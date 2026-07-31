@@ -1,19 +1,22 @@
-const CACHE_NAME = 'milliontcg-v2';
+const CACHE_NAME = 'milliontcg-v3';
 const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/shop.html',
-  '/product.html',
-  '/sell.html',
-  '/checkout.html',
-  '/contact-us.html',
-  '/track-order.html',
-  '/returns-policy.html',
-  '/shipping-policy.html',
-  '/styles.css',
-  '/main.js',
-  '/manifest.json',
-  '/images/logo.png'
+  '/MillionTCG/',
+  '/MillionTCG/index.html',
+  '/MillionTCG/shop.html',
+  '/MillionTCG/product.html',
+  '/MillionTCG/sell.html',
+  '/MillionTCG/checkout.html',
+  '/MillionTCG/contact-us.html',
+  '/MillionTCG/track-order.html',
+  '/MillionTCG/returns-policy.html',
+  '/MillionTCG/shipping-policy.html',
+  '/MillionTCG/styles.css',
+  '/MillionTCG/main.js',
+  '/MillionTCG/auth.js',
+  '/MillionTCG/manifest.json',
+  '/MillionTCG/images/logo.png',
+  '/MillionTCG/images/icon-192.png',
+  '/MillionTCG/images/icon-512.png'
 ];
 
 // Install: cache static assets

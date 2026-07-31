@@ -2,12 +2,12 @@
   "name": "MillionTCG",
   "short_name": "MillionTCG",
   "description": "Your Premier Destination for Authentic Trading Cards & Sealed Products",
-  "start_url": "/index.html",
+  "start_url": "/MillionTCG/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
-  "scope": "/",
+  "scope": "/MillionTCG/",
   "icons": [
     {
       "src": "images/icon-192.png",
@@ -24,4 +24,3 @@
   ],
   "categories": ["shopping", "entertainment"]
 }
-
