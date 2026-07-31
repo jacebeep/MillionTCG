@@ -2431,8 +2431,6 @@ html, body {
     position: relative;
     width: 100%;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
   }
 
   .hero-3d-container {
@@ -2442,28 +2440,34 @@ html, body {
     width: 100%;
   }
 
+  /* Overlay stays ABSOLUTE over the canvas - do NOT change to relative */
   .hero-3d-overlay {
-    position: relative;
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    padding: 14px 16px;
-    background: #08080c;
+    height: 100%;
+    padding: 16px;
     display: flex;
     flex-direction: column;
+    justify-content: flex-end;
     align-items: center;
   }
 
-  /* Homescreen UI Card - SHOP NOW only, no banner */
+  /* Homescreen UI Card - SHOP NOW only, transparent, bottom-centered */
   .homescreen-ui {
     width: auto;
-    max-width: 100%;
-    padding: 16px;
+    max-width: 90%;
+    padding: 0;
     background: transparent;
     border: none;
     box-shadow: none;
-    margin: 0;
+    margin: 0 0 12px 0;
     text-align: center;
     display: flex;
     justify-content: center;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   /* These are overridden to nothing since elements are hidden - kept for specificity */
