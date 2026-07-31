@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Details | MillionTCG</title>
+  <meta name="description" content="View product specifications, condition, and availability for TCG cards.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .product-detail-container {
+      max-width: 1200px;
+      margin: 60px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 60px;
+    }
+    @media (max-width: 850px) {
+      .product-detail-container { grid-template-columns: 1fr; }
+    }
+    .detail-gallery {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .detail-gallery img {
+      max-width: 85%;
+      max-height: 400px;
+      object-fit: contain;
+    }
+    .detail-content h1 {
+      font-size: 2.2rem;
+      font-weight: 900;
+      margin-bottom: 12px;
+    }
+    .detail-price {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 24px;
+      color: #ffffff;
+    }
+    .detail-specs {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+    .spec-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+    .spec-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>🔥 FREE EXPRESS SHIPPING ON ALL ORDERS OVER $75 | HIGH-GRADE SINGLES & SEALED BOXES 🔥</span>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="shop.html" class="nav-link">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="index.html#about" class="nav-link">About Us</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Product Detail Section -->
+  <main class="product-detail-container" id="product-detail-view">
+    <!-- Populated by JS -->
+  </main>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3>Your Cart</h3>
+      <button class="close-btn" id="close-cart-btn">✕</button>
+    </div>
+    <div class="cart-body" id="cart-items"></div>
+    <div class="cart-footer">
+      <div class="subtotal-row">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal">$0.00</span>
+      </div>
+      <a href="checkout.html" class="btn-primary" style="width: 100%; text-align: center;">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>MILLION TCG</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">The premier black & white luxury destination for card collectors, tournament players, and card enthusiasts worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="shop.html">Shop All Products</a></li>
+          <li><a href="shop.html?category=Single Card">Singles Catalog</a></li>
+          <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
+          <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="track-order.html">Track Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+          <li><a href="contact-us.html">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const prodId = parseInt(urlParams.get('id')) || 17;
+      const product = PRODUCTS.find(p => p.id === prodId) || PRODUCTS[0];
+
+      const galleryImages = product.gallery || [product.image];
+
+      const view = document.getElementById('product-detail-view');
+      view.innerHTML = `
+        <div>
+          <div class="detail-gallery">
+            <img id="main-product-img" src="${galleryImages[0]}" alt="${product.name}" style="max-width: 100%; max-height: 420px; object-fit: contain;">
+          </div>
+          ${galleryImages.length > 1 ? `
+            <div style="display: flex; gap: 12px; margin-top: 16px; overflow-x: auto; padding-bottom: 8px;">
+              ${galleryImages.map((imgSrc, idx) => `
+                <img src="${imgSrc}" onclick="document.getElementById('main-product-img').src='${imgSrc}'" style="width: 70px; height: 70px; object-fit: cover; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; background: #050505;">
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+        <div class="detail-content">
+          <span class="product-category">${product.category}</span>
+          <h1>${product.name}</h1>
+          
+          <!-- Tier Quantity Bundle Selector -->
+          ${product.bundleOptions ? `
+            <div style="margin: 20px 0;">
+              <label style="display: block; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;">Select Quantity Bundle:</label>
+              <div style="display: flex; gap: 12px; flex-wrap: wrap;" id="bundle-selector-group">
+                ${product.bundleOptions.map((opt, idx) => `
+                  <button type="button" class="filter-btn ${idx === 0 ? 'active' : ''}" 
+                          data-count="${opt.count}" 
+                          data-price="${opt.price}" 
+                          data-label="${opt.label}" 
+                          onclick="selectBundleTier(this, ${opt.price})" 
+                          style="padding: 12px 18px; text-align: left; min-width: 140px;">
+                    <div style="font-weight: 800; font-size: 0.95rem;">${opt.label}</div>
+                    <div style="font-size: 0.85rem; opacity: 0.8; margin-top: 2px;">$${opt.price.toFixed(2)}</div>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
+
+          <div class="detail-price" id="display-detail-price">$${product.price.toFixed(2)}</div>
+          
+          <div class="detail-specs">
+            <div class="spec-item">
+              <span style="color: var(--text-muted);">Condition & Seal</span>
+              <span>${product.condition || 'Original Sealed Box & Case'}</span>
+            </div>
+            <div class="spec-item">
+              <span style="color: var(--text-muted);">Dispatch Time</span>
+              <span>${product.dispatchTime || '2 Days after order date'}</span>
+            </div>
+            <div class="spec-item">
+              <span style="color: var(--text-muted);">Euro Shipping</span>
+              <span>DDP (10-15 working days)</span>
+            </div>
+            <div class="spec-item">
+              <span style="color: var(--text-muted);">Other Countries</span>
+              <span>DAP (3-9 working days)</span>
+            </div>
+            <div class="spec-item">
+              <span style="color: var(--text-muted);">Bulk Orders</span>
+              <span style="color: #4ade80;">Price Negotiable — Contact Support</span>
+            </div>
+          </div>
+
+          <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem; line-height: 1.6;">${product.desc}</p>
+
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 16px; border-radius: 6px; margin-bottom: 24px; font-size: 0.85rem; color: var(--text-muted);">
+            ℹ️ <strong>Tariff Remark:</strong> Customs/Tariff duties negotiated per destination country. For bulk case pricing, email <a href="mailto:Jacep0230@gmail.com" style="color: #fff; font-weight: 700;">Jacep0230@gmail.com</a>.
+          </div>
+
+          <button class="btn-primary" id="add-bundle-cart-btn" onclick="addSelectedBundleToCart(${product.id})" style="width: 100%; padding: 18px;">
+            ADD TO CART & SECURE PRE-ORDER
+          </button>
+        </div>
+      `;
+    });
+
+    let currentSelectedBundle = null;
+
+    function selectBundleTier(btn, price) {
+      document.querySelectorAll('#bundle-selector-group .filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('display-detail-price').textContent = `$${price.toFixed(2)}`;
+
+      currentSelectedBundle = {
+        count: parseInt(btn.getAttribute('data-count')),
+        price: parseFloat(btn.getAttribute('data-price')),
+        label: btn.getAttribute('data-label')
+      };
+    }
+
+    function addSelectedBundleToCart(productId) {
+      const product = PRODUCTS.find(p => p.id === productId);
+      if (!currentSelectedBundle && product && product.bundleOptions) {
+        currentSelectedBundle = product.bundleOptions[0];
+      }
+      addToCart(productId, currentSelectedBundle);
+    }
+  </script>
+</body>
+</html>

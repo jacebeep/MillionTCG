@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track Your Order | MillionTCG</title>
+  <meta name="description" content="Track your MillionTCG shipment and delivery status live.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .page-container {
+      max-width: 900px;
+      margin: 60px auto 100px;
+      padding: 0 24px;
+    }
+    .track-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 40px;
+      margin-top: 30px;
+    }
+    .track-form {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .track-form input {
+      flex: 1;
+      min-width: 260px;
+    }
+    .status-display {
+      display: none;
+      margin-top: 40px;
+      border-top: 1px solid var(--border-color);
+      padding-top: 30px;
+    }
+    .status-step {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .step-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #4ade80;
+      box-shadow: 0 0 10px rgba(74, 222, 128, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>📦 LIVE PACKAGE TRACKING & ARMOR SHIPMENT STATUS</span>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="shop.html" class="nav-link">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="index.html#about" class="nav-link">About Us</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-container">
+    <h1 class="section-title">TRACK YOUR ORDER</h1>
+    <p class="section-subtitle">Enter your order ID (e.g. MTCG-98412) to check real-time packaging and delivery progress.</p>
+
+    <div class="track-box">
+      <form class="track-form" id="track-form">
+        <input type="text" class="form-input" id="track-input" required placeholder="Order Number (e.g., MTCG-98412)">
+        <button type="submit" class="btn-primary">Track Package</button>
+      </form>
+
+      <div class="status-display" id="status-display">
+        <h3 style="font-size: 1.1rem; text-transform: uppercase; margin-bottom: 20px;">Order Status: <span style="color: #4ade80;" id="order-id-label">#MTCG-98412</span></h3>
+        
+        <div class="status-step">
+          <div class="step-dot"></div>
+          <div>
+            <h4 style="font-size: 0.95rem;">Order Verified & Card Inspected</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Cards verified under magnification and prepped.</p>
+          </div>
+        </div>
+
+        <div class="status-step">
+          <div class="step-dot"></div>
+          <div>
+            <h4 style="font-size: 0.95rem;">Encased in Top-Loader & Bubble Armor</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Package sealed in rigid cardboard protection.</p>
+          </div>
+        </div>
+
+        <div class="status-step">
+          <div class="step-dot" style="background: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);"></div>
+          <div>
+            <h4 style="font-size: 0.95rem;">In Transit with Courier (Express Shipping)</h4>
+            <p style="font-size: 0.85rem; color: var(--text-muted);">Estimated arrival: 2 Business Days</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3>Your Cart</h3>
+      <button class="close-btn" id="close-cart-btn">✕</button>
+    </div>
+    <div class="cart-body" id="cart-items"></div>
+    <div class="cart-footer">
+      <div class="subtotal-row">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal">$0.00</span>
+      </div>
+      <a href="checkout.html" class="btn-primary" style="width: 100%; text-align: center;">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>MILLION TCG</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">The premier black & white luxury destination for card collectors, tournament players, and card enthusiasts worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="shop.html">Shop All Products</a></li>
+          <li><a href="shop.html?category=Single Card">Singles Catalog</a></li>
+          <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
+          <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="track-order.html">Track Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+          <li><a href="contact-us.html">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    document.getElementById('track-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = document.getElementById('track-input').value.trim();
+      document.getElementById('order-id-label').textContent = val.startsWith('#') ? val : `#${val}`;
+      document.getElementById('status-display').style.display = 'block';
+    });
+  </script>
+</body>
+</html>

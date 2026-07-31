@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop Catalog | MillionTCG</title>
+  <meta name="description" content="Browse our complete catalog of TCG single cards, booster boxes, and gaming supplies.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>🔥 FREE EXPRESS SHIPPING ON ALL ORDERS OVER $75 | HIGH-GRADE SINGLES & SEALED BOXES 🔥</span>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="shop.html" class="nav-link active">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="sell.html" class="nav-link" style="color: #00e5ff; font-weight: 800;">Sell Cards 🏷️</a></li>
+          <li><a href="index.html#about" class="nav-link">About Us</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Shop Header Banner -->
+  <section class="shop-header">
+    <h1 class="section-title">STORE CATALOG</h1>
+    <p class="section-subtitle">Explore rare singles, sealed boxes, and gaming gear</p>
+  </section>
+
+  <!-- Category Filter Bar -->
+  <div class="filter-bar">
+    <div class="filter-btn-group">
+      <button class="filter-btn active" onclick="filterCatalog('All')">All Items</button>
+      <button class="filter-btn" onclick="filterCatalog('Single Card')">Single Cards</button>
+      <button class="filter-btn" onclick="filterCatalog('Sealed Product')">Sealed Boxes & Packs</button>
+      <button class="filter-btn" onclick="filterCatalog('Accessories')">Accessories</button>
+      <button class="filter-btn" onclick="filterCatalog('Collector Bundle')">Bundles</button>
+    </div>
+  </div>
+
+  <!-- Dynamic Product Grid -->
+  <section class="products-section" style="padding-top: 20px;">
+    <div class="product-grid" id="catalog-grid">
+      <!-- Items populated by JavaScript -->
+    </div>
+  </section>
+
+  <!-- Slide-out Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3>Your Cart</h3>
+      <button class="close-btn" id="close-cart-btn">✕</button>
+    </div>
+    <div class="cart-body" id="cart-items">
+      <!-- Cart rows -->
+    </div>
+    <div class="cart-footer">
+      <div class="subtotal-row">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal">$0.00</span>
+      </div>
+      <a href="checkout.html" class="btn-primary" style="width: 100%; text-align: center;">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>MILLION TCG</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">The premier black & white luxury destination for card collectors, tournament players, and card enthusiasts worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="shop.html">Shop All Products</a></li>
+          <li><a href="shop.html?category=Single Card">Singles Catalog</a></li>
+          <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
+          <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="track-order.html">Track Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+          <li><a href="contact-us.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Newsletter</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">Subscribe to get early access to restocks and secret drops.</p>
+        <div class="search-bar" style="border-radius: 4px;">
+          <input type="email" placeholder="Your email address" style="width: 100%;">
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+      <p>Designed for TCG Players & Collectors</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const catParam = urlParams.get('category');
+      const searchParam = urlParams.get('search');
+
+      if (catParam) {
+        filterCatalog(catParam);
+      } else if (searchParam) {
+        searchCatalog(searchParam);
+      } else {
+        renderCatalog(PRODUCTS);
+      }
+    });
+
+    function renderCatalog(items) {
+      const grid = document.getElementById('catalog-grid');
+      if (items.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No matching products found.</p>';
+        return;
+      }
+      grid.innerHTML = items.map(p => `
+        <div class="product-card">
+          ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
+          <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+            <img src="${p.image}" alt="${p.name}">
+          </div>
+          <div class="product-info">
+            <span class="product-category">${p.category}</span>
+            <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc}</p>
+            <div class="product-footer">
+              <span class="product-price">$${p.price.toFixed(2)}</span>
+              <button class="btn-secondary" onclick="addToCart(${p.id})">Add to Cart</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterCatalog(category) {
+      const buttons = document.querySelectorAll('.filter-btn');
+      buttons.forEach(b => {
+        if (b.textContent.includes(category) || (category === 'All' && b.textContent.includes('All'))) {
+          b.classList.add('active');
+        } else {
+          b.classList.remove('active');
+        }
+      });
+
+      if (category === 'All') {
+        renderCatalog(PRODUCTS);
+      } else {
+        const filtered = PRODUCTS.filter(p => p.category === category);
+        renderCatalog(filtered);
+      }
+    }
+
+    function searchCatalog(query) {
+      const filtered = PRODUCTS.filter(p => 
+        p.name.toLowerCase().includes(query.toLowerCase()) || 
+        p.category.toLowerCase().includes(query.toLowerCase())
+      );
+      renderCatalog(filtered);
+    }
+  </script>
+</body>
+</html>

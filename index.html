@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MillionTCG | Your Ultimate TCG Destination</title>
+  <meta name="description" content="MillionTCG - Collect, trade, and compete. Premier destination for trading card game booster packs, singles, and sealed products.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Three.js 3D WebGL Engine -->
+  <script src="js/three.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>🔥 FREE EXPRESS SHIPPING ON ALL ORDERS OVER $75 | HIGH-GRADE SINGLES & SEALED BOXES 🔥</span>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <!-- Logo in Header -->
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <!-- Navigation Links -->
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link active">Home</a></li>
+          <li><a href="shop.html" class="nav-link">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="sell.html" class="nav-link" style="color: #00e5ff; font-weight: 800;">Sell Cards 🏷️</a></li>
+          <li><a href="index.html#about" class="nav-link">About Us</a></li>
+        </ul>
+      </nav>
+
+      <!-- Actions (Search & Cart) -->
+      <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Landing Section - Real 3D WebGL Game Homescreen -->
+  <section class="hero-section">
+    <!-- WebGL 3D Canvas Stage -->
+    <div class="hero-3d-container" id="hero-3d-container">
+      <canvas id="hero-3d-canvas"></canvas>
+
+      <!-- 3D Interactive UI Overlay -->
+      <div class="hero-3d-overlay">
+        <!-- 3D Nerd Speech Bubble overlay floating above 3D character -->
+        <div class="nerd-speech-bubble" id="nerd-bubble">
+          <span id="nerd-text">Hey collector! Drag me around for RAGDOLL physics! 🤪</span>
+          <div class="bubble-arrow"></div>
+        </div>
+
+        <!-- Homescreen Title & Actions Callout -->
+        <div class="homescreen-ui">
+          <div class="game-badge">SEASON 1 • ORIGINAL DROPS</div>
+          <h1 class="hero-headline">COLLECT<br><span class="outline-text">TRADE</span><br>COMPETE</h1>
+          <p class="hero-subtitle">Your Premier Destination for Authentic Trading Cards & Sealed Products</p>
+
+          <div class="hero-stats-row">
+            <div class="stat-pill">⚡ 24,500+ Shipped</div>
+            <div class="stat-pill">🛡️ PSA/BGS 100% Authentic</div>
+            <div class="stat-pill">🚀 Same-Day Dispatch</div>
+          </div>
+
+          <div class="cta-action-row">
+            <a href="shop.html" class="btn-primary" id="shop-now-btn">
+              SHOP NOW
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Strip -->
+  <section class="features-section">
+    <div class="features-container">
+      <div class="feature-box">
+        <div class="feature-icon">🃏</div>
+        <h3 class="feature-title">Thousands of Cards</h3>
+        <p class="feature-desc">Rare singles, holo cards, and complete master sets available.</p>
+      </div>
+      <div class="feature-box">
+        <div class="feature-icon">🛡️</div>
+        <h3 class="feature-title">Trusted & Verified</h3>
+        <p class="feature-desc">100% authentic guarantee on every single card and product.</p>
+      </div>
+      <div class="feature-box">
+        <div class="feature-icon">⚡</div>
+        <h3 class="feature-title">Fast Express Shipping</h3>
+        <p class="feature-desc">Carefully packaged with top loaders and bubble mailers.</p>
+      </div>
+      <div class="feature-box">
+        <div class="feature-icon">🔒</div>
+        <h3 class="feature-title">Secure Checkout</h3>
+        <p class="feature-desc">Encrypted transactions for maximum buyer protection.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products Section -->
+  <section class="products-section" id="shop">
+    <h2 class="section-title">FEATURED TCG DROP</h2>
+    <p class="section-subtitle">Hand-picked collection of premium cards and sealed booster packs</p>
+
+    <div class="product-grid">
+      <!-- Featured Product 1: Pokemon 30th Anniversary -->
+      <div class="product-card">
+        <span class="card-badge">PRE-ORDER</span>
+        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">
+          <img src="images/pokemon-30th-vol2-boxes.jpg" alt="Pokemon 30th Anniversary Vol.2" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+        </div>
+        <div class="product-info">
+          <span class="product-category">Sealed 2-Box Bundle</span>
+          <h3 class="product-name" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">Pokemon 30th Anniversary Collection – Original Partners Vol.2 (2 Boxes)</h3>
+          <div class="product-footer">
+            <span class="product-price">$250.00</span>
+            <button class="btn-secondary" onclick="addToCart(17)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Quick Grid -->
+  <section class="category-grid-section">
+    <h2 class="section-title">BROWSE BY CATEGORY</h2>
+    <p class="section-subtitle">Find exact card types, sealed product drops, or armor supplies</p>
+
+    <div class="category-flex-grid">
+      <a href="shop.html?category=Single Card" class="category-card">
+        <h3>Single Cards</h3>
+        <span>Rare Holos & Graded Slabs →</span>
+      </a>
+
+      <a href="shop.html?category=Sealed Product" class="category-card">
+        <h3>Sealed Boosters</h3>
+        <span>Booster Boxes & ETBs →</span>
+      </a>
+
+      <a href="shop.html?category=Accessories" class="category-card">
+        <h3>Card Accessories</h3>
+        <span>Sleeves, Binders & Cases →</span>
+      </a>
+
+      <a href="shop.html?category=Collector Bundle" class="category-card">
+        <h3>Collector Bundles</h3>
+        <span>Starter Packs & Mystery Boxes →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- Why Choose Us Showcase Section -->
+  <section class="why-choose-us-section" id="about">
+    <h2 class="section-title" style="text-align: center;">WHY CHOOSE MILLION TCG?</h2>
+    <p class="section-subtitle" style="text-align: center;">UPGRADE YOUR COLLECTION WITH LEGENDARY CARDS & ENDLESS POSSIBILITIES</p>
+
+    <!-- Full-Width Dragon Banner Graphic -->
+    <div class="why-banner-wrapper">
+      <img src="images/why-choose-us.jpg" alt="MillionTCG - Upgrade Your Collection Showcase" class="why-banner-img">
+    </div>
+
+    <!-- Reason Cards Grid -->
+    <div class="why-reasons-grid">
+      <div class="reason-card">
+        <span class="reason-badge">Guaranteed Authentic</span>
+        <h3>100% Verified Cards</h3>
+        <p>Every single card and sealed booster box in our inventory is thoroughly inspected by expert collectors to guarantee absolute authenticity.</p>
+      </div>
+
+      <div class="reason-card">
+        <span class="reason-badge">Collector Shield</span>
+        <h3>Armor Packaging</h3>
+        <p>We ship every rare card in premium top loaders with extra-rigid cardboard armor and bubble mailers. Your grails arrive in flawless condition.</p>
+      </div>
+
+      <div class="reason-card">
+        <span class="reason-badge">Community First</span>
+        <h3>Built For Players</h3>
+        <p>Founded by passionate TCG players and collectors. We support local tournament play and drop exclusive competitive singles daily.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Customer Testimonials Section -->
+  <section class="reviews-section">
+    <h2 class="section-title">WHAT COLLECTORS ARE SAYING</h2>
+    <p class="section-subtitle">Real reviews from verified TCG buyers and players nationwide</p>
+
+    <div class="reviews-grid">
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"My PSA 10 slab arrived in top-loader armor packaging. Unbelievable care put into shipping. Hands down the best TCG store online!"</p>
+        <div class="review-author">Marcus T.</div>
+        <div class="review-verified">✓ Verified Buyer</div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Pulled a Secret Rare from the MillionTCG Booster Box! Shipping was fast (2 days) and the box was factory sealed."</p>
+        <div class="review-author">David K.</div>
+        <div class="review-verified">✓ Verified Buyer</div>
+      </div>
+
+      <div class="review-card">
+        <div class="review-stars">★★★★★</div>
+        <p class="review-text">"Super clean website and fast checkout. Used coupon code MILLION10 for 10% off. Will definitely buy more singles!"</p>
+        <div class="review-author">Elena R.</div>
+        <div class="review-verified">✓ Verified Buyer</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIP Secret Drops Newsletter -->
+  <section class="vip-banner-section">
+    <div class="vip-card">
+      <h2>JOIN THE MILLION TCG VIP DROP LIST</h2>
+      <p>Get early 15-minute access to rare grail card restocks, secret booster drops, and exclusive discount codes.</p>
+      <form action="https://formsubmit.co/Jacep0230@gmail.com" method="POST" class="vip-input-group">
+        <input type="email" name="email" class="form-input" required placeholder="Enter your email address...">
+        <input type="hidden" name="_subject" value="New VIP Newsletter Subscriber!">
+        <button type="submit" class="btn-primary" style="white-space: nowrap;">JOIN VIP DROPS</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Slide-out Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3>Your Cart</h3>
+      <button class="close-btn" id="close-cart-btn">✕</button>
+    </div>
+    <div class="cart-body" id="cart-items">
+      <!-- Items populated by JS -->
+    </div>
+    <div class="cart-footer">
+      <div class="subtotal-row">
+        <span>Subtotal:</span>
+        <span id="cart-subtotal">$0.00</span>
+      </div>
+      <a href="checkout.html" class="btn-primary" style="width: 100%; text-align: center;">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <h4>MILLION TCG</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem;">The premier black & white luxury destination for card collectors, tournament players, and card enthusiasts worldwide.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Quick Links</h4>
+        <ul>
+          <li><a href="shop.html">Shop All Products</a></li>
+          <li><a href="shop.html?category=Single Card">Singles Catalog</a></li>
+          <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
+          <li><a href="checkout.html">Checkout</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Care</h4>
+        <ul>
+          <li><a href="track-order.html">Track Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+          <li><a href="contact-us.html">Contact Us</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Newsletter</h4>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px;">Subscribe to get early access to restocks and secret drops.</p>
+        <div class="search-bar" style="border-radius: 4px;">
+          <input type="email" placeholder="Your email address" style="width: 100%;">
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+      <p>Designed for TCG Players & Collectors</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script>setTimeout(function() { if (typeof initHero3DScene === 'function') initHero3DScene(); }, 100);</script>
+</body>
+</html>

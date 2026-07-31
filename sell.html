@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sell Your Cards | MillionTCG Seller Portal</title>
+  <meta name="description" content="Create your seller account and list trading cards, PSA slabs, and sealed products on MillionTCG.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="js/three.min.js"></script>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>🔥 MILLION TCG SELLER PORTAL • CREATE AN ACCOUNT TO LIST YOUR CARDS TODAY 🔥</span>
+  </div>
+
+  <!-- Header (Identical Sticky Header as Index & Shop) -->
+  <header class="site-header">
+    <div class="header-container">
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="shop.html" class="nav-link">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="sell.html" class="nav-link active" style="color: #00e5ff; font-weight: 800;">Sell Cards 🏷️</a></li>
+          <li><a href="index.html#about" class="nav-link">About Us</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
+        <button class="auth-btn-nav" id="nav-auth-btn">ACCOUNT</button>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Seller Hero Section -->
+  <section class="seller-hero-section">
+    <div class="seller-hero-container">
+      <div class="seller-badge">VERIFIED SELLER PORTAL</div>
+      <h1>SELL YOUR CARDS ON MILLION TCG</h1>
+      <p>Create a verified seller account to upload singles, PSA slabs, and sealed products directly to collector marketplace buyers.</p>
+
+      <!-- Account State Banner -->
+      <div class="account-state-box" id="account-state-box">
+        <!-- Rendered by JS based on login state -->
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Seller Hub Layout -->
+  <main class="seller-main-container">
+    
+    <!-- Account Required Gate Notice (Hidden when logged in) -->
+    <div class="auth-required-gate" id="auth-required-gate">
+      <div class="gate-card">
+        <div class="gate-icon">🔒</div>
+        <h2>SELLER ACCOUNT REQUIRED</h2>
+        <p>To ensure authenticity and secure payouts, you must create a free MillionTCG Seller Account before uploading items.</p>
+        <div class="gate-actions">
+          <button class="btn-primary" id="gate-signup-btn">CREATE FREE SELLER ACCOUNT</button>
+          <button class="btn-secondary" id="gate-login-btn">LOG IN TO EXISTING ACCOUNT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Organized Seller Workspace (Visible when logged in) -->
+    <div class="seller-workspace hidden" id="seller-workspace">
+      
+      <!-- Top Steps Bar -->
+      <div class="seller-steps-bar">
+        <div class="step-item active">
+          <span class="step-num">1</span>
+          <span class="step-title">Card Image Upload</span>
+        </div>
+        <div class="step-item active">
+          <span class="step-num">2</span>
+          <span class="step-title">Details & Condition</span>
+        </div>
+        <div class="step-item active">
+          <span class="step-num">3</span>
+          <span class="step-title">Pricing & Terms</span>
+        </div>
+        <div class="step-item active">
+          <span class="step-num">4</span>
+          <span class="step-title">Publish Live</span>
+        </div>
+      </div>
+
+      <div class="seller-two-col-layout">
+        
+        <!-- Left: Neat Upload Form -->
+        <div class="seller-form-card">
+          <div class="form-header">
+            <h2>UPLOAD CARD FOR SALE 🃏</h2>
+            <p>Complete the details below to list your card on the store.</p>
+          </div>
+
+          <form id="card-upload-form" class="card-form">
+
+            <!-- Card Photo Upload (Neat 2.5:3.5 Ratio Box) -->
+            <div class="form-group">
+              <label>Card Photo Upload <span class="required">*</span></label>
+              <div class="neat-upload-zone" id="neat-upload-zone">
+                <input type="file" id="card-photo-input" accept="image/*" class="file-input-hidden" required>
+                <div class="neat-drop-placeholder" id="drop-placeholder">
+                  <div class="neat-icon">📷</div>
+                  <div class="neat-title">Upload High-Res Card Photo</div>
+                  <div class="neat-sub">Click or Drag & Drop photo here</div>
+                </div>
+                <div class="neat-preview-frame hidden" id="neat-preview-frame">
+                  <img id="neat-preview-img" src="" alt="Card Upload Preview">
+                  <button type="button" class="btn-change-photo" id="btn-change-photo">Change Photo ✕</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card Name & Franchise -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="card-title">Card Name / Item Title <span class="required">*</span></label>
+                <input type="text" id="card-title" placeholder="e.g. Charizard GX Shiny Vault #SV107" required>
+              </div>
+
+              <div class="form-group">
+                <label for="card-category">TCG Franchise <span class="required">*</span></label>
+                <select id="card-category" required>
+                  <option value="Pokemon">Pokémon TCG</option>
+                  <option value="Yu-Gi-Oh!">Yu-Gi-Oh!</option>
+                  <option value="Magic The Gathering">Magic: The Gathering</option>
+                  <option value="One Piece">One Piece TCG</option>
+                  <option value="Lorcana">Disney Lorcana</option>
+                  <option value="Sealed Product">Sealed Booster Box / Pack</option>
+                  <option value="Other">Other Collectible</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Condition & Grading -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="card-condition">Card Condition / Grade <span class="required">*</span></label>
+                <select id="card-condition" required>
+                  <option value="PSA 10 (Gem Mint)">PSA 10 (Gem Mint Graded)</option>
+                  <option value="BGS 9.5 (Gem Mint)">BGS 9.5 (Gem Mint Graded)</option>
+                  <option value="CGC 10 (Pristine)">CGC 10 (Pristine Graded)</option>
+                  <option value="Near Mint (Raw)">Near Mint / Ungraded (Raw)</option>
+                  <option value="Lightly Played (LP)">Lightly Played (LP)</option>
+                  <option value="Moderately Played (MP)">Moderately Played (MP)</option>
+                  <option value="Heavily Played (HP)">Heavily Played (HP)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="card-price">Listing Price ($ USD) <span class="required">*</span></label>
+                <input type="number" id="card-price" placeholder="89.99" step="0.01" min="0.50" required>
+                <div class="fee-breakdown-tag" id="fee-breakdown-tag">
+                  <span>Fee (10%): <strong>-$0.00</strong></span> • <span>Your Payout: <strong id="net-payout-val">$0.00</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+              <label for="card-description">Card Description & Certification Details</label>
+              <textarea id="card-description" rows="3" placeholder="Mention PSA cert #, surface condition, or shipping details..."></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary btn-submit-listing">
+              PUBLISH CARD LISTING 🚀
+            </button>
+          </form>
+        </div>
+
+        <!-- Right: Logged-in Seller's Dashboard & Payout Settings -->
+        <div class="seller-dashboard-card">
+          
+          <!-- Earnings & Payout Summary Widget -->
+          <div class="payout-summary-box">
+            <div class="payout-box-header">
+              <h3>SELLER EARNINGS & PAYOUTS 💰</h3>
+              <span class="payout-status-badge">10% Platform Cut Active</span>
+            </div>
+            
+            <div class="payout-stats-grid">
+              <div class="payout-stat">
+                <span class="payout-stat-label">Total Gross Sales</span>
+                <span class="payout-stat-val" id="seller-gross-sales">$0.00</span>
+              </div>
+              <div class="payout-stat">
+                <span class="payout-stat-label">MillionTCG Cut (10%)</span>
+                <span class="payout-stat-val" id="seller-platform-cut" style="color: #ff4757;">-$0.00</span>
+              </div>
+              <div class="payout-stat">
+                <span class="payout-stat-label">Your Net Payout (90%)</span>
+                <span class="payout-stat-val" id="seller-net-payout" style="color: #00e5ff;">$0.00</span>
+              </div>
+            </div>
+
+            <!-- Linked Payout Account Upload & Setup -->
+            <div class="payout-method-form">
+              <div class="payout-form-title">
+                <label>LINK PAYOUT ACCOUNT (FOR AUTOMATED PAYOUTS) <span class="required">*</span></label>
+                <span class="account-verified-status" id="account-verified-status">⚠️ No Linked Account</span>
+              </div>
+              
+              <div class="payout-account-grid">
+                <div class="form-group">
+                  <label for="payout-method-select">Account Type</label>
+                  <select id="payout-method-select">
+                    <option value="bank">Bank ACH Direct Deposit</option>
+                    <option value="paypal">PayPal Business Account</option>
+                    <option value="venmo">Venmo Account</option>
+                    <option value="stripe">Stripe Express Connect</option>
+                    <option value="zelle">Zelle Pay</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="payout-name-input">Account Holder Legal Name</label>
+                  <input type="text" id="payout-name-input" placeholder="e.g. Alex Mercer" value="">
+                </div>
+              </div>
+
+              <!-- Bank Routing / Handle Details -->
+              <div class="payout-details-row">
+                <div class="form-group">
+                  <label for="payout-destination-input">Email / Account / Handle</label>
+                  <input type="text" id="payout-destination-input" placeholder="e.g. alex@paypal.com or Account #123456" value="">
+                </div>
+                
+                <div class="form-group" id="bank-routing-group">
+                  <label for="payout-routing-input">Bank Routing # (9-Digits)</label>
+                  <input type="text" id="payout-routing-input" placeholder="e.g. 021000021" value="">
+                </div>
+              </div>
+
+              <button type="button" class="btn-primary btn-save-payout" id="btn-save-payout">
+                LINK & VERIFY PAYOUT ACCOUNT 🔗
+              </button>
+            </div>
+          </div>
+
+          <!-- Escrow Orders & Tracking Upload Section -->
+          <div class="escrow-orders-box" style="margin-top: 32px;">
+            <div class="dashboard-header">
+              <h2>SOLD ORDERS & ESCROW PAYOUT TRACKING 📦</h2>
+              <p>Upload tracking numbers for sold items. Funds are held in MillionTCG Escrow and released automatically upon carrier delivery verification!</p>
+            </div>
+
+            <div class="sold-orders-list" id="sold-orders-list">
+              <!-- Rendered dynamically by JS -->
+            </div>
+          </div>
+
+          <div class="dashboard-header" style="margin-top: 32px;">
+            <h2>MY ACTIVE LISTINGS 🏷️</h2>
+            <p>Manage items you have published for sale</p>
+          </div>
+
+          <div class="my-listings-list" id="my-listings-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Auth Account Modal (Sign Up / Log In) -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card auth-modal-card">
+      <button class="modal-close" id="auth-modal-close">✕</button>
+      
+      <div class="auth-tabs">
+        <button class="auth-tab-btn active" id="tab-signup">CREATE SELLER ACCOUNT</button>
+        <button class="auth-tab-btn" id="tab-login">LOG IN</button>
+      </div>
+
+      <!-- Sign Up Form -->
+      <form id="signup-form" class="auth-form">
+        <div class="form-row-2">
+          <div class="form-group">
+            <label>Full Name <span class="required">*</span></label>
+            <input type="text" id="signup-name" placeholder="Alex Mercer" required>
+          </div>
+
+          <div class="form-group">
+            <label>Store Handle (@) <span class="required">*</span></label>
+            <input type="text" id="signup-handle" placeholder="PokeVault" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Email Address <span class="required">*</span></label>
+          <input type="email" id="signup-email" placeholder="alex@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="signup-pass" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-primary auth-submit-btn">CREATE SELLER ACCOUNT 🚀</button>
+      </form>
+
+      <!-- Log In Form -->
+      <form id="login-form" class="auth-form hidden">
+        <div class="form-group">
+          <label>Email Address <span class="required">*</span></label>
+          <input type="email" id="login-email" placeholder="alex@example.com" required>
+        </div>
+
+        <div class="form-group">
+          <label>Password <span class="required">*</span></label>
+          <input type="password" id="login-pass" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn-primary auth-submit-btn">LOG IN TO SELLER DASHBOARD 🔓</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shopping Cart Drawer (Standard) -->
+  <div class="cart-drawer-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3>YOUR CART</h3>
+      <button class="close-cart" id="close-cart">✕</button>
+    </div>
+    <div class="cart-items" id="cart-items">
+      <!-- Items loaded dynamically -->
+    </div>
+    <div class="cart-footer">
+      <div class="cart-subtotal">
+        <span>Subtotal</span>
+        <span class="subtotal-amount" id="cart-subtotal">$0.00</span>
+      </div>
+      <a href="checkout.html" class="btn-primary checkout-btn">PROCEED TO CHECKOUT</a>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col brand-col">
+        <a href="index.html" class="brand-logo">
+          <img src="images/logo.png" alt="MillionTCG Logo">
+          <span class="brand-title">MILLION TCG</span>
+        </a>
+        <p>The premier high-octane TCG platform for buying, selling, and collecting authentic trading cards, sealed booster boxes, and PSA slabs.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigation</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="shop.html">Shop All Products</a></li>
+          <li><a href="sell.html">Sell Your Cards</a></li>
+          <li><a href="shop.html?category=Single+Card">Single Cards</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Support & Policies</h4>
+        <ul>
+          <li><a href="track-order.html">Track Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+          <li><a href="contact-us.html">Contact Us</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+      <p>Designed for TCG Players & Collectors</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
