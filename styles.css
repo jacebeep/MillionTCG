@@ -2412,25 +2412,18 @@ html, body {
     display: none !important; /* Hide top search bar from header row so header contains only Hamburger + Logo + Cart */
   }
 
-  /* On mobile: hide the COLLECT TRADE COMPETE banner but keep the SHOP NOW button */
+  /* On mobile: hide the COLLECT TRADE COMPETE banner - keep ONLY the SHOP NOW button */
   .hero-headline,
   .hero-subtitle,
   .hero-stats-row,
-  .game-badge {
+  .game-badge,
+  .nerd-hint-tag {
     display: none !important;
   }
 
-  .homescreen-ui {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    display: flex;
-    justify-content: center;
-  }
-
-  .cta-action-row {
-    justify-content: center;
+  /* Features strip below hero - hidden on mobile */
+  .features-section {
+    display: none !important;
   }
 
   /* 3D Hero Section - Portrait Mobile Stage */
@@ -2459,48 +2452,26 @@ html, body {
     align-items: center;
   }
 
-  /* Homescreen UI Card - Compacted & Positioned BELOW 3D Stage (No Overlap) */
+  /* Homescreen UI Card - SHOP NOW only, no banner */
   .homescreen-ui {
-    width: 100%;
+    width: auto;
     max-width: 100%;
-    padding: 14px 16px;
-    border-radius: 12px;
-    background: #111116;
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    margin-bottom: 0;
+    padding: 16px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 0;
     text-align: center;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
-  }
-
-  .game-badge {
-    font-size: 0.62rem;
-    padding: 2px 8px;
-    margin-bottom: 6px;
-  }
-
-  .hero-headline {
-    font-size: 1.2rem;
-    line-height: 1.1;
-    letter-spacing: 0.5px;
-    margin-bottom: 6px;
-  }
-
-  .hero-subtitle {
-    font-size: 0.75rem;
-    margin-bottom: 10px;
-    line-height: 1.3;
-  }
-
-  .hero-stats-row {
-    flex-wrap: wrap;
-    gap: 4px;
+    display: flex;
     justify-content: center;
-    margin-bottom: 10px;
   }
 
-  .stat-pill {
-    font-size: 0.62rem;
-    padding: 2px 6px;
+  /* These are overridden to nothing since elements are hidden - kept for specificity */
+  .hero-headline,
+  .hero-subtitle,
+  .hero-stats-row,
+  .game-badge {
+    display: none !important;
   }
 
   .cta-action-row {
@@ -2509,18 +2480,22 @@ html, body {
   }
 
   .btn-primary {
-    width: 100%;
-    padding: 10px 16px;
-    font-size: 0.82rem;
+    padding: 14px 40px;
+    font-size: 1rem;
     justify-content: center;
-    height: 38px;
+    height: auto;
   }
 
   .nerd-speech-bubble {
-    font-size: 0.68rem;
-    padding: 4px 8px;
-    max-width: 160px;
-    border-radius: 8px;
+    font-size: 0.8rem;
+    padding: 8px 12px;
+    max-width: 260px;
+    min-width: 120px;
+    width: max-content;
+    border-radius: 12px;
+    white-space: normal;
+    text-align: center;
+    line-height: 1.4;
   }
 
   .form-row {
