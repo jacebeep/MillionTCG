@@ -672,9 +672,9 @@ function initHero3DScene() {
     const isMobile = w < 768;
 
     if (isMobile) {
-      // Center character and move higher up on mobile portrait view
-      benchGroup.position.set(0, 1.05, -0.2);
-      packGroup.position.set(0.65, 2.0, 0);
+      // Center character naturally in center of stage on mobile view
+      benchGroup.position.set(0, 0, -0.2);
+      packGroup.position.set(0.65, 0.96, 0);
     } else {
       // Desktop default offset
       benchGroup.position.set(0.8, 0, -0.2);
@@ -691,9 +691,9 @@ function initHero3DScene() {
 
     // 0. Dynamic Camera Positioning (Adapt FOV and lookAt for Mobile vs Desktop)
     const baseCamX = isMobile ? 0 : 0.4;
-    const baseCamY = isMobile ? 3.1 : 2.4;
-    const baseCamZ = isMobile ? 8.6 : 7.6;
-    const lookY = isMobile ? 2.05 : 1.1;
+    const baseCamY = 2.4;
+    const baseCamZ = 7.6;
+    const lookY = 1.1;
 
     camera.position.x += (baseCamX + mouse.x * 0.3 - camera.position.x) * 0.05;
     camera.position.y += (baseCamY + mouse.y * 0.25 - camera.position.y) * 0.05;
@@ -716,7 +716,7 @@ function initHero3DScene() {
     sparkParticles.geometry.attributes.position.needsUpdate = true;
 
     // Pack floating bob
-    const packBaseY = isMobile ? 2.0 : 0.96;
+    const packBaseY = 0.96;
     packGroup.position.y = packBaseY + Math.sin(time * 2.5) * 0.04;
     packGroup.rotation.y = Math.sin(time * 1.2) * 0.3;
 
@@ -736,7 +736,7 @@ function initHero3DScene() {
       }
 
       const nerdBaseX = isMobile ? 0 : 0.8;
-      const nerdBaseY = isMobile ? 1.95 : 0.95;
+      const nerdBaseY = 0.95;
 
       nerd.position.set(nerdBaseX, nerdBaseY + Math.sin(time * 2) * 0.02, -0.1);
       nerd.rotation.set(0, 0, 0);
