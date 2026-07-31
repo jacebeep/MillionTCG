@@ -1,4 +1,4 @@
-const CACHE_NAME = 'milliontcg-v1';
+const CACHE_NAME = 'milliontcg-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
