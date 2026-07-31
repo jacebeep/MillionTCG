@@ -2392,11 +2392,11 @@ a {
   }
 
   .site-header {
-    padding: 12px 16px;
+    padding: 10px 16px;
   }
 
   .header-container {
-    gap: 12px;
+    gap: 10px;
   }
 
   .brand-title {
@@ -2404,46 +2404,92 @@ a {
   }
 
   .search-bar {
-    max-width: 160px;
+    max-width: 150px;
   }
 
   .search-input {
-    padding: 8px 12px 8px 34px;
-    font-size: 0.82rem;
+    padding: 6px 10px 6px 30px;
+    font-size: 0.8rem;
   }
 
   .hero-section {
-    min-height: 520px;
+    min-height: auto;
   }
 
   .hero-3d-container {
-    height: 520px;
+    height: 78vh;
+    min-height: 560px;
+    max-height: 700px;
+  }
+
+  .hero-3d-overlay {
+    padding: 16px 16px 20px;
+    justify-content: flex-end;
+    align-items: center;
+  }
+
+  .homescreen-ui {
+    width: 100%;
+    max-width: 440px;
+    padding: 18px 20px;
+    border-radius: 14px;
+    background: rgba(10, 10, 14, 0.88);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    margin-bottom: 0;
+    text-align: center;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9);
+  }
+
+  .game-badge {
+    font-size: 0.68rem;
+    padding: 3px 10px;
+    margin-bottom: 8px;
   }
 
   .hero-headline {
-    font-size: 1.8rem;
+    font-size: 1.6rem;
     line-height: 1.1;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
   }
 
   .hero-subtitle {
-    font-size: 0.88rem;
+    font-size: 0.82rem;
+    margin-bottom: 12px;
+    line-height: 1.35;
   }
 
   .hero-stats-row {
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
     justify-content: center;
+    margin-bottom: 14px;
   }
 
   .stat-pill {
-    font-size: 0.75rem;
+    font-size: 0.72rem;
     padding: 4px 10px;
   }
 
+  .cta-action-row {
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 0.9rem;
+    justify-content: center;
+  }
+
   .nerd-speech-bubble {
-    font-size: 0.78rem;
-    padding: 8px 12px;
-    max-width: 220px;
+    font-size: 0.75rem;
+    padding: 6px 12px;
+    max-width: 200px;
+    border-radius: 12px;
   }
 
   .form-row {
@@ -2476,8 +2522,28 @@ a {
     max-width: 120px;
   }
 
+  .hero-3d-container {
+    height: 72vh;
+    min-height: 520px;
+  }
+
+  .homescreen-ui {
+    padding: 14px 16px;
+    max-width: 100%;
+  }
+
   .hero-headline {
-    font-size: 1.5rem;
+    font-size: 1.35rem;
+  }
+
+  .hero-subtitle {
+    font-size: 0.78rem;
+    margin-bottom: 10px;
+  }
+
+  .stat-pill {
+    font-size: 0.68rem;
+    padding: 3px 8px;
   }
 
   .vip-card {

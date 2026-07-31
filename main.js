@@ -544,6 +544,7 @@ function initHero3DScene() {
     }
   }
 
+  // --- SPEECH BUBBLE POSITIONING ---
   function updateSpeechBubblePosition() {
     if (!speechBubble || !speechBubble.classList.contains('visible')) return;
     const vector = new THREE.Vector3();
@@ -551,10 +552,18 @@ function initHero3DScene() {
     vector.y += 0.5;
     vector.project(camera);
 
-    const x = (vector.x * 0.5 + 0.5) * width;
-    const y = (-vector.y * 0.5 + 0.5) * height;
-    speechBubble.style.left = `${x}px`;
-    speechBubble.style.top = `${y}px`;
+    const containerW = container.clientWidth || window.innerWidth;
+    const containerH = container.clientHeight || 600;
+
+    const x = (vector.x * 0.5 + 0.5) * containerW;
+    const y = (-vector.y * 0.5 + 0.5) * containerH;
+
+    // Clamp speech bubble within mobile screen margins
+    const clampedX = Math.max(120, Math.min(containerW - 120, x));
+    const clampedY = Math.max(50, Math.min(containerH - 120, y));
+
+    speechBubble.style.left = `${clampedX}px`;
+    speechBubble.style.top = `${clampedY}px`;
   }
 
   const mouse = new THREE.Vector2();
@@ -580,8 +589,10 @@ function initHero3DScene() {
 
   window.addEventListener('pointermove', (e) => {
     const rect = canvas.getBoundingClientRect();
-    mouse.x = ((e.clientX - rect.left) / width) * 2 - 1;
-    mouse.y = -((e.clientY - rect.top) / height) * 2 + 1;
+    const currentW = rect.width || window.innerWidth;
+    const currentH = rect.height || 600;
+    mouse.x = ((e.clientX - rect.left) / currentW) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / currentH) * 2 + 1;
 
     nerdVelocity.x = (e.clientX - prevMousePos.x) * 0.01;
     nerdVelocity.y = (e.clientY - prevMousePos.y) * 0.01;
@@ -643,16 +654,39 @@ function initHero3DScene() {
   scene.add(packGroup);
 
   const clock = new THREE.Clock();
-  let packOpeningTimer = 0;
+
+  function updateLayoutForMobile() {
+    const w = container.clientWidth || window.innerWidth;
+    const isMobile = w < 768;
+
+    if (isMobile) {
+      // Center character and move higher up on mobile portrait view
+      benchGroup.position.set(0, 0.45, -0.2);
+      packGroup.position.set(0.65, 1.4, 0);
+    } else {
+      // Desktop default offset
+      benchGroup.position.set(0.8, 0, -0.2);
+      packGroup.position.set(1.4, 0.96, 0);
+    }
+  }
+  updateLayoutForMobile();
 
   function animate() {
     requestAnimationFrame(animate);
     const time = clock.getElapsedTime();
+    const w = container.clientWidth || window.innerWidth;
+    const isMobile = w < 768;
 
-    // 0. Cinematic Mouse Parallax Camera Movement
-    camera.position.x += (0.4 + mouse.x * 0.4 - camera.position.x) * 0.05;
-    camera.position.y += (2.4 + mouse.y * 0.25 - camera.position.y) * 0.05;
-    camera.lookAt(0.4, 1.1, 0);
+    // 0. Dynamic Camera Positioning (Adapt FOV and lookAt for Mobile vs Desktop)
+    const baseCamX = isMobile ? 0 : 0.4;
+    const baseCamY = isMobile ? 2.8 : 2.4;
+    const baseCamZ = isMobile ? 8.8 : 7.6;
+    const lookY = isMobile ? 1.7 : 1.1;
+
+    camera.position.x += (baseCamX + mouse.x * 0.3 - camera.position.x) * 0.05;
+    camera.position.y += (baseCamY + mouse.y * 0.25 - camera.position.y) * 0.05;
+    camera.position.z += (baseCamZ - camera.position.z) * 0.05;
+    camera.lookAt(baseCamX, lookY, 0);
 
     // 1. Floating Cards Animation (Infinite Depth)
     floatingCards.forEach((c, idx) => {
@@ -670,7 +704,8 @@ function initHero3DScene() {
     sparkParticles.geometry.attributes.position.needsUpdate = true;
 
     // Pack floating bob
-    packGroup.position.y = 0.96 + Math.sin(time * 2.5) * 0.04;
+    const packBaseY = isMobile ? 1.4 : 0.96;
+    packGroup.position.y = packBaseY + Math.sin(time * 2.5) * 0.04;
     packGroup.rotation.y = Math.sin(time * 1.2) * 0.3;
 
     // 3. State machine (Sitting on bench)
@@ -688,7 +723,10 @@ function initHero3DScene() {
         armRightGroup.rotation.x = Math.cos(time * 2) * 0.05;
       }
 
-      nerd.position.set(0.8, 0.95 + Math.sin(time * 2) * 0.02, -0.1);
+      const nerdBaseX = isMobile ? 0 : 0.8;
+      const nerdBaseY = isMobile ? 1.4 : 0.95;
+
+      nerd.position.set(nerdBaseX, nerdBaseY + Math.sin(time * 2) * 0.02, -0.1);
       nerd.rotation.set(0, 0, 0);
     }
 
@@ -729,6 +767,7 @@ function initHero3DScene() {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
+    updateLayoutForMobile();
   });
 }
 
