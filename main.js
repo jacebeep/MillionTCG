@@ -52,6 +52,7 @@ function startApp() {
   try { updateCartUI(); } catch (e) {}
   try { setupCartModal(); } catch (e) {}
   try { setupSearch(); } catch (e) {}
+  try { setupMobileMenu(); } catch (e) {}
   try { initHeroMangaInteractive(); } catch (e) { console.error("3D init error:", e); }
   try { initSellerSystem(); } catch (e) {}
 }
@@ -214,6 +215,40 @@ function setupSearch() {
         window.location.href = `shop.html?search=${encodeURIComponent(input.value.trim())}`;
       }
     };
+  });
+}
+
+// Mobile Navigation Menu Drawer Handler
+function setupMobileMenu() {
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const drawer = document.getElementById('mobile-nav-drawer');
+  const overlay = document.getElementById('mobile-nav-overlay');
+  const closeBtn = document.getElementById('close-drawer-btn');
+
+  if (!menuBtn) return;
+
+  function openDrawer() {
+    if (drawer) drawer.classList.add('open');
+    if (overlay) overlay.classList.add('open');
+  }
+
+  function closeDrawer() {
+    if (drawer) drawer.classList.remove('open');
+    if (overlay) overlay.classList.remove('open');
+  }
+
+  menuBtn.onclick = (e) => {
+    e.preventDefault();
+    openDrawer();
+  };
+
+  if (closeBtn) closeBtn.onclick = closeDrawer;
+  if (overlay) overlay.onclick = closeDrawer;
+
+  // Close drawer on link click
+  const navLinks = drawer ? drawer.querySelectorAll('a') : [];
+  navLinks.forEach(link => {
+    link.addEventListener('click', closeDrawer);
   });
 }
 
