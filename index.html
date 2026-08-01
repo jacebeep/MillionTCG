@@ -348,9 +348,9 @@
     </div>
   </footer>
 
-  <script src="main.js?v=24"></script>
+  <script src="main.js?v=25"></script>
   <script>
-    // Ensure 3D scene starts after layout is fully ready
+    // Init 3D scene on first load
     function tryInit3D() {
       if (typeof initHero3DScene === 'function') {
         initHero3DScene();
@@ -363,6 +363,19 @@
     } else {
       setTimeout(tryInit3D, 200);
     }
+
+    // Re-init 3D scene when user hits Back button (bfcache restore).
+    // WebGL context is destroyed when page is hidden; pageshow fires on restore.
+    window.addEventListener('pageshow', function(e) {
+      if (e.persisted) {
+        // Page was restored from back-forward cache — restart everything
+        setTimeout(function() {
+          try { startApp(); } catch(err) {}
+          try { initHero3DScene(); } catch(err) {}
+          try { renderHomeProducts(); } catch(err) {}
+        }, 150);
+      }
+    });
   </script>
   <script src="auth.js?v=24"></script>
   <script>

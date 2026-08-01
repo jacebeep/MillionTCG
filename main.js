@@ -486,8 +486,16 @@ function initHero3DScene() {
     return;
   }
 
-  if (canvas.userData && canvas.userData.initialized) return;
+  // If already initialized, dispose the old WebGL renderer before re-creating
+  // (needed when page is restored from bfcache after Back navigation)
+  if (canvas.userData && canvas.userData.initialized) {
+    if (canvas.userData.renderer) {
+      try { canvas.userData.renderer.dispose(); } catch(e) {}
+    }
+    canvas.userData = {};
+  }
   canvas.userData = canvas.userData || {};
+
   canvas.userData.initialized = true;
 
   // --- SCENE ---
@@ -510,6 +518,9 @@ function initHero3DScene() {
     renderer.setClearColor(0x141416, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    // Store renderer so bfcache re-init can dispose it before re-creating
+    canvas.userData.renderer = renderer;
 
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
