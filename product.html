@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -68,17 +68,37 @@
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      padding: 20px;
+      padding: 16px;
       margin-bottom: 24px;
     }
     .spec-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       padding: 8px 0;
       border-bottom: 1px solid var(--border-color);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+      gap: 12px;
+      word-break: break-word;
     }
     .spec-item:last-child { border-bottom: none; }
+    @media (max-width: 640px) {
+      .spec-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 6px 0;
+      }
+      .spec-item span:first-child {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #888888;
+      }
+      .spec-item span:last-child {
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+    }
   </style>
 </head>
 <body>

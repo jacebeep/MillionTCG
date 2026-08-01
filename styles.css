@@ -26,11 +26,16 @@ body {
   font-family: var(--font-family);
   line-height: 1.6;
   overflow-x: hidden;
+  max-width: 100vw;
   -webkit-font-smoothing: antialiased;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+.hidden {
+  display: none !important;
 }
 
 img, canvas {
@@ -1464,7 +1469,7 @@ a {
   position: relative;
   width: 100%;
   aspect-ratio: 2.5 / 3.5;
-  max-width: 220px;
+  max-width: 200px;
   margin: 0 auto;
   border: 2px dashed rgba(255, 255, 255, 0.25);
   border-radius: 14px;
@@ -1484,7 +1489,8 @@ a {
 }
 
 .neat-drop-placeholder {
-  padding: 20px;
+  padding: 16px;
+  width: 100%;
 }
 
 .neat-icon {
@@ -1507,11 +1513,14 @@ a {
 .neat-preview-frame {
   width: 100%;
   height: 100%;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #050507;
+  overflow: hidden;
 }
 
 .neat-preview-frame img {
@@ -1522,25 +1531,34 @@ a {
 
 .btn-change-photo {
   position: absolute;
-  bottom: 12px;
-  background: rgba(0, 0, 0, 0.8);
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: 20px;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   font-weight: 800;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .fee-breakdown-tag {
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 6px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px dashed rgba(255, 255, 255, 0.15);
-  padding: 6px 12px;
+  padding: 6px 10px;
   border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 /* Payout Summary Box */
@@ -1548,7 +1566,7 @@ a {
   background: #0d0d12;
   border: 1px solid rgba(0, 229, 255, 0.25);
   border-radius: 14px;
-  padding: 24px;
+  padding: 20px;
   margin-bottom: 24px;
 }
 
@@ -1556,31 +1574,25 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
   gap: 10px;
 }
 
 .payout-box-header h3 {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
   color: #ffffff;
 }
 
 .payout-status-badge {
-  font-size: 0.72rem;
-  font-weight: 800;
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.1);
-  padding: 4px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 229, 255, 0.3);
+  display: none !important;
 }
 
 .payout-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 12px;
   margin-bottom: 20px;
 }
 
@@ -3030,26 +3042,30 @@ html, body {
 }
 
 /* Seller Platform Mobile Organization */
+/* Seller Platform Mobile Organization & Compact Neat Layouts */
 @media (max-width: 768px) {
+  html, body {
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
   .seller-hero-section {
-    padding: 20px 14px 10px !important;
+    padding: 16px 12px 8px !important;
   }
 
   .seller-hero-section h1 {
-    font-size: 1.4rem !important;
-    margin-bottom: 6px !important;
+    font-size: 1.3rem !important;
+    margin-bottom: 4px !important;
   }
 
   .seller-hero-section p {
-    font-size: 0.82rem !important;
-    margin-bottom: 12px !important;
-    display: none; /* Hide heavy paragraph on mobile for cleaner look */
+    display: none !important; /* Hide heavy paragraph on mobile for cleaner look */
   }
 
   .seller-badge {
-    font-size: 0.65rem !important;
-    padding: 4px 10px !important;
-    margin-bottom: 8px !important;
+    font-size: 0.6rem !important;
+    padding: 3px 8px !important;
+    margin-bottom: 6px !important;
   }
 
   .seller-steps-bar {
@@ -3057,70 +3073,127 @@ html, body {
   }
 
   .seller-main-container {
-    padding: 12px 12px 30px !important;
+    padding: 8px 10px 24px !important;
+    max-width: 100% !important;
   }
 
   .seller-form-card {
-    padding: 18px 14px !important;
-    border-radius: 12px !important;
+    padding: 14px 12px !important;
+    border-radius: 10px !important;
   }
 
   .seller-form-card .form-header h2 {
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
   }
 
   .seller-form-card .form-header p {
-    font-size: 0.78rem !important;
-    margin-bottom: 14px !important;
+    font-size: 0.75rem !important;
+    margin-bottom: 12px !important;
   }
 
   .neat-upload-zone {
-    max-width: 160px !important;
+    max-width: 140px !important;
     aspect-ratio: 2.5 / 3.5 !important;
+    margin: 0 auto 10px !important;
+  }
+
+  .neat-drop-placeholder {
+    padding: 10px 8px !important;
   }
 
   .neat-icon {
-    font-size: 1.8rem !important;
+    font-size: 1.6rem !important;
+    margin-bottom: 4px !important;
   }
 
   .neat-title {
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
   }
 
   .neat-sub {
-    font-size: 0.68rem !important;
+    font-size: 0.65rem !important;
   }
 
   .card-form input[type="text"],
   .card-form input[type="number"],
   .card-form select,
   .card-form textarea {
-    padding: 9px 11px !important;
-    font-size: 0.85rem !important;
+    padding: 8px 10px !important;
+    font-size: 0.82rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .card-form label {
+    font-size: 0.75rem !important;
+    margin-bottom: 4px !important;
+  }
+
+  .fee-breakdown-tag {
+    font-size: 0.7rem !important;
+    padding: 5px 8px !important;
+    gap: 2px 6px !important;
   }
 
   .form-row-2 {
     grid-template-columns: 1fr !important;
-    gap: 10px !important;
+    gap: 8px !important;
   }
 
   .btn-submit-listing {
-    padding: 12px !important;
-    font-size: 0.88rem !important;
+    padding: 11px !important;
+    font-size: 0.85rem !important;
   }
 
   .seller-dashboard-card {
-    padding: 16px 12px !important;
-    border-radius: 12px !important;
+    padding: 14px 10px !important;
+    border-radius: 10px !important;
   }
 
   .payout-summary-box {
-    padding: 16px 12px !important;
+    padding: 12px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .payout-box-header h3 {
+    font-size: 0.95rem !important;
+  }
+
+  .payout-status-badge {
+    display: none !important;
   }
 
   .payout-stats-grid {
-    grid-template-columns: 1fr !important;
-    gap: 8px !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .payout-stat {
+    padding: 8px 4px !important;
+    border-radius: 6px !important;
+  }
+
+  .payout-stat-label {
+    font-size: 0.62rem !important;
+    line-height: 1.1 !important;
+    margin-bottom: 2px !important;
+    word-break: break-word !important;
+  }
+
+  .payout-stat-val {
+    font-size: 0.9rem !important;
+  }
+
+  .payout-form-title {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 4px !important;
+  }
+
+  .account-verified-status {
+    font-size: 0.7rem !important;
+    padding: 3px 8px !important;
   }
 
   .payout-account-grid,
@@ -3129,19 +3202,40 @@ html, body {
     gap: 8px !important;
   }
 
+  .payout-method-form select,
+  .payout-method-form input {
+    padding: 8px 10px !important;
+    font-size: 0.82rem !important;
+    width: 100% !important;
+  }
+
+  .btn-save-payout {
+    padding: 10px !important;
+    font-size: 0.82rem !important;
+  }
+
   .product-detail-container {
-    margin: 16px auto !important;
-    padding: 0 12px !important;
-    gap: 20px !important;
+    margin: 12px auto !important;
+    padding: 0 10px !important;
+    gap: 16px !important;
   }
 
   .detail-gallery {
-    padding: 14px !important;
+    padding: 12px !important;
     max-height: 240px !important;
   }
 
   .detail-gallery img {
-    max-height: 200px !important;
+    max-height: 190px !important;
+  }
+
+  .spec-item {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 2px !important;
+    padding: 6px 0 !important;
+    font-size: 0.82rem !important;
+    word-break: break-word !important;
   }
 }
 
