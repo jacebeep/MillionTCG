@@ -164,27 +164,18 @@
     </div>
   </section>
 
-  <!-- Featured Products Section -->
+  <!-- Featured Products / Live Marketplace Section -->
   <section class="products-section" id="shop">
-    <h2 class="section-title">FEATURED TCG DROP</h2>
-    <p class="section-subtitle">Hand-picked collection of premium cards and sealed booster packs</p>
-
-    <div class="product-grid">
-      <!-- Featured Product 1: Pokemon 30th Anniversary -->
-      <div class="product-card">
-        <span class="card-badge">PRE-ORDER</span>
-        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">
-          <img src="images/pokemon-30th-vol2-boxes.jpg" alt="Pokemon 30th Anniversary Vol.2" style="max-width: 100%; max-height: 100%; object-fit: cover;">
-        </div>
-        <div class="product-info">
-          <span class="product-category">Sealed 2-Box Bundle</span>
-          <h3 class="product-name" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">Pokemon 30th Anniversary Collection – Original Partners Vol.2 (2 Boxes)</h3>
-          <div class="product-footer">
-            <span class="product-price">$250.00</span>
-            <button class="btn-secondary" onclick="addToCart(17)">Add to Cart</button>
-          </div>
-        </div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <h2 class="section-title" style="margin-bottom: 4px;">LIVE MARKETPLACE & FEATURED DROPS 🔥</h2>
+        <p class="section-subtitle">Browse products created by verified sellers and store catalog items</p>
       </div>
+      <a href="shop.html" class="btn-primary" style="padding: 10px 20px; font-size: 0.85rem; border-radius: 6px;">View Full Shop Catalog →</a>
+    </div>
+
+    <div class="product-grid" id="home-product-grid">
+      <!-- Populated dynamically with all seller listings & products -->
     </div>
   </section>
 
@@ -348,7 +339,7 @@
     </div>
   </footer>
 
-  <script src="main.js?v=10"></script>
+  <script src="main.js?v=11"></script>
   <script>setTimeout(function() { if (typeof initHero3DScene === 'function') initHero3DScene(); }, 100);</script>
   <script src="auth.js?v=7"></script>
   <script>

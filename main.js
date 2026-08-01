@@ -66,11 +66,49 @@ try {
   cart = [];
 }
 
+function renderHomeProducts() {
+  const grid = document.getElementById('home-product-grid');
+  if (!grid) return;
+
+  const community = typeof getCommunityListings === 'function' ? getCommunityListings() : [];
+  const mappedCommunity = community.map(c => ({
+    id: c.id,
+    name: c.title,
+    price: parseFloat(c.price) || 0,
+    category: c.category || 'Single Card',
+    image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
+    gallery: c.gallery || [c.image || 'images/logo.png'],
+    tag: 'SELLER LISTING',
+    desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+  }));
+
+  const allItems = [...mappedCommunity, ...PRODUCTS];
+
+  grid.innerHTML = allItems.map(p => `
+    <div class="product-card">
+      <span class="card-badge" style="background: ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.2)'}; color: ${p.tag === 'PRE-ORDER' ? '#fff' : '#4ade80'}; border: 1px solid ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.4)'};">${p.tag || 'SELLER LISTING'}</span>
+      <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+        <img src="${p.image}" alt="${p.name}">
+      </div>
+      <div class="product-info">
+        <span class="product-category">${p.category}</span>
+        <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">${p.desc || ''}</p>
+        <div class="product-footer">
+          <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+          <button class="btn-primary" onclick="window.location.href='product.html?id=${p.id}'" style="padding: 8px 14px; font-size: 0.8rem; border-radius: 6px;">View 3D & Buy 🛒</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
 function startApp() {
   try { updateCartUI(); } catch (e) {}
   try { setupCartModal(); } catch (e) {}
   try { setupSearch(); } catch (e) {}
   try { setupMobileMenu(); } catch (e) {}
+  try { renderHomeProducts(); } catch (e) {}
   try { initHeroMangaInteractive(); } catch (e) { console.error("3D init error:", e); }
   try { initSellerSystem(); } catch (e) {}
 }
