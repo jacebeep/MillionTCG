@@ -1146,17 +1146,11 @@ function initSellerSystem() {
       }
     }
 
-    if (authGate && sellerWorkspace) {
-      if (currentUser) {
-        authGate.classList.add('hidden');
-        sellerWorkspace.classList.remove('hidden');
-        renderMyListings();
-        renderSoldOrders();
-        updatePayoutAccountUI();
-      } else {
-        authGate.classList.remove('hidden');
-        sellerWorkspace.classList.add('hidden');
-      }
+    if (sellerWorkspace) {
+      sellerWorkspace.classList.remove('hidden');
+      renderMyListings();
+      renderSoldOrders();
+      updatePayoutAccountUI();
     }
   }
 
@@ -1168,7 +1162,7 @@ function initSellerSystem() {
       const val = parseFloat(priceInput.value) || 0;
       const fee = val * 0.10;
       const net = val - fee;
-      feeTag.innerHTML = `<span>Fee (10%): <strong style="color:#ff4757;">-$${fee.toFixed(2)}</strong></span> • <span>Your Payout (90%): <strong style="color:#00e5ff;">$${net.toFixed(2)}</strong></span>`;
+      feeTag.innerHTML = `<span>Fee (10%): <strong style="color:#ff4757;">-$${fee.toFixed(2)}</strong></span> • <span>Your Payout (90%): <strong style="color:#4ade80;">$${net.toFixed(2)}</strong></span>`;
     });
   }
 

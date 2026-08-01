@@ -54,7 +54,7 @@
           <li><a href="shop.html" class="nav-link">Shop All</a></li>
           <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
           <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
-          <li><a href="sell.html" class="nav-link active" style="color: #00e5ff; font-weight: 800;">Sell Cards 🏷️</a></li>
+          <li><a href="sell.html" class="nav-link active" style="color: #ffffff; font-weight: 800;">Sell Cards 🏷️</a></li>
           <li><a href="index.html#about" class="nav-link">About Us</a></li>
         </ul>
       </nav>
@@ -93,7 +93,7 @@
       <li><a href="shop.html">Shop All</a></li>
       <li><a href="shop.html?category=Single Card">Single Cards</a></li>
       <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
-      <li><a href="sell.html" class="active" style="color: #00e5ff;">Sell Cards 🏷️</a></li>
+      <li><a href="sell.html" class="active" style="color: #ffffff;">Sell Cards 🏷️</a></li>
       <li><a href="track-order.html">Track Order</a></li>
       <li><a href="contact-us.html">Contact Us</a></li>
       <li id="install-app-li" style="display:none; border-top: 1px solid rgba(255,255,255,0.08); margin-top: 8px; padding-top: 8px;">
@@ -121,21 +121,8 @@
   <!-- Main Seller Hub Layout -->
   <main class="seller-main-container">
     
-    <!-- Account Required Gate Notice (Hidden when logged in) -->
-    <div class="auth-required-gate" id="auth-required-gate">
-      <div class="gate-card">
-        <div class="gate-icon">🔒</div>
-        <h2>SELLER ACCOUNT REQUIRED</h2>
-        <p>To ensure authenticity and secure payouts, you must create a free MillionTCG Seller Account before uploading items.</p>
-        <div class="gate-actions">
-          <button class="btn-primary" id="gate-signup-btn">CREATE FREE SELLER ACCOUNT</button>
-          <button class="btn-secondary" id="gate-login-btn">LOG IN TO EXISTING ACCOUNT</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Organized Seller Workspace (Visible when logged in) -->
-    <div class="seller-workspace hidden" id="seller-workspace">
+    <!-- Organized Seller Workspace (Always Visible) -->
+    <div class="seller-workspace" id="seller-workspace">
       
       <!-- Top Steps Bar -->
       <div class="seller-steps-bar">
@@ -262,7 +249,7 @@
               </div>
               <div class="payout-stat">
                 <span class="payout-stat-label">Your Net Payout (90%)</span>
-                <span class="payout-stat-val" id="seller-net-payout" style="color: #00e5ff;">$0.00</span>
+                <span class="payout-stat-val" id="seller-net-payout" style="color: #4ade80;">$0.00</span>
               </div>
             </div>
 

@@ -1484,8 +1484,8 @@ a {
 }
 
 .neat-upload-zone:hover {
-  border-color: #00e5ff;
-  box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  border-color: #ffffff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 .neat-drop-placeholder {
@@ -1564,7 +1564,7 @@ a {
 /* Payout Summary Box */
 .payout-summary-box {
   background: #0d0d12;
-  border: 1px solid rgba(0, 229, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 20px;
   margin-bottom: 24px;
@@ -1637,9 +1637,9 @@ a {
 }
 
 .account-verified-status.verified {
-  color: #00e5ff;
-  background: rgba(0, 229, 255, 0.1);
-  border-color: rgba(0, 229, 255, 0.3);
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.3);
 }
 
 .payout-account-grid,
@@ -2022,8 +2022,8 @@ a {
 .card-form select:focus,
 .card-form textarea:focus {
   outline: none;
-  border-color: #00e5ff;
-  box-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+  border-color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.2);
 }
 
 /* Upload Dropzone */
