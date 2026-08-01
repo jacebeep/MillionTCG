@@ -70,67 +70,171 @@ try {
 
 const DEFAULT_COMMUNITY_LISTINGS = [];
 
-function getCommunityListings() {
-  let list = [];
+// =============================================================================
+// INDEXEDDB STORAGE ENGINE — Handles large base64 image data (250MB+ capacity)
+// localStorage silently fails when images are stored, so we use IndexedDB.
+// =============================================================================
+const DB_NAME = 'milliontcg_db';
+const DB_VERSION = 1;
+const STORE_NAME = 'listings';
+
+let _db = null;
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    if (_db) { resolve(_db); return; }
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+        store.createIndex('date', 'date', { unique: false });
+      }
+    };
+    req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
+    req.onerror = (e) => { console.error('IndexedDB error:', e); reject(e); };
+  });
+}
+
+function dbGetAll() {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const req = tx.objectStore(STORE_NAME).index('date').getAll();
+    req.onsuccess = () => {
+      // Sort newest first (descending date)
+      const sorted = (req.result || []).sort((a, b) => (b.date || 0) - (a.date || 0));
+      resolve(sorted);
+    };
+    req.onerror = () => reject(req.error);
+  }));
+}
+
+function dbPut(listing) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const req = tx.objectStore(STORE_NAME).put(listing);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  }));
+}
+
+function dbDelete(id) {
+  return openDB().then(db => new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const req = tx.objectStore(STORE_NAME).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  }));
+}
+
+// Migrate any old localStorage listings into IndexedDB once
+function migrateFromLocalStorage() {
   try {
-    list = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
-    if (!Array.isArray(list)) list = [];
-    const cleanList = list.filter(item => item && item.id && !String(item.id).includes('seed'));
-    if (cleanList.length !== list.length) {
-      localStorage.setItem('milliontcg_community_listings', JSON.stringify(cleanList));
-    }
-    list = cleanList;
-  } catch (e) {
-    list = [];
-  }
-  return list;
+    const old = localStorage.getItem('milliontcg_community_listings');
+    if (!old) return;
+    const arr = JSON.parse(old);
+    if (!Array.isArray(arr) || arr.length === 0) return;
+    const real = arr.filter(i => i && i.id && !String(i.id).includes('seed'));
+    if (real.length === 0) { localStorage.removeItem('milliontcg_community_listings'); return; }
+    Promise.all(real.map(item => dbPut(item))).then(() => {
+      localStorage.removeItem('milliontcg_community_listings');
+      console.log('[MillionTCG] Migrated', real.length, 'listings from localStorage → IndexedDB');
+      renderHomeProducts();
+    }).catch(console.error);
+  } catch (e) {}
+}
+
+// Public API — async versions used by sell page, sync fallback for homepage
+function getCommunityListings() {
+  // Synchronous fallback: returns empty array on first call, async fill happens via renderHomeProducts
+  return [];
+}
+
+function getCommunityListingsAsync() {
+  return dbGetAll();
 }
 
 function saveCommunityListing(newListing) {
-  let current = getCommunityListings();
-  current.unshift(newListing);
-  localStorage.setItem('milliontcg_community_listings', JSON.stringify(current));
-  try { renderHomeProducts(); } catch (e) {}
-  window.dispatchEvent(new Event('storage'));
+  return dbPut(newListing).then(() => {
+    renderHomeProducts();
+    window.dispatchEvent(new Event('milliontcg_listing_saved'));
+  }).catch(err => {
+    console.error('[MillionTCG] Failed to save listing:', err);
+    alert('Error saving listing. Please try again.');
+  });
 }
 
-let communityListings = getCommunityListings();
+function deleteCommunityListing(id) {
+  return dbDelete(id);
+}
+
+let communityListings = [];
+// Async load on startup
+openDB().then(() => {
+  migrateFromLocalStorage();
+  return dbGetAll();
+}).then(listings => {
+  communityListings = listings;
+  try { renderHomeProducts(); } catch (e) {}
+}).catch(console.error);
+
+
 
 function renderHomeProducts() {
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 
-  const community = typeof getCommunityListings === 'function' ? getCommunityListings() : [];
-  const mappedCommunity = community.map(c => ({
-    id: c.id,
-    name: c.title,
-    price: parseFloat(c.price) || 0,
-    category: c.category || 'Single Card',
-    image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
-    gallery: c.gallery || [c.image || 'images/logo.png'],
-    tag: 'SELLER LISTING',
-    desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
-  }));
+  getCommunityListingsAsync().then(community => {
+    const mappedCommunity = community.map(c => ({
+      id: c.id,
+      name: c.title,
+      price: parseFloat(c.price) || 0,
+      category: c.category || 'Single Card',
+      image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
+      gallery: c.gallery || [c.image || 'images/logo.png'],
+      tag: 'SELLER LISTING',
+      desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+    }));
 
-  const allItems = [...mappedCommunity, ...PRODUCTS];
+    const allItems = [...mappedCommunity, ...PRODUCTS];
 
-  grid.innerHTML = allItems.map(p => `
-    <div class="product-card">
-      ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
-      <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-        <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
-      </div>
-      <div class="product-info">
-        <span class="product-category">${p.category}</span>
-        <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
-        <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc || ''}</p>
-        <div class="product-footer">
-          <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-          <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">Add to Cart</button>
+    grid.innerHTML = allItems.map(p => `
+      <div class="product-card">
+        ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
+        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+          <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+        </div>
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc || ''}</p>
+          <div class="product-footer">
+            <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
+  }).catch(err => {
+    console.error('[MillionTCG] renderHomeProducts error:', err);
+    // Fallback: show only static products
+    grid.innerHTML = PRODUCTS.map(p => `
+      <div class="product-card">
+        <span class="card-badge">${p.tag || ''}</span>
+        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+          <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+        </div>
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
+          <div class="product-footer">
+            <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  });
 }
 
 function startApp() {
@@ -1286,56 +1390,66 @@ function initSellerSystem() {
   // Render Logged-in User's Listings Dashboard & Payout Stats
   function renderMyListings() {
     if (!myListingsContainer) return;
-    myListingsContainer.innerHTML = '';
+    myListingsContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
+    if (!currentUser) { myListingsContainer.innerHTML = ''; return; }
 
-    if (!currentUser) return;
-    const userItems = communityListings.filter(item => item.sellerName === currentUser.handle);
+    getCommunityListingsAsync().then(allListings => {
+      communityListings = allListings;
+      const userItems = allListings.filter(item => item.sellerName === currentUser.handle);
 
-    // Calculate Earnings Breakdown
-    const grossTotal = userItems.reduce((acc, i) => acc + (parseFloat(i.price) || 0), 0);
-    const platformCut = grossTotal * 0.10;
-    const netPayout = grossTotal - platformCut;
+      // Calculate Earnings Breakdown
+      const grossTotal = userItems.reduce((acc, i) => acc + (parseFloat(i.price) || 0), 0);
+      const platformCut = grossTotal * 0.10;
+      const netPayout = grossTotal - platformCut;
 
-    const grossEl = document.getElementById('seller-gross-sales');
-    const cutEl = document.getElementById('seller-platform-cut');
-    const netEl = document.getElementById('seller-net-payout');
-    if (grossEl) grossEl.textContent = `$${grossTotal.toFixed(2)}`;
-    if (cutEl) cutEl.textContent = `-$${platformCut.toFixed(2)}`;
-    if (netEl) netEl.textContent = `$${netPayout.toFixed(2)}`;
+      const grossEl = document.getElementById('seller-gross-sales');
+      const cutEl = document.getElementById('seller-platform-cut');
+      const netEl = document.getElementById('seller-net-payout');
+      if (grossEl) grossEl.textContent = `$${grossTotal.toFixed(2)}`;
+      if (cutEl) cutEl.textContent = `-$${platformCut.toFixed(2)}`;
+      if (netEl) netEl.textContent = `$${netPayout.toFixed(2)}`;
 
-    if (userItems.length === 0) {
-      myListingsContainer.innerHTML = `
-        <div style="text-align: center; color: #888888; padding: 40px 20px;">
-          <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
-          You haven't listed any cards yet.<br>Use the form on the left to upload your first card!
-        </div>
-      `;
-      return;
-    }
+      myListingsContainer.innerHTML = '';
 
-    userItems.forEach(item => {
-      const row = document.createElement('div');
-      row.className = 'my-listing-row';
-      row.innerHTML = `
-        <img class="my-listing-img" src="${item.image}" alt="${item.title}">
-        <div class="my-listing-info">
-          <div class="my-listing-title">${item.title}</div>
-          <div class="my-listing-meta">${item.condition} • ${item.category}</div>
-        </div>
-        <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
-        <div style="display: flex; gap: 8px; align-items: center;">
-          <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View Listing</a>
-          <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
-        </div>
-      `;
+      if (userItems.length === 0) {
+        myListingsContainer.innerHTML = `
+          <div style="text-align: center; color: #888888; padding: 40px 20px;">
+            <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
+            You haven't listed any cards yet.<br>Use the form on the left to upload your first card!
+          </div>
+        `;
+        return;
+      }
 
-      row.querySelector('.btn-delete-listing').addEventListener('click', () => {
-        communityListings = communityListings.filter(i => i.id !== item.id);
-        localStorage.setItem('milliontcg_community_listings', JSON.stringify(communityListings));
-        renderMyListings();
+      userItems.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'my-listing-row';
+        row.innerHTML = `
+          <img class="my-listing-img" src="${item.image || 'images/logo.png'}" alt="${item.title}">
+          <div class="my-listing-info">
+            <div class="my-listing-title">${item.title}</div>
+            <div class="my-listing-meta">${item.condition} • ${item.category}</div>
+          </div>
+          <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View Listing</a>
+            <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
+          </div>
+        `;
+
+        row.querySelector('.btn-delete-listing').addEventListener('click', () => {
+          if (!confirm(`Remove "${item.title}" from your listings?`)) return;
+          deleteCommunityListing(item.id).then(() => {
+            renderMyListings();
+            renderHomeProducts();
+          }).catch(console.error);
+        });
+
+        myListingsContainer.appendChild(row);
       });
-
-      myListingsContainer.appendChild(row);
+    }).catch(err => {
+      console.error('[MillionTCG] renderMyListings error:', err);
+      myListingsContainer.innerHTML = '<div style="color:#ff4757;padding:20px;">Error loading listings. Please refresh.</div>';
     });
   }
 
@@ -1588,6 +1702,8 @@ function renderSoldOrders() {
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
+
+      // Auto-create anonymous seller session if not logged in
       if (!currentUser) {
         currentUser = {
           name: 'Verified Seller',
@@ -1603,8 +1719,13 @@ function renderSoldOrders() {
       const title = document.getElementById('card-title').value.trim();
       const category = document.getElementById('card-category').value;
       const condition = document.getElementById('card-condition').value;
-      const price = parseFloat(document.getElementById('card-price').value);
+      const priceRaw = document.getElementById('card-price').value;
+      const price = parseFloat(priceRaw);
       const description = document.getElementById('card-description').value.trim();
+
+      // Validation
+      if (!title) { alert('Please enter a card/product title.'); return; }
+      if (isNaN(price) || price <= 0) { alert('Please enter a valid price.'); return; }
 
       const gallery = uploadedImages.length > 0 ? [...uploadedImages] : ['images/logo.png'];
       const image = gallery[0];
@@ -1622,29 +1743,38 @@ function renderSoldOrders() {
         date: Date.now()
       };
 
-      saveCommunityListing(newListing);
-      communityListings = getCommunityListings();
+      // Show saving indicator
+      const submitBtn = form.querySelector('[type="submit"]');
+      const origText = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) { submitBtn.textContent = 'Saving...'; submitBtn.disabled = true; }
 
-      // Trigger direct email notification for new Card / Product Listed
-      if (typeof window.sendDirectEmailNotification === 'function') {
-        window.sendDirectEmailNotification('New Product Card Listed 🃏', {
-          CardTitle: title,
-          Category: category,
-          Condition: condition,
-          ListingPrice: `$${price.toFixed(2)}`,
-          SellerHandle: `@${currentUser.handle}`,
-          SellerEmail: currentUser.email || 'N/A',
-          PhotoCount: `${gallery.length} pictures uploaded`,
-          Description: description || 'No description provided'
-        });
-      }
+      saveCommunityListing(newListing).then(() => {
+        // Trigger email notification
+        if (typeof window.sendDirectEmailNotification === 'function') {
+          window.sendDirectEmailNotification('New Product Card Listed 🃏', {
+            CardTitle: title,
+            Category: category,
+            Condition: condition,
+            ListingPrice: `$${price.toFixed(2)}`,
+            SellerHandle: `@${currentUser.handle}`,
+            SellerEmail: currentUser.email || 'N/A',
+            PhotoCount: `${gallery.length} picture(s) uploaded`,
+            Description: description || 'No description provided'
+          });
+        }
 
-      form.reset();
-      uploadedImages = [];
-      renderPhotoSlots();
+        form.reset();
+        uploadedImages = [];
+        renderPhotoSlots();
+        renderMyListings();
 
-      renderMyListings();
-      alert(`🎉 SUCCESS! "${title}" with ${gallery.length} picture(s) has been published to your active seller listings!`);
+        if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
+        alert(`✅ "${title}" with ${gallery.length} photo(s) has been published to the marketplace!\n\nIt will now appear on the Home page and Shop.`);
+      }).catch(err => {
+        console.error('[MillionTCG] Submission error:', err);
+        if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
+        alert('Failed to save listing. Please try again or reduce image file sizes.');
+      });
     });
   }
 

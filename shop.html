@@ -185,24 +185,24 @@
     </div>
   </footer>
 
-  <script src="main.js?v=23"></script>
-  <script src="auth.js?v=23"></script>
+  <script src="main.js?v=24"></script>
+  <script src="auth.js?v=24"></script>
   <script>
-    function getAllShopProducts() {
-      const community = typeof getCommunityListings === 'function' ? getCommunityListings() : [];
-
-      const mappedCommunity = community.map(c => ({
-        id: c.id,
-        name: c.title,
-        price: parseFloat(c.price) || 0,
-        category: c.category || 'Single Card',
-        image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
-        gallery: c.gallery || [c.image || 'images/logo.png'],
-        tag: 'SELLER LISTING',
-        desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
-      }));
-
-      return [...mappedCommunity, ...PRODUCTS];
+    function getAllShopProductsAsync() {
+      return (typeof getCommunityListingsAsync === 'function' ? getCommunityListingsAsync() : Promise.resolve([]))
+        .then(community => {
+          const mappedCommunity = community.map(c => ({
+            id: c.id,
+            name: c.title,
+            price: parseFloat(c.price) || 0,
+            category: c.category || 'Single Card',
+            image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
+            gallery: c.gallery || [c.image || 'images/logo.png'],
+            tag: 'SELLER LISTING',
+            desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+          }));
+          return [...mappedCommunity, ...PRODUCTS];
+        });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -210,15 +210,15 @@
       const catParam = urlParams.get('category');
       const searchParam = urlParams.get('search');
 
-      const all = getAllShopProducts();
-
-      if (catParam) {
-        filterCatalog(catParam);
-      } else if (searchParam) {
-        searchCatalog(searchParam);
-      } else {
-        renderCatalog(all);
-      }
+      getAllShopProductsAsync().then(all => {
+        if (catParam) {
+          filterCatalog(catParam, all);
+        } else if (searchParam) {
+          searchCatalog(searchParam, all);
+        } else {
+          renderCatalog(all);
+        }
+      });
     });
 
     function renderCatalog(items) {
@@ -248,8 +248,8 @@
       `).join('');
     }
 
-    function filterCatalog(category) {
-      const all = getAllShopProducts();
+    function filterCatalog(category, all) {
+      if (!all) { getAllShopProductsAsync().then(a => filterCatalog(category, a)); return; }
       const buttons = document.querySelectorAll('.filter-btn');
       buttons.forEach(b => {
         if (b.textContent.includes(category) || (category === 'All' && b.textContent.includes('All'))) {
@@ -284,8 +284,8 @@
       }
     }
 
-    function searchCatalog(query) {
-      const all = getAllShopProducts();
+    function searchCatalog(query, all) {
+      if (!all) { getAllShopProductsAsync().then(a => searchCatalog(query, a)); return; }
       const filtered = all.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) || 
         p.category.toLowerCase().includes(query.toLowerCase())
