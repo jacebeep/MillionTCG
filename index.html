@@ -1,10 +1,12 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MillionTCG | Your Ultimate TCG Destination</title>
   <meta name="description" content="MillionTCG - Collect, trade, and compete. Premier destination for trading card game booster packs, singles, and sealed products.">
+  <!-- Strip index.html from URL so iOS "Add to Home Screen" saves the clean link -->
+  <script>if(location.pathname.endsWith('/index.html'))history.replaceState(null,'',location.pathname.replace('/index.html','/')+location.search+location.hash);</script>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
