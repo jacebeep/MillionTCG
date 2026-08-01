@@ -247,7 +247,7 @@ a {
   width: 100%;
   height: 100%;
   display: block;
-  z-index: 2;
+  z-index: 1;
   cursor: grab;
 }
 
@@ -262,7 +262,7 @@ a {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 2;
+  z-index: 10;
   pointer-events: none;
   display: flex;
   flex-direction: column;
