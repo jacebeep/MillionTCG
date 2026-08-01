@@ -1,3 +1,23 @@
+// =============================================================================
+// MillionTCG — main.js
+// =============================================================================
+// ⚠️  GLOBAL DECLARATION REGISTRY — DO NOT RE-DECLARE ANY OF THESE ANYWHERE ⚠️
+//
+//  const  PRODUCTS                   — line ~14  (static product catalogue)
+//  let    cart                       — line ~42  (user cart, from localStorage)
+//  function getCommunityListings()   — line ~53  (reads community listings)
+//  function saveCommunityListing()   — line ~69  (saves a new listing)
+//  let    communityListings          — line ~77  (live snapshot of listings)
+//  function renderHomeProducts()     — line ~79  (renders homepage grid)
+//  function startApp()               — line ~116 (main entry point)
+//  let    currentUser                — line ~1063 (authenticated user object)
+//  function initSellerSystem()       — line ~1065 (seller workspace engine)
+//
+//  Adding a SECOND `const`, `let`, or `var` for any of the above names will
+//  throw a SyntaxError and kill ALL JavaScript on every page — including the
+//  3D hero model, cart, search, and mobile menu.
+// =============================================================================
+
 // --- ANTI-COPY & SOURCE CODE PROTECTION ENGINE ---
 document.addEventListener('contextmenu', (e) => e.preventDefault());
 document.addEventListener('keydown', (e) => {
