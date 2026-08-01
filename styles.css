@@ -1720,9 +1720,9 @@ a {
 }
 
 .escrow-badge-transit {
-  background: rgba(0, 229, 255, 0.15);
-  color: #00e5ff;
-  border: 1px solid rgba(0, 229, 255, 0.4);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
 }
 
 .escrow-badge-released {
@@ -1789,7 +1789,7 @@ a {
 }
 
 .btn-upload-tracking {
-  background: #00e5ff;
+  background: #ffffff;
   color: #000000;
   border: none;
   padding: 8px 16px;
@@ -2039,8 +2039,8 @@ a {
 }
 
 .upload-dropzone:hover {
-  border-color: #00e5ff;
-  background: rgba(0, 229, 255, 0.04);
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .file-input-hidden {
@@ -2066,7 +2066,7 @@ a {
 }
 
 .drop-text span {
-  color: #00e5ff;
+  color: #ffffff;
   text-decoration: underline;
 }
 
