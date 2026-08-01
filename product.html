@@ -180,6 +180,27 @@
     <!-- Populated by JS -->
   </main>
 
+  <!-- Fullscreen Zoom & Lightbox Modal -->
+  <div class="zoom-modal-overlay" id="zoom-lightbox-modal">
+    <div class="zoom-modal-header">
+      <div class="zoom-modal-title" id="zoom-modal-title">PRODUCT ZOOM & INSPECTOR</div>
+      <div class="zoom-controls-group">
+        <button type="button" class="zoom-control-btn" id="zoom-in-btn">🔍 +</button>
+        <button type="button" class="zoom-control-btn" id="zoom-out-btn">🔍 -</button>
+        <button type="button" class="zoom-control-btn" id="zoom-reset-btn">↺ Reset</button>
+        <button type="button" class="zoom-control-btn" id="zoom-flip-btn">🔄 Flip 3D</button>
+        <button type="button" class="zoom-control-btn" id="zoom-close-btn" style="background: rgba(255, 71, 87, 0.2); border-color: rgba(255, 71, 87, 0.4); color: #ff4757;">✕ Close</button>
+      </div>
+    </div>
+
+    <div class="zoom-modal-viewport" id="zoom-viewport">
+      <img id="zoom-lightbox-img" class="zoom-modal-img" src="" alt="High-Res Zoom View">
+    </div>
+
+    <!-- Gallery Thumbnail Strip -->
+    <div class="zoom-gallery-strip" id="zoom-gallery-strip"></div>
+  </div>
+
   <!-- Cart Drawer -->
   <div class="cart-overlay" id="cart-overlay"></div>
   <div class="cart-drawer" id="cart-drawer">
@@ -233,26 +254,59 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const prodId = parseInt(urlParams.get('id')) || 17;
-      const product = PRODUCTS.find(p => p.id === prodId) || PRODUCTS[0];
+      const prodIdStr = urlParams.get('id');
+      
+      let communityListings = [];
+      try {
+        communityListings = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
+      } catch (e) {
+        communityListings = [];
+      }
+      
+      let product = null;
+      if (prodIdStr) {
+        product = PRODUCTS.find(p => p.id == prodIdStr || p.id === prodIdStr) || 
+                  communityListings.find(p => p.id == prodIdStr || p.id === prodIdStr);
+      }
+      if (!product) product = PRODUCTS[0];
 
-      const galleryImages = product.gallery || [product.image];
+      // Build gallery array (up to 5 pictures)
+      let galleryImages = [];
+      if (Array.isArray(product.gallery) && product.gallery.length > 0) {
+        galleryImages = product.gallery;
+      } else if (product.image) {
+        galleryImages = [product.image];
+      } else {
+        galleryImages = ['images/logo.png'];
+      }
+
+      // Default back photo: second uploaded photo if available, else logo/back placeholder
+      const frontPhoto = galleryImages[0];
+      const backPhoto = galleryImages.length > 1 ? galleryImages[1] : (product.image || 'images/logo.png');
 
       const view = document.getElementById('product-detail-view');
-      view.innerHTML = `
-        <div>
-          <div class="detail-gallery">
-            <img id="main-product-img" src="${galleryImages[0]}" alt="${product.name}" style="max-width: 100%; max-height: 420px; object-fit: contain;">
-          </div>
-          ${galleryImages.length > 1 ? `
-            <div style="display: flex; gap: 12px; margin-top: 16px; overflow-x: auto; padding-bottom: 8px;">
-              ${galleryImages.map((imgSrc, idx) => `
-                <img src="${imgSrc}" onclick="document.getElementById('main-product-img').src='${imgSrc}'" style="width: 70px; height: 70px; object-fit: cover; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; background: #050505;">
-              `).join('')}
-            </div>
-          ` : ''}
-        </div>
+      if (view) {
+        view.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+            
+            <!-- 3D Card Perspective Wrapper -->
+            <div class="card-turn-perspective" id="card-perspective">
+              <div class="card-3d-flipper" id="card-flipper">
+                
+                <!-- Front Face with Hover Lens Magnifier -->
+                <div class="card-face front product-magnifier-container" id="magnifier-container">
+                  <img id="main-product-img" src="${frontPhoto}" alt="${product.name || product.title}">
+                  <div class="magnifier-lens" id="magnifier-lens"></div>
+                  <div class="card-hologram-glare" id="hologram-glare"></div>
+                </div>
 
+                <!-- Back Face -->
+                <div class="card-face back">
+                  <img id="back-product-img" src="${backPhoto}" alt="${product.name || product.title} (Back View)">
+                  <div class="card-hologram-glare"></div>
+                </div>
+
+<<<<<<< HEAD
 <<<<<<< Updated upstream
         <div class="detail-content">
           <span class="product-category">${product.category}</span>
@@ -296,13 +350,45 @@
                        style="width: 66px; height: 66px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #050508;">
 >>>>>>> Stashed changes
                 `).join('')}
+=======
+>>>>>>> 5f113a7c6dd227a635a273f5504ae8e0a750ab9b
               </div>
             </div>
-          ` : ''}
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
           <div class="detail-price" id="display-detail-price">$${product.price.toFixed(2)}</div>
 =======
+=======
+            <!-- Interactive Controls Under Card -->
+            <div style="display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; justify-content: center; width: 100%;">
+              <button class="btn-flip-card" id="btn-turn-card">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                TURN / FLIP 3D CARD 🔄
+              </button>
+              <button class="btn-flip-card" id="btn-open-zoom" style="background: rgba(255,255,255,0.08);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                FULLSCREEN ZOOM 🔍
+              </button>
+            </div>
+
+            <!-- Thumbnails Selector Bar (Up to 5 pictures) -->
+            ${galleryImages.length > 1 ? `
+              <div style="display: flex; gap: 10px; margin-top: 20px; overflow-x: auto; max-width: 100%; padding-bottom: 6px;" id="product-thumb-bar">
+                ${galleryImages.map((imgSrc, idx) => `
+                  <img src="${imgSrc}" class="zoom-thumb ${idx === 0 ? 'active' : ''}" 
+                       data-idx="${idx}"
+                       onclick="switchMainProductImage(this, '${imgSrc}')" 
+                       style="width: 66px; height: 66px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #050508;">
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
+              💡 Hover image for surface magnifier lens • Click button or card to turn 3D card front/back!
+            </div>
+
+>>>>>>> 5f113a7c6dd227a635a273f5504ae8e0a750ab9b
           </div>
 
           <div class="detail-content">
@@ -364,7 +450,11 @@
         `;
       }
 
+<<<<<<< HEAD
       // Setup 3D Card Turn / Flip listeners (AFTER innerHTML is rendered!)
+=======
+      // Setup 3D Card Turn / Flip listeners
+>>>>>>> 5f113a7c6dd227a635a273f5504ae8e0a750ab9b
       const cardPerspective = document.getElementById('card-perspective');
       const cardFlipper = document.getElementById('card-flipper');
       const turnCardBtn = document.getElementById('btn-turn-card');
@@ -395,50 +485,179 @@
           const rotateY = ((x - centerX) / centerX) * 12;
 
           cardFlipper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+<<<<<<< HEAD
 >>>>>>> Stashed changes
-          
-          <div class="detail-specs">
-            <div class="spec-item">
-              <span style="color: var(--text-muted);">Condition & Seal</span>
-              <span>${product.condition || 'Original Sealed Box & Case'}</span>
-            </div>
-            <div class="spec-item">
-              <span style="color: var(--text-muted);">Dispatch Time</span>
-              <span>${product.dispatchTime || '2 Days after order date'}</span>
-            </div>
-            <div class="spec-item">
-              <span style="color: var(--text-muted);">Euro Shipping</span>
-              <span>DDP (10-15 working days)</span>
-            </div>
-            <div class="spec-item">
-              <span style="color: var(--text-muted);">Other Countries</span>
-              <span>DAP (3-9 working days)</span>
-            </div>
-            <div class="spec-item">
-              <span style="color: var(--text-muted);">Bulk Orders</span>
-              <span style="color: #4ade80;">Price Negotiable — Contact Support</span>
-            </div>
-          </div>
-
-          <p style="color: var(--text-muted); margin-bottom: 24px; font-size: 0.95rem; line-height: 1.6;">${product.desc}</p>
-
-<<<<<<< Updated upstream
-          <div style="background: var(--bg-card); border: 1px solid var(--border-color); padding: 16px; border-radius: 6px; margin-bottom: 24px; font-size: 0.85rem; color: var(--text-muted);">
-            ℹ️ <strong>Tariff Remark:</strong> Customs/Tariff duties negotiated per destination country. For bulk case pricing, email <a href="mailto:Jacep0230@gmail.com" style="color: #fff; font-weight: 700;">Jacep0230@gmail.com</a>.
-          </div>
 =======
-      // Setup Hover Lens Magnifier (AFTER innerHTML is rendered!)
+>>>>>>> 5f113a7c6dd227a635a273f5504ae8e0a750ab9b
+          
+          const glare = document.getElementById('hologram-glare');
+          if (glare) {
+            glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)`;
+          }
+        });
+
+        cardPerspective.addEventListener('mouseleave', () => {
+          if (!cardFlipper.classList.contains('is-flipped')) {
+            cardFlipper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+          }
+        });
+      }
+
+      // Setup Hover Lens Magnifier
       const container = document.getElementById('magnifier-container');
       const lens = document.getElementById('magnifier-lens');
       const mainImg = document.getElementById('main-product-img');
->>>>>>> Stashed changes
 
-          <button class="btn-primary" id="add-bundle-cart-btn" onclick="addSelectedBundleToCart(${product.id})" style="width: 100%; padding: 18px;">
-            ADD TO CART & SECURE PRE-ORDER
-          </button>
-        </div>
-      `;
+      if (container && lens && mainImg) {
+        container.addEventListener('mouseenter', () => {
+          if (cardFlipper && cardFlipper.classList.contains('is-flipped')) return;
+          lens.style.display = 'block';
+          lens.style.backgroundImage = `url('${mainImg.src}')`;
+          lens.style.backgroundSize = `${mainImg.offsetWidth * 2.2}px ${mainImg.offsetHeight * 2.2}px`;
+        });
+
+        container.addEventListener('mouseleave', () => {
+          lens.style.display = 'none';
+        });
+
+        container.addEventListener('mousemove', (e) => {
+          if (cardFlipper && cardFlipper.classList.contains('is-flipped')) {
+            lens.style.display = 'none';
+            return;
+          }
+          const rect = container.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+
+          const lensW = lens.offsetWidth / 2;
+          const lensH = lens.offsetHeight / 2;
+
+          lens.style.left = `${x - lensW}px`;
+          lens.style.top = `${y - lensH}px`;
+
+          const bgX = (x / rect.width) * 100;
+          const bgY = (y / rect.height) * 100;
+          lens.style.backgroundPosition = `${bgX}% ${bgY}%`;
+        });
+      }
+
+      // --- FULLSCREEN LIGHTBOX ZOOM MODAL ENGINE ---
+      const modal = document.getElementById('zoom-lightbox-modal');
+      const openZoomBtn = document.getElementById('btn-open-zoom');
+      const closeZoomBtn = document.getElementById('zoom-close-btn');
+      const zoomImg = document.getElementById('zoom-lightbox-img');
+      const viewport = document.getElementById('zoom-viewport');
+      const galleryStrip = document.getElementById('zoom-gallery-strip');
+
+      const zoomInBtn = document.getElementById('zoom-in-btn');
+      const zoomOutBtn = document.getElementById('zoom-out-btn');
+      const zoomResetBtn = document.getElementById('zoom-reset-btn');
+      const zoomFlipBtn = document.getElementById('zoom-flip-btn');
+
+      let currentZoom = 1;
+      let panX = 0;
+      let panY = 0;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let activeImageIdx = 0;
+
+      function updateZoomTransform() {
+        if (zoomImg) {
+          zoomImg.style.transform = `scale(${currentZoom}) translate(${panX / currentZoom}px, ${panY / currentZoom}px)`;
+        }
+      }
+
+      function resetZoom() {
+        currentZoom = 1;
+        panX = 0;
+        panY = 0;
+        updateZoomTransform();
+      }
+
+      function openZoomModal(imgSrc) {
+        if (!modal) return;
+        activeImageIdx = galleryImages.indexOf(imgSrc);
+        if (activeImageIdx === -1) activeImageIdx = 0;
+
+        zoomImg.src = galleryImages[activeImageIdx];
+        resetZoom();
+        modal.classList.add('open');
+
+        // Render thumbnails strip inside lightbox
+        if (galleryStrip) {
+          galleryStrip.innerHTML = galleryImages.map((src, i) => `
+            <img src="${src}" class="zoom-thumb ${i === activeImageIdx ? 'active' : ''}" onclick="switchLightboxImage(${i})">
+          `).join('');
+        }
+      }
+
+      window.switchLightboxImage = function(index) {
+        activeImageIdx = index;
+        zoomImg.src = galleryImages[index];
+        resetZoom();
+        if (galleryStrip) {
+          const thumbs = galleryStrip.querySelectorAll('.zoom-thumb');
+          thumbs.forEach((t, i) => t.classList.toggle('active', i === index));
+        }
+      };
+
+      if (openZoomBtn) openZoomBtn.addEventListener('click', (e) => { e.stopPropagation(); openZoomModal(mainImg.src); });
+      if (closeZoomBtn) closeZoomBtn.addEventListener('click', () => modal.classList.remove('open'));
+
+      if (zoomInBtn) zoomInBtn.addEventListener('click', () => { currentZoom = Math.min(currentZoom + 0.5, 4); updateZoomTransform(); });
+      if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => { currentZoom = Math.max(currentZoom - 0.5, 0.8); updateZoomTransform(); });
+      if (zoomResetBtn) zoomResetBtn.addEventListener('click', resetZoom);
+      if (zoomFlipBtn) zoomFlipBtn.addEventListener('click', () => {
+        flip3DCard();
+        const isFlipped = cardFlipper && cardFlipper.classList.contains('is-flipped');
+        zoomImg.src = isFlipped ? backPhoto : frontPhoto;
+        resetZoom();
+      });
+
+      // Pan & Mousewheel Zoom logic inside lightbox
+      if (viewport) {
+        viewport.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          if (e.deltaY < 0) {
+            currentZoom = Math.min(currentZoom + 0.25, 4);
+          } else {
+            currentZoom = Math.max(currentZoom - 0.25, 0.8);
+          }
+          updateZoomTransform();
+        });
+
+        viewport.addEventListener('mousedown', (e) => {
+          if (currentZoom <= 1) return;
+          isDragging = true;
+          startX = e.clientX - panX;
+          startY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (!isDragging) return;
+          panX = e.clientX - startX;
+          panY = e.clientY - startY;
+          updateZoomTransform();
+        });
+
+        window.addEventListener('mouseup', () => {
+          isDragging = false;
+        });
+      }
     });
+
+    window.switchMainProductImage = function(thumbEl, imgSrc) {
+      const mainImg = document.getElementById('main-product-img');
+      if (mainImg) mainImg.src = imgSrc;
+
+      const thumbs = document.querySelectorAll('#product-thumb-bar .zoom-thumb');
+      thumbs.forEach(t => t.classList.remove('active'));
+      if (thumbEl) thumbEl.classList.add('active');
+
+      const lens = document.getElementById('magnifier-lens');
+      if (lens) lens.style.backgroundImage = `url('${imgSrc}')`;
+    };
 
     let currentSelectedBundle = null;
 
@@ -455,7 +674,8 @@
     }
 
     function addSelectedBundleToCart(productId) {
-      const product = PRODUCTS.find(p => p.id === productId);
+      const communityListings = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
+      const product = PRODUCTS.find(p => p.id == productId) || communityListings.find(p => p.id == productId);
       if (!currentSelectedBundle && product && product.bundleOptions) {
         currentSelectedBundle = product.bundleOptions[0];
       }

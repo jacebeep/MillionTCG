@@ -1030,11 +1030,8 @@ function initSellerSystem() {
   const photoInput = document.getElementById('card-photo-input');
   const neatZone = document.getElementById('neat-upload-zone');
   const placeholder = document.getElementById('drop-placeholder');
-  const previewFrame = document.getElementById('neat-preview-frame');
-  const previewImg = document.getElementById('neat-preview-img');
-  const changePhotoBtn = document.getElementById('btn-change-photo');
 
-  let uploadedImageDataUrl = '';
+  let uploadedImages = []; // Array of up to 5 image Data URLs
 
   // Auth Modal Toggles
   function openAuthModal(mode = 'signup') {
@@ -1401,32 +1398,114 @@ function renderSoldOrders() {
   });
 }
 
-  // Handle Photo Upload (Neat 2.5:3.5 Ratio Box)
-  if (photoInput && neatZone) {
+  // Render Photo Slots Grid
+  function renderPhotoSlots() {
+    const grid = document.getElementById('photo-slots-grid');
+    const badge = document.getElementById('upload-count-badge');
+    if (!grid) return;
+
+    if (badge) {
+      badge.textContent = `${uploadedImages.length} / 5 Pictures`;
+      badge.style.color = uploadedImages.length > 0 ? '#4ade80' : '#888888';
+    }
+
+    if (placeholder) {
+      if (uploadedImages.length >= 5) {
+        placeholder.innerHTML = `
+          <div class="neat-icon">✅</div>
+          <div class="neat-title">Maximum 5 Pictures Added</div>
+          <div class="neat-sub">Remove a picture below to upload a replacement</div>
+        `;
+      } else {
+        placeholder.innerHTML = `
+          <div class="neat-icon">📷</div>
+          <div class="neat-title">Upload Up To 5 Card Photos</div>
+          <div class="neat-sub">Click or Drag & Drop photos here (${5 - uploadedImages.length} slot${(5 - uploadedImages.length) !== 1 ? 's' : ''} remaining)</div>
+        `;
+      }
+    }
+
+    grid.innerHTML = '';
+    uploadedImages.forEach((imgUrl, index) => {
+      const slot = document.createElement('div');
+      slot.className = 'photo-slot-item';
+
+      const slotLabel = index === 0 ? 'FRONT' : (index === 1 ? 'BACK' : `SLOT ${index + 1}`);
+
+      slot.innerHTML = `
+        <span class="slot-badge">${slotLabel}</span>
+        <img src="${imgUrl}" alt="Card photo ${index + 1}">
+        <button type="button" class="btn-remove-photo" title="Remove photo">✕</button>
+      `;
+
+      slot.querySelector('.btn-remove-photo').addEventListener('click', (e) => {
+        e.stopPropagation();
+        uploadedImages.splice(index, 1);
+        renderPhotoSlots();
+      });
+
+      grid.appendChild(slot);
+    });
+  }
+
+  function handleUploadedFiles(files) {
+    const fileList = Array.from(files);
+    const availableSlots = 5 - uploadedImages.length;
+    if (availableSlots <= 0) {
+      alert('You have already uploaded the maximum of 5 pictures.');
+      return;
+    }
+
+    const filesToRead = fileList.slice(0, availableSlots);
+    let loadedCount = 0;
+
+    filesToRead.forEach(file => {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        uploadedImages.push(event.target.result);
+        loadedCount++;
+        if (loadedCount === filesToRead.length) {
+          renderPhotoSlots();
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  if (photoInput) {
     photoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          uploadedImageDataUrl = event.target.result;
-          if (previewImg) previewImg.src = uploadedImageDataUrl;
-          if (placeholder) placeholder.classList.add('hidden');
-          if (previewFrame) previewFrame.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
+      if (e.target.files && e.target.files.length > 0) {
+        handleUploadedFiles(e.target.files);
+        photoInput.value = '';
+      }
+    });
+  }
+
+  if (neatZone) {
+    neatZone.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-remove-photo')) return;
+      if (uploadedImages.length < 5 && photoInput) {
+        photoInput.click();
       }
     });
 
-    if (changePhotoBtn) {
-      changePhotoBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        uploadedImageDataUrl = '';
-        photoInput.value = '';
-        if (previewImg) previewImg.src = '';
-        if (placeholder) placeholder.classList.remove('hidden');
-        if (previewFrame) previewFrame.classList.add('hidden');
-      });
-    }
+    neatZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      neatZone.style.borderColor = '#ffffff';
+    });
+
+    neatZone.addEventListener('dragleave', () => {
+      neatZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+    });
+
+    neatZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      neatZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleUploadedFiles(e.dataTransfer.files);
+      }
+    });
   }
 
   // Handle Submission
@@ -1444,7 +1523,8 @@ function renderSoldOrders() {
       const price = parseFloat(document.getElementById('card-price').value);
       const description = document.getElementById('card-description').value.trim();
 
-      const image = uploadedImageDataUrl || 'images/logo.png';
+      const gallery = uploadedImages.length > 0 ? [...uploadedImages] : ['images/logo.png'];
+      const image = gallery[0];
 
       const newListing = {
         id: 'user_' + Date.now(),
@@ -1454,6 +1534,7 @@ function renderSoldOrders() {
         price,
         sellerName: currentUser.handle,
         image,
+        gallery,
         desc: description,
         date: Date.now()
       };
@@ -1470,17 +1551,17 @@ function renderSoldOrders() {
           ListingPrice: `$${price.toFixed(2)}`,
           SellerHandle: `@${currentUser.handle}`,
           SellerEmail: currentUser.email || 'N/A',
+          PhotoCount: `${gallery.length} pictures uploaded`,
           Description: description || 'No description provided'
         });
       }
 
       form.reset();
-      uploadedImageDataUrl = '';
-      if (placeholder) placeholder.classList.remove('hidden');
-      if (previewFrame) previewFrame.classList.add('hidden');
+      uploadedImages = [];
+      renderPhotoSlots();
 
       renderMyListings();
-      alert(`🎉 SUCCESS! "${title}" has been published to your active seller listings!`);
+      alert(`🎉 SUCCESS! "${title}" with ${gallery.length} picture(s) has been published to your active seller listings!`);
     });
   }
 
