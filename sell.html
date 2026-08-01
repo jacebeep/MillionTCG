@@ -26,7 +26,7 @@
 
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=27">
   <script src="js/three.min.js"></script>
 </head>
 <body>
@@ -108,31 +108,22 @@
   <!-- Seller Hero Section -->
   <section class="seller-hero-section">
     <div class="seller-hero-container">
-      <div class="seller-badge">INSTANT MARKETPLACE LISTING</div>
       <h1>SELL YOUR CARDS ON MILLION TCG</h1>
-      <p>List trading cards, PSA slabs, and sealed booster boxes directly for sale. Cards go live instantly — no seller sign-in required!</p>
-
-      <!-- Account State Banner -->
-      <div class="account-state-box" id="account-state-box">
-        <div class="user-logged-badge" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <span>⚡ <strong>Instant Listing Enabled:</strong> Products published here go live immediately for marketplace buyers.</span>
-          <button class="btn-primary" id="open-profile-banking-btn" style="padding: 6px 14px; font-size: 0.75rem;">Manage Banking in Profile ⚙️</button>
-        </div>
-      </div>
+      <p>List trading cards, PSA slabs, and sealed booster boxes directly for sale. Cards go live instantly — no sign-in required!</p>
     </div>
   </section>
 
   <!-- Main Seller Hub Layout -->
   <main class="seller-main-container">
     
-    <!-- Organized Seller Workspace (Always Visible) -->
+    <!-- Seller Workspace - Single Column Focused Form -->
     <div class="seller-workspace" id="seller-workspace">
-      
-      <!-- Top Steps Bar -->
+
+      <!-- Steps Bar -->
       <div class="seller-steps-bar">
         <div class="step-item active">
           <span class="step-num">1</span>
-          <span class="step-title">Card Image Upload</span>
+          <span class="step-title">Card Photos</span>
         </div>
         <div class="step-item active">
           <span class="step-num">2</span>
@@ -140,7 +131,7 @@
         </div>
         <div class="step-item active">
           <span class="step-num">3</span>
-          <span class="step-title">Pricing & Terms</span>
+          <span class="step-title">Pricing</span>
         </div>
         <div class="step-item active">
           <span class="step-num">4</span>
@@ -148,10 +139,8 @@
         </div>
       </div>
 
-      <div class="seller-two-col-layout">
-        
-        <!-- Left: Neat Upload Form -->
-        <div class="seller-form-card">
+      <!-- Upload Form (full width) -->
+      <div class="seller-form-card seller-form-fullwidth">
           <div class="form-header">
             <h2>UPLOAD CARD FOR SALE 🃏</h2>
             <p>Complete the details below to list your card on the store.</p>
@@ -235,99 +224,19 @@
               PUBLISH CARD LISTING 🚀
             </button>
           </form>
-        </div>
-
-        <!-- Right: Logged-in Seller's Dashboard & Payout Settings -->
-        <div class="seller-dashboard-card">
-          
-          <!-- Earnings & Payout Summary Widget -->
-          <div class="payout-summary-box">
-            <div class="payout-box-header">
-              <h3>SELLER EARNINGS & PAYOUTS 💰</h3>
-            </div>
-            
-            <div class="payout-stats-grid">
-              <div class="payout-stat">
-                <span class="payout-stat-label">Total Gross Sales</span>
-                <span class="payout-stat-val" id="seller-gross-sales">$0.00</span>
-              </div>
-              <div class="payout-stat">
-                <span class="payout-stat-label">MillionTCG Cut (10%)</span>
-                <span class="payout-stat-val" id="seller-platform-cut" style="color: #ff4757;">-$0.00</span>
-              </div>
-              <div class="payout-stat">
-                <span class="payout-stat-label">Your Net Payout (90%)</span>
-                <span class="payout-stat-val" id="seller-net-payout" style="color: #4ade80;">$0.00</span>
-              </div>
-            </div>
-
-            <!-- Linked Payout Account Upload & Setup -->
-            <div class="payout-method-form">
-              <div class="payout-form-title">
-                <label>LINK PAYOUT ACCOUNT (FOR AUTOMATED PAYOUTS) <span class="required">*</span></label>
-                <span class="account-verified-status" id="account-verified-status">⚠️ No Linked Account</span>
-              </div>
-              
-              <div class="payout-account-grid">
-                <div class="form-group">
-                  <label for="payout-method-select">Account Type</label>
-                  <select id="payout-method-select">
-                    <option value="bank">Bank ACH Direct Deposit</option>
-                    <option value="paypal">PayPal Business Account</option>
-                    <option value="venmo">Venmo Account</option>
-                    <option value="stripe">Stripe Express Connect</option>
-                    <option value="zelle">Zelle Pay</option>
-                  </select>
-                </div>
-
-                <div class="form-group">
-                  <label for="payout-name-input">Account Holder Legal Name</label>
-                  <input type="text" id="payout-name-input" placeholder="e.g. Alex Mercer" value="">
-                </div>
-              </div>
-
-              <!-- Bank Routing / Handle Details -->
-              <div class="payout-details-row">
-                <div class="form-group">
-                  <label for="payout-destination-input">Email / Account / Handle</label>
-                  <input type="text" id="payout-destination-input" placeholder="e.g. alex@paypal.com or Account #123456" value="">
-                </div>
-                
-                <div class="form-group" id="bank-routing-group">
-                  <label for="payout-routing-input">Bank Routing # (9-Digits)</label>
-                  <input type="text" id="payout-routing-input" placeholder="e.g. 021000021" value="">
-                </div>
-              </div>
-
-              <button type="button" class="btn-primary btn-save-payout" id="btn-save-payout">
-                LINK & VERIFY PAYOUT ACCOUNT 🔗
-              </button>
-            </div>
-          </div>
-
-          <!-- Escrow Orders & Tracking Upload Section -->
-          <div class="escrow-orders-box" style="margin-top: 32px;">
-            <div class="dashboard-header">
-              <h2>SOLD ORDERS & ESCROW PAYOUT TRACKING 📦</h2>
-              <p>Upload tracking numbers for sold items. Funds are held in MillionTCG Escrow and released automatically upon carrier delivery verification!</p>
-            </div>
-
-            <div class="sold-orders-list" id="sold-orders-list">
-              <!-- Rendered dynamically by JS -->
-            </div>
-          </div>
-
-          <div class="dashboard-header" style="margin-top: 32px;">
-            <h2>MY ACTIVE LISTINGS 🏷️</h2>
-            <p>Manage items you have published for sale</p>
-          </div>
-
-          <div class="my-listings-list" id="my-listings-list">
-            <!-- Rendered by JS -->
-          </div>
-        </div>
-
       </div>
+
+      <!-- My Active Listings (below form) -->
+      <div class="my-listings-below" style="margin-top: 32px;">
+        <div class="dashboard-header">
+          <h2>MY ACTIVE LISTINGS 🏷️</h2>
+          <p>Manage items you have published for sale. To manage earnings & payouts, visit your <a href="#" onclick="window.MillionAuth && window.MillionAuth.openAuthModal('profile'); return false;" style="color:inherit; text-decoration:underline;">User Profile ⚙️</a></p>
+        </div>
+        <div class="my-listings-list" id="my-listings-list">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -387,8 +296,8 @@
     </div>
   </footer>
 
-  <script src="main.js?v=26"></script>
-  <script src="auth.js?v=26"></script>
+  <script src="main.js?v=27"></script>
+  <script src="auth.js?v=27"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

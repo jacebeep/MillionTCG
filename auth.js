@@ -150,8 +150,11 @@
       localStorage.setItem('mtcg_current_user', JSON.stringify(user));
       localStorage.setItem('mtcg_saved_email', user.email);
       if (user.displayName) localStorage.setItem('mtcg_saved_name', user.displayName);
+      // Extra persistence: also remember login state flag
+      localStorage.setItem('mtcg_logged_in', '1');
     } else {
       localStorage.removeItem('mtcg_current_user');
+      localStorage.removeItem('mtcg_logged_in');
     }
   }
 
@@ -295,11 +298,13 @@
     const banking = getBankingInfo();
     const savedColor = localStorage.getItem('mtcg_theme_color') || '#ff4757';
 
+    // Profile Name & Email
     const nameInput = document.getElementById('profile-display-name');
     const emailInput = document.getElementById('profile-display-email');
     if (nameInput) nameInput.value = (user && user.displayName) ? user.displayName : localStorage.getItem('mtcg_saved_name') || '';
     if (emailInput) emailInput.value = (user && user.email) ? user.email : localStorage.getItem('mtcg_saved_email') || '';
 
+    // Banking fields
     const bankName = document.getElementById('profile-bank-name');
     const bankMethod = document.getElementById('profile-bank-method');
     const bankDest = document.getElementById('profile-bank-dest');
@@ -320,6 +325,21 @@
         bankStatus.classList.add('unlinked');
       }
     }
+
+    // Earnings stats
+    const listings = JSON.parse(localStorage.getItem('mtcg_community_listings') || '[]');
+    const myListings = user ? listings.filter(l => l.sellerEmail === user.email) : [];
+    const grossSales = myListings.reduce((sum, l) => sum + (parseFloat(l.price) || 0), 0);
+    const platformCut = grossSales * 0.10;
+    const netPayout = grossSales * 0.90;
+    const grossEl = document.getElementById('profile-gross-sales');
+    const cutEl = document.getElementById('profile-platform-cut');
+    const netEl = document.getElementById('profile-net-payout');
+    const countEl = document.getElementById('profile-listing-count');
+    if (grossEl) grossEl.textContent = '$' + grossSales.toFixed(2);
+    if (cutEl) cutEl.textContent = '-$' + platformCut.toFixed(2);
+    if (netEl) netEl.textContent = '$' + netPayout.toFixed(2);
+    if (countEl) countEl.textContent = myListings.length;
 
     applyThemeColor(savedColor);
   }
@@ -393,7 +413,46 @@
 
         <!-- Profile & Settings Panel -->
         <div id="auth-profile-panel" class="auth-panel" style="display:flex; flex-direction:column; gap:12px;">
-          <p class="auth-panel-sub">Manage your profile, banking payouts, & theme colors.</p>
+          <p class="auth-panel-sub">Manage your profile, earnings, banking payouts, & theme colors.</p>
+
+          <!-- User Account Info -->
+          <div class="profile-section-title">👤 Account Information</div>
+          <div class="banking-info-card">
+            <div class="auth-field">
+              <label>Display Name</label>
+              <input type="text" id="profile-display-name" placeholder="Your collector name">
+            </div>
+            <div class="auth-field" style="margin-top:10px;">
+              <label>Email Address</label>
+              <input type="email" id="profile-display-email" placeholder="you@example.com" readonly style="opacity:0.7; cursor:not-allowed;">
+            </div>
+            <button type="button" class="auth-submit-btn" id="save-profile-btn" style="margin-top:14px;">
+              SAVE PROFILE NAME 💾
+            </button>
+          </div>
+
+          <!-- Seller Earnings & Payouts -->
+          <div class="profile-section-title">💰 Seller Earnings & Payouts</div>
+          <div class="banking-info-card">
+            <div class="payout-stats-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin-bottom:16px;">
+              <div class="payout-stat" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; text-align:center;">
+                <span style="display:block; font-size:0.7rem; font-weight:700; color:#a0a0a0; letter-spacing:1px; margin-bottom:6px;">TOTAL GROSS</span>
+                <span style="font-size:1.3rem; font-weight:900; color:#fff;" id="profile-gross-sales">$0.00</span>
+              </div>
+              <div class="payout-stat" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; text-align:center;">
+                <span style="display:block; font-size:0.7rem; font-weight:700; color:#a0a0a0; letter-spacing:1px; margin-bottom:6px;">PLATFORM CUT (10%)</span>
+                <span style="font-size:1.3rem; font-weight:900; color:#ff4757;" id="profile-platform-cut">-$0.00</span>
+              </div>
+              <div class="payout-stat" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; text-align:center;">
+                <span style="display:block; font-size:0.7rem; font-weight:700; color:#a0a0a0; letter-spacing:1px; margin-bottom:6px;">YOUR NET (90%)</span>
+                <span style="font-size:1.3rem; font-weight:900; color:#4ade80;" id="profile-net-payout">$0.00</span>
+              </div>
+              <div class="payout-stat" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; text-align:center;">
+                <span style="display:block; font-size:0.7rem; font-weight:700; color:#a0a0a0; letter-spacing:1px; margin-bottom:6px;">ACTIVE LISTINGS</span>
+                <span style="font-size:1.3rem; font-weight:900; color:#fff;" id="profile-listing-count">0</span>
+              </div>
+            </div>
+          </div>
           
           <!-- Banking & Payout Settings -->
           <div class="profile-section-title">🏦 Banking Information Settings</div>
@@ -490,6 +549,25 @@
         applyThemeColor(e.target.value);
       });
     }
+
+    // Save Profile Name
+    modal.querySelector('#save-profile-btn')?.addEventListener('click', () => {
+      const user = getCurrentUser();
+      const newName = document.getElementById('profile-display-name')?.value.trim();
+      if (!newName) { alert('Please enter a display name.'); return; }
+      if (user) {
+        user.displayName = newName;
+        setCurrentUser(user);
+        // Also update in users store
+        const users = getUsers();
+        if (users[user.email]) { users[user.email].displayName = newName; saveUsers(users); }
+        updateAllAuthUI();
+        alert('✅ Profile name saved!');
+      } else {
+        localStorage.setItem('mtcg_saved_name', newName);
+        alert('✅ Name saved locally!');
+      }
+    });
 
     // Save Banking Info
     modal.querySelector('#save-banking-btn')?.addEventListener('click', () => {
