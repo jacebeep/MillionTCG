@@ -36,6 +36,24 @@ const PRODUCTS = [
     shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
     condition: "Original Sealed Boxes & Case",
     bulkNegotiable: true
+  },
+  {
+    id: 101,
+    name: "Charizard VMAX Shiny Vault #SV107 (PSA 10 Gem Mint)",
+    price: 189.99,
+    category: "Single Card",
+    image: "images/pokemon-30th-vol2-cards.jpg",
+    tag: "PSA 10 GEM MINT",
+    desc: "Authentic PSA 10 Gem Mint graded Charizard card with holographic foil finish and certified PSA slab cert #8821941.",
+    gallery: [
+      "images/pokemon-30th-vol2-cards.jpg",
+      "images/pokemon-30th-vol2-singlebox.png",
+      "images/pokemon-30th-vol2-boxes.jpg",
+      "images/pokemon-30th-vol2-pack.jpg",
+      "images/pokemon-30th-vol2-cases.jpg"
+    ],
+    condition: "PSA 10 Gem Mint Graded",
+    dispatchTime: "1 Day Dispatch"
   }
 ];
 
@@ -1250,7 +1268,10 @@ function initSellerSystem() {
           <div class="my-listing-meta">${item.condition} • ${item.category}</div>
         </div>
         <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
-        <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View 3D & Zoom 👁️</a>
+          <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
+        </div>
       `;
 
       row.querySelector('.btn-delete-listing').addEventListener('click', () => {

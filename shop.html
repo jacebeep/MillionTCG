@@ -184,25 +184,52 @@
     </div>
   </footer>
 
-  <script src="main.js?v=7"></script>
-  <script src="auth.js?v=7"></script>
+  <script src="main.js?v=8"></script>
+  <script src="auth.js?v=8"></script>
   <script>
+    function getAllShopProducts() {
+      let community = [];
+      try {
+        community = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
+        if (!Array.isArray(community)) community = [];
+      } catch (e) {
+        community = [];
+      }
+
+      const mappedCommunity = community.map(c => ({
+        id: c.id,
+        name: c.title,
+        price: parseFloat(c.price) || 0,
+        category: c.category || 'Single Card',
+        image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
+        gallery: c.gallery || [c.image || 'images/logo.png'],
+        tag: 'SELLER LISTING',
+        desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+      }));
+
+      return [...mappedCommunity, ...PRODUCTS];
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const catParam = urlParams.get('category');
       const searchParam = urlParams.get('search');
+
+      const all = getAllShopProducts();
 
       if (catParam) {
         filterCatalog(catParam);
       } else if (searchParam) {
         searchCatalog(searchParam);
       } else {
-        renderCatalog(PRODUCTS);
+        renderCatalog(all);
       }
     });
 
     function renderCatalog(items) {
       const grid = document.getElementById('catalog-grid');
+      if (!grid) return;
+
       if (items.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No matching products found.</p>';
         return;
@@ -218,8 +245,8 @@
             <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
             <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc}</p>
             <div class="product-footer">
-              <span class="product-price">$${p.price.toFixed(2)}</span>
-              <button class="btn-secondary" onclick="addToCart(${p.id})">Add to Cart</button>
+              <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+              <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View 3D & Zoom 👁️</button>
             </div>
           </div>
         </div>
@@ -227,6 +254,7 @@
     }
 
     function filterCatalog(category) {
+      const all = getAllShopProducts();
       const buttons = document.querySelectorAll('.filter-btn');
       buttons.forEach(b => {
         if (b.textContent.includes(category) || (category === 'All' && b.textContent.includes('All'))) {
@@ -237,15 +265,16 @@
       });
 
       if (category === 'All') {
-        renderCatalog(PRODUCTS);
+        renderCatalog(all);
       } else {
-        const filtered = PRODUCTS.filter(p => p.category === category);
+        const filtered = all.filter(p => p.category === category || (category === 'Single Card' && p.category.includes('Card')));
         renderCatalog(filtered);
       }
     }
 
     function searchCatalog(query) {
-      const filtered = PRODUCTS.filter(p => 
+      const all = getAllShopProducts();
+      const filtered = all.filter(p => 
         p.name.toLowerCase().includes(query.toLowerCase()) || 
         p.category.toLowerCase().includes(query.toLowerCase())
       );
