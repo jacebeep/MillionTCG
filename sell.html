@@ -155,21 +155,25 @@
 
           <form id="card-upload-form" class="card-form">
 
-            <!-- Card Photo Upload (Neat 2.5:3.5 Ratio Box) -->
+            <!-- Card Photo Upload (Up to 5 Pictures) -->
             <div class="form-group">
-              <label>Card Photo Upload <span class="required">*</span></label>
+              <div class="upload-label-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <label style="margin-bottom:0;">Card Photos Upload <span class="required">*</span></label>
+                <span class="upload-count-badge" id="upload-count-badge" style="font-size: 0.8rem; font-weight: 700; background: rgba(255,255,255,0.1); padding: 2px 10px; border-radius: 12px; color: #4ade80;">0 / 5 Pictures</span>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Upload up to 5 pictures (Front, Back, Hologram surface, Edges/Corners, PSA cert).</p>
+              
               <div class="neat-upload-zone" id="neat-upload-zone">
-                <input type="file" id="card-photo-input" accept="image/*" class="file-input-hidden" required>
+                <input type="file" id="card-photo-input" accept="image/*" multiple class="file-input-hidden">
                 <div class="neat-drop-placeholder" id="drop-placeholder">
                   <div class="neat-icon">📷</div>
-                  <div class="neat-title">Upload High-Res Card Photo</div>
-                  <div class="neat-sub">Click or Drag & Drop photo here</div>
-                </div>
-                <div class="neat-preview-frame hidden" id="neat-preview-frame">
-                  <img id="neat-preview-img" src="" alt="Card Upload Preview">
-                  <button type="button" class="btn-change-photo" id="btn-change-photo">Change Photo ✕</button>
+                  <div class="neat-title">Upload Up To 5 Card Photos</div>
+                  <div class="neat-sub">Click or Drag & Drop photos here</div>
                 </div>
               </div>
+
+              <!-- Multi-Photo Slots Grid -->
+              <div class="photo-slots-grid" id="photo-slots-grid"></div>
             </div>
 
             <!-- Card Name & Franchise -->
