@@ -180,7 +180,7 @@ openDB().then(() => {
 
 
 
-function renderHomeProducts(showAll = false) {
+function renderHomeProducts() {
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 
@@ -197,11 +197,8 @@ function renderHomeProducts(showAll = false) {
     }));
 
     const allItems = [...mappedCommunity, ...PRODUCTS];
-    const isMobile = window.innerWidth <= 768;
-    const limit = (isMobile && !showAll) ? 6 : (showAll ? allItems.length : 8);
-    const displayItems = allItems.slice(0, limit);
 
-    grid.innerHTML = displayItems.map(p => `
+    grid.innerHTML = allItems.map(p => `
       <div class="product-card">
         ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
@@ -210,30 +207,18 @@ function renderHomeProducts(showAll = false) {
         <div class="product-info">
           <span class="product-category">${p.category}</span>
           <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc || ''}</p>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View</button>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
           </div>
         </div>
       </div>
     `).join('');
-
-    const existingBtn = document.getElementById('load-more-home-products');
-    if (existingBtn) existingBtn.remove();
-
-    if (allItems.length > displayItems.length) {
-      const loadBtn = document.createElement('button');
-      loadBtn.id = 'load-more-home-products';
-      loadBtn.className = 'load-more-products-btn';
-      loadBtn.innerHTML = `EXPLORE ALL PRODUCTS (${allItems.length}) ↓`;
-      loadBtn.onclick = () => renderHomeProducts(true);
-      if (grid.parentElement) {
-        grid.parentElement.appendChild(loadBtn);
-      }
-    }
   }).catch(err => {
     console.error('[MillionTCG] renderHomeProducts error:', err);
-    grid.innerHTML = PRODUCTS.slice(0, 6).map(p => `
+    // Fallback: show only static products
+    grid.innerHTML = PRODUCTS.map(p => `
       <div class="product-card">
         <span class="card-badge">${p.tag || ''}</span>
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
@@ -244,7 +229,7 @@ function renderHomeProducts(showAll = false) {
           <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View</button>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
           </div>
         </div>
       </div>
@@ -518,8 +503,6 @@ function initHero3DScene() {
   scene.background = new THREE.Color(0x141416); // High-contrast monochrome dark studio room
   scene.fog = new THREE.FogExp2(0x141416, 0.015);
 
-  window._heroThreeScene = scene;
-
   // --- CAMERA (Zoomed Out for Wide 3D Stage Field of View) ---
   const aspect = width / height;
   const camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 100);
@@ -535,8 +518,6 @@ function initHero3DScene() {
     renderer.setClearColor(0x141416, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-    window._heroThreeRenderer = renderer;
 
     // Store renderer so bfcache re-init can dispose it before re-creating
     canvas.userData.renderer = renderer;
@@ -567,33 +548,6 @@ function initHero3DScene() {
   spotLight.position.set(0, 8, 5);
   spotLight.castShadow = true;
   scene.add(spotLight);
-
-  window._heroThreeSpotLight = spotLight;
-
-  // Global helper to dynamically update ONLY 3D background color
-  window.update3DBackgroundColor = function(hexColor) {
-    if (!hexColor) return;
-    localStorage.setItem('mtcg_3d_bg_color', hexColor);
-    try {
-      if (window._heroThreeScene && typeof THREE !== 'undefined') {
-        const c = new THREE.Color(hexColor);
-        window._heroThreeScene.background = c;
-        if (window._heroThreeScene.fog) window._heroThreeScene.fog.color = c;
-        if (window._heroThreeRenderer) window._heroThreeRenderer.setClearColor(c, 1);
-      }
-    } catch(e) {}
-    window._hero2DCustomColor = hexColor;
-    const heroBgContainer = document.getElementById('hero-3d-container');
-    if (heroBgContainer) {
-      heroBgContainer.style.background = hexColor;
-    }
-  };
-
-  // Restore saved 3D background color if set
-  const saved3DColor = localStorage.getItem('mtcg_3d_bg_color');
-  if (saved3DColor && typeof window.update3DBackgroundColor === 'function') {
-    window.update3DBackgroundColor(saved3DColor);
-  }
 
   // --- 3D PERSPECTIVE GRID FLOOR (Monochrome White/Grey Grid) ---
   const floorGeo = new THREE.PlaneGeometry(40, 40);
@@ -1107,9 +1061,8 @@ function initCanvas2DFallback(canvas, container) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const grad = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.4, 50, canvas.width * 0.5, canvas.height * 0.5, canvas.width);
-    const custom3DCol = window._hero2DCustomColor || localStorage.getItem('mtcg_3d_bg_color') || '#141416';
-    grad.addColorStop(0, custom3DCol);
-    grad.addColorStop(1, '#0a0a0c');
+    grad.addColorStop(0, '#3a3d4d');
+    grad.addColorStop(1, '#22242e');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -1357,13 +1310,25 @@ function initSellerSystem() {
       navAuthBtn.textContent = currentUser ? `@${currentUser.handle}` : 'ACCOUNT';
     }
 
-    const openProfileBankingBtn = document.getElementById('open-profile-banking-btn');
-    if (openProfileBankingBtn) {
-      openProfileBankingBtn.addEventListener('click', () => {
-        if (window.MillionAuth && typeof window.MillionAuth.openAuthModal === 'function') {
-          window.MillionAuth.openAuthModal('profile');
-        }
-      });
+    if (accountStateBox) {
+      if (currentUser) {
+        accountStateBox.innerHTML = `
+          <div class="user-logged-badge">
+            <span>Logged in as: <strong>@${currentUser.handle}</strong> ✓ Verified Seller</span>
+            <button class="btn-logout" id="btn-logout">Log Out</button>
+          </div>
+        `;
+        document.getElementById('btn-logout').addEventListener('click', () => {
+          currentUser = null;
+          localStorage.removeItem('milliontcg_user_account');
+          updateAccountUI();
+        });
+      } else {
+        accountStateBox.innerHTML = `
+          <button class="btn-primary" id="hero-create-acc-btn" style="padding: 10px 24px; font-size: 0.85rem;">CREATE SELLER ACCOUNT TO LIST CARDS</button>
+        `;
+        document.getElementById('hero-create-acc-btn').addEventListener('click', () => openAuthModal('signup'));
+      }
     }
 
     if (sellerWorkspace) {
@@ -1395,15 +1360,11 @@ function initSellerSystem() {
   const accountVerifiedStatus = document.getElementById('account-verified-status');
 
   function updatePayoutAccountUI() {
-    const bankingInfo = (window.MillionAuth && typeof window.MillionAuth.getBankingInfo === 'function') 
-      ? window.MillionAuth.getBankingInfo() 
-      : ((currentUser && currentUser.payoutAccount) ? currentUser.payoutAccount : {});
-
-    if (bankingInfo && (bankingInfo.dest || bankingInfo.name)) {
-      if (payoutDestInput) payoutDestInput.value = bankingInfo.dest || '';
-      if (payoutNameInput) payoutNameInput.value = bankingInfo.name || '';
-      if (payoutRoutingInput) payoutRoutingInput.value = bankingInfo.routing || '';
-      if (payoutMethodSelect) payoutMethodSelect.value = bankingInfo.type || 'bank';
+    if (currentUser && currentUser.payoutAccount) {
+      if (payoutDestInput) payoutDestInput.value = currentUser.payoutAccount.dest || '';
+      if (payoutNameInput) payoutNameInput.value = currentUser.payoutAccount.name || '';
+      if (payoutRoutingInput) payoutRoutingInput.value = currentUser.payoutAccount.routing || '';
+      if (payoutMethodSelect) payoutMethodSelect.value = currentUser.payoutAccount.type || 'bank';
 
       if (accountVerifiedStatus) {
         accountVerifiedStatus.textContent = '✓ Linked & Verified Account';
@@ -1419,6 +1380,7 @@ function initSellerSystem() {
 
   if (savePayoutBtn) {
     savePayoutBtn.addEventListener('click', () => {
+      if (!currentUser) return;
       const dest = payoutDestInput ? payoutDestInput.value.trim() : '';
       const name = payoutNameInput ? payoutNameInput.value.trim() : '';
       const routing = payoutRoutingInput ? payoutRoutingInput.value.trim() : '';
@@ -1429,16 +1391,10 @@ function initSellerSystem() {
         return;
       }
 
-      const info = { type, name, dest, routing, verified: true, linkedAt: Date.now() };
-      if (window.MillionAuth && typeof window.MillionAuth.saveBankingInfo === 'function') {
-        window.MillionAuth.saveBankingInfo(info);
-      }
-      if (currentUser) {
-        currentUser.payoutAccount = info;
-        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
-      }
+      currentUser.payoutAccount = { type, name, dest, routing, verified: true, linkedAt: Date.now() };
+      localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
       updatePayoutAccountUI();
-      alert(`🎉 SUCCESS! Your ${type.toUpperCase()} Payout Account has been saved to your User Profile Settings! 90% net funds from all card sales will automatically route here.`);
+      alert(`🎉 SUCCESS! Your ${type.toUpperCase()} Payout Account has been linked & verified. 90% net funds from all card sales will automatically route here!`);
     });
   }
 
@@ -1446,13 +1402,11 @@ function initSellerSystem() {
   function renderMyListings() {
     if (!myListingsContainer) return;
     myListingsContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
-    
-    // Auto-create seller profile handle if not set
-    const sellerHandle = currentUser ? currentUser.handle : (localStorage.getItem('mtcg_saved_handle') || 'Collector_Portal');
+    if (!currentUser) { myListingsContainer.innerHTML = ''; return; }
 
     getCommunityListingsAsync().then(allListings => {
       communityListings = allListings;
-      const userItems = allListings.filter(item => item.sellerName === sellerHandle || (currentUser && item.sellerName === currentUser.handle));
+      const userItems = allListings.filter(item => item.sellerName === currentUser.handle);
 
       // Calculate Earnings Breakdown
       const grossTotal = userItems.reduce((acc, i) => acc + (parseFloat(i.price) || 0), 0);
@@ -1485,7 +1439,7 @@ function initSellerSystem() {
           <img class="my-listing-img" src="${item.image || 'images/logo.png'}" alt="${item.title}">
           <div class="my-listing-info">
             <div class="my-listing-title">${item.title}</div>
-            <div class="my-listing-meta">${item.condition} • ${item.category} • <strong style="color:#4ade80;">READY TO SELL</strong></div>
+            <div class="my-listing-meta">${item.condition} • ${item.category}</div>
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
           <div style="display: flex; gap: 8px; align-items: center;">
@@ -1539,11 +1493,10 @@ if (soldOrders.length === 0) {
 
 function renderSoldOrders() {
   const soldContainer = document.getElementById('sold-orders-list');
-  if (!soldContainer) return;
+  if (!soldContainer || !currentUser) return;
   soldContainer.innerHTML = '';
 
-  const activeHandle = currentUser ? currentUser.handle : 'PokeVault';
-  const userSold = soldOrders.filter(order => order.sellerHandle === activeHandle || activeHandle === 'PokeVault');
+  const userSold = soldOrders.filter(order => order.sellerHandle === currentUser.handle || currentUser.handle === 'PokeVault');
 
   if (userSold.length === 0) {
     soldContainer.innerHTML = `
@@ -1756,12 +1709,23 @@ function renderSoldOrders() {
     });
   }
 
-  // Handle Submission (Instant Readiness & Ready to Sell)
+  // Handle Submission
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      const sellerHandle = currentUser ? currentUser.handle : (localStorage.getItem('mtcg_saved_handle') || ('Collector_' + Math.floor(1000 + Math.random() * 9000)));
+      // Auto-create anonymous seller session if not logged in
+      if (!currentUser) {
+        currentUser = {
+          name: 'Verified Seller',
+          handle: 'PokeSeller_' + Math.floor(1000 + Math.random() * 9000),
+          email: 'seller@milliontcg.com',
+          isVerified: true,
+          joined: Date.now()
+        };
+        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
+        updateAccountUI();
+      }
 
       const title = document.getElementById('card-title').value.trim();
       const category = document.getElementById('card-category').value;
@@ -1783,21 +1747,17 @@ function renderSoldOrders() {
         category,
         condition,
         price,
-        sellerName: sellerHandle,
+        sellerName: currentUser.handle,
         image,
         gallery,
         desc: description,
-        status: 'active',
-        readyToSell: true,
-        inStock: true,
-        quantity: 1,
         date: Date.now()
       };
 
       // Show saving indicator
       const submitBtn = form.querySelector('[type="submit"]');
       const origText = submitBtn ? submitBtn.textContent : '';
-      if (submitBtn) { submitBtn.textContent = 'Publishing Live...'; submitBtn.disabled = true; }
+      if (submitBtn) { submitBtn.textContent = 'Saving...'; submitBtn.disabled = true; }
 
       saveCommunityListing(newListing).then(() => {
         // Trigger email notification
@@ -1807,11 +1767,10 @@ function renderSoldOrders() {
             Category: category,
             Condition: condition,
             ListingPrice: `$${price.toFixed(2)}`,
-            SellerHandle: `@${sellerHandle}`,
-            SellerEmail: (currentUser && currentUser.email) ? currentUser.email : 'N/A',
+            SellerHandle: `@${currentUser.handle}`,
+            SellerEmail: currentUser.email || 'N/A',
             PhotoCount: `${gallery.length} picture(s) uploaded`,
-            Description: description || 'No description provided',
-            Status: 'ACTIVE - READY TO SELL'
+            Description: description || 'No description provided'
           });
         }
 
@@ -1821,7 +1780,7 @@ function renderSoldOrders() {
         renderMyListings();
 
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
-        alert(`🚀 SUCCESS! "${title}" is LIVE and READY TO BE SOLD!\n\nYour product is now published on the Home page, Shop, and Product view.`);
+        alert(`✅ "${title}" with ${gallery.length} photo(s) has been published to the marketplace!\n\nIt will now appear on the Home page and Shop.`);
       }).catch(err => {
         console.error('[MillionTCG] Submission error:', err);
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
