@@ -1,83 +1,55 @@
-const CACHE_NAME = 'milliontcg-v3';
+const CACHE_NAME = 'milliontcg-v4';
 const STATIC_ASSETS = [
-  '/MillionTCG/',
-  '/MillionTCG/index.html',
-  '/MillionTCG/shop.html',
-  '/MillionTCG/product.html',
-  '/MillionTCG/sell.html',
-  '/MillionTCG/checkout.html',
-  '/MillionTCG/contact-us.html',
-  '/MillionTCG/track-order.html',
-  '/MillionTCG/returns-policy.html',
-  '/MillionTCG/shipping-policy.html',
-  '/MillionTCG/styles.css',
-  '/MillionTCG/main.js',
-  '/MillionTCG/auth.js',
-  '/MillionTCG/manifest.json',
-  '/MillionTCG/images/logo.png',
-  '/MillionTCG/images/icon-192.png',
-  '/MillionTCG/images/icon-512.png'
+  '/',
+  '/index.html',
+  '/shop.html',
+  '/product.html',
+  '/sell.html',
+  '/checkout.html',
+  '/contact-us.html',
+  '/track-order.html',
+  '/returns-policy.html',
+  '/shipping-policy.html',
+  '/styles.css',
+  '/main.js',
+  '/auth.js',
+  '/manifest.json',
+  '/images/logo.png',
+  '/images/icon-192.png',
+  '/images/icon-512.png'
 ];
 
-// Install: cache static assets
+// Install: skip waiting immediately
 self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      return cache.addAll(STATIC_ASSETS);
-    }).catch(err => {
-      console.warn('SW: Some assets failed to cache', err);
-    })
-  );
   self.skipWaiting();
 });
 
-// Activate: clean up old caches
+// Activate: clean up all old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
+        keys.map(key => caches.delete(key))
       );
     })
   );
   self.clients.claim();
 });
 
-// Fetch: network-first for navigation, cache-first for assets
+// Fetch: Network-first for all resources to ensure live GitHub Pages and local updates show instantly
 self.addEventListener('fetch', event => {
   const { request } = event;
-  const url = new URL(request.url);
+  if (request.method !== 'GET') return;
 
-  // Skip non-GET requests and non-same-origin requests
-  if (request.method !== 'GET' || !url.origin.includes(self.location.origin.split('//')[1])) {
-    return;
-  }
-
-  // Network-first for HTML pages (fresh content)
-  if (request.destination === 'document' || request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('/index.html')))
-    );
-    return;
-  }
-
-  // Cache-first for static assets (images, css, js)
   event.respondWith(
-    caches.match(request).then(cached => {
-      if (cached) return cached;
-      return fetch(request).then(response => {
+    fetch(request)
+      .then(response => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
         }
         return response;
-      });
-    })
+      })
+      .catch(() => caches.match(request))
   );
 });
