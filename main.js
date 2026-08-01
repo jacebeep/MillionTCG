@@ -1089,6 +1089,17 @@ function initSellerSystem() {
       localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
       closeAuthModal();
       updateAccountUI();
+
+      // Trigger direct email notification for new Seller Account
+      if (typeof window.sendDirectEmailNotification === 'function') {
+        window.sendDirectEmailNotification('New Seller Account Created 🏪', {
+          FullName: name,
+          StoreHandle: `@${handle}`,
+          SellerEmail: email,
+          AccountType: 'Verified Seller Portal'
+        });
+      }
+
       alert(`🎉 Welcome to MillionTCG, @${handle}! Your Seller Account is ready.`);
     });
   }
@@ -1455,6 +1466,19 @@ function renderSoldOrders() {
 
       communityListings.unshift(newListing);
       localStorage.setItem('milliontcg_community_listings', JSON.stringify(communityListings));
+
+      // Trigger direct email notification for new Card / Product Listed
+      if (typeof window.sendDirectEmailNotification === 'function') {
+        window.sendDirectEmailNotification('New Product Card Listed 🃏', {
+          CardTitle: title,
+          Category: category,
+          Condition: condition,
+          ListingPrice: `$${price.toFixed(2)}`,
+          SellerHandle: `@${currentUser.handle}`,
+          SellerEmail: currentUser.email || 'N/A',
+          Description: description || 'No description provided'
+        });
+      }
 
       form.reset();
       uploadedImageDataUrl = '';

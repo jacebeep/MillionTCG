@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -296,6 +296,24 @@
 
         localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
       } catch(e) { console.error('Error creating sold order record:', e); }
+
+      // Direct Email Alert to Admin for Every Sale
+      if (typeof window.sendDirectEmailNotification === 'function') {
+        const buyerName = (document.getElementById('checkout-name') ? document.getElementById('checkout-name').value : '').trim() || 'Guest Customer';
+        const buyerEmail = (document.getElementById('checkout-email') ? document.getElementById('checkout-email').value : '').trim() || 'Not specified';
+        const buyerAddress = (document.getElementById('checkout-address') ? document.getElementById('checkout-address').value : '').trim() || 'Not specified';
+        const itemsSummary = currentCart.map(i => `${i.name} (x${i.quantity || 1}) - $${((i.price || 0) * (i.quantity || 1)).toFixed(2)}`).join(' | ');
+
+        window.sendDirectEmailNotification('NEW SALE COMPLETED! 🛍️', {
+          TotalSaleAmount: `$${grandTotal.toFixed(2)}`,
+          AdminFee_10Percent: `$${adminCut}`,
+          SellerEscrow_90Percent: `$${netPayout}`,
+          BuyerName: buyerName,
+          BuyerEmail: buyerEmail,
+          ShippingAddress: buyerAddress,
+          PurchasedItems: itemsSummary
+        });
+      }
 
       const splitLogBox = document.getElementById('instant-payout-split-log');
       if (splitLogBox) {

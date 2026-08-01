@@ -6,6 +6,33 @@
 (function () {
   'use strict';
 
+  /* ── Direct Admin Email Notification Helper ── */
+  window.sendDirectEmailNotification = function (eventTitle, detailsData) {
+    try {
+      const adminEmail = localStorage.getItem('milliontcg_admin_email') || 'jacebeep@gmail.com';
+      const payload = {
+        _subject: `⚡ MillionTCG Alert: ${eventTitle}`,
+        _template: 'table',
+        _captcha: 'false',
+        EventType: eventTitle,
+        Timestamp: new Date().toLocaleString(),
+        ...detailsData
+      };
+      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      }).then(res => res.json())
+        .then(data => console.log('Direct email notification sent:', data))
+        .catch(err => console.log('Notification background push:', err));
+    } catch (e) {
+      console.error('Email notification error:', e);
+    }
+  };
+
   /* ── Helpers ── */
   function hashPassword(str) {
     // Simple deterministic hash (good enough for client-side only)
@@ -43,6 +70,16 @@
     users[email] = { ...user, passwordHash: hashPassword(password) };
     saveUsers(users);
     setCurrentUser(user);
+
+    // Direct Email Alert to Admin
+    if (typeof window.sendDirectEmailNotification === 'function') {
+      window.sendDirectEmailNotification('New User Account Registered 👤', {
+        DisplayName: user.displayName,
+        UserEmail: user.email,
+        RegistrationTime: new Date().toLocaleString()
+      });
+    }
+
     return { ok: true, user };
   }
 
