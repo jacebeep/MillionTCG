@@ -7,17 +7,23 @@
   'use strict';
 
   /* ── Direct Admin Email Notification Helper ── */
+  /* ── Direct Admin & Customer Email Notification Helper ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
-      const adminEmail = localStorage.getItem('milliontcg_admin_email') || 'jacebeep@gmail.com';
+      const adminEmail = localStorage.getItem('milliontcg_admin_email') || 'Jacep0230@gmail.com';
+      const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail;
+      
       const payload = {
         _subject: `⚡ MillionTCG Alert: ${eventTitle}`,
         _template: 'table',
         _captcha: 'false',
+        _replyto: userContactEmail || adminEmail,
         EventType: eventTitle,
         Timestamp: new Date().toLocaleString(),
         ...detailsData
       };
+
+      // 1. Send alert to Admin (Jacep0230@gmail.com)
       fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
         method: 'POST',
         headers: {
@@ -26,16 +32,99 @@
         },
         body: JSON.stringify(payload)
       }).then(res => res.json())
-        .then(data => console.log('Direct email notification sent:', data))
-        .catch(err => console.log('Notification background push:', err));
+        .then(data => console.log('Direct admin email notification sent:', data))
+        .catch(err => console.log('Admin notification background push error:', err));
+
+      // 2. Send confirmation copy to Customer Email if provided
+      if (userContactEmail && userContactEmail.toLowerCase() !== adminEmail.toLowerCase() && userContactEmail.includes('@')) {
+        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userContactEmail.trim())}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify({
+            _subject: `MillionTCG Confirmation: ${eventTitle}`,
+            _template: 'table',
+            _captcha: 'false',
+            Notice: `Thank you for contacting MillionTCG! Details of your ${eventTitle} are listed below:`,
+            Timestamp: new Date().toLocaleString(),
+            ...detailsData
+          })
+        }).then(res => res.json())
+          .then(data => console.log('Customer confirmation email sent:', data))
+          .catch(err => console.log('Customer confirmation push error:', err));
+      }
     } catch (e) {
       console.error('Email notification error:', e);
     }
   };
 
+  /* ── Auto-Save & Persistent Login Info ── */
+  function autoFillFormInputs() {
+    try {
+      const user = getCurrentUser();
+      const savedEmail = (user && user.email) ? user.email : localStorage.getItem('mtcg_saved_email') || '';
+      const savedName = (user && user.displayName) ? user.displayName : localStorage.getItem('mtcg_saved_name') || '';
+      const savedFirstName = localStorage.getItem('mtcg_saved_first_name') || (savedName ? savedName.split(' ')[0] : '');
+      const savedLastName = localStorage.getItem('mtcg_saved_last_name') || (savedName ? savedName.split(' ').slice(1).join(' ') : '');
+      const savedAddress = localStorage.getItem('mtcg_saved_address') || '';
+      const savedCity = localStorage.getItem('mtcg_saved_city') || '';
+      const savedZip = localStorage.getItem('mtcg_saved_zip') || '';
+
+      const emailInputs = ['checkout-email', 'signin-email', 'signup-email', 'contact-email', 'seller-payout-email', 'seller-email'];
+      emailInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && savedEmail && !el.value) el.value = savedEmail;
+      });
+
+      const nameInputs = ['signin-name', 'signup-name', 'cardholder-name', 'seller-payout-name', 'contact-name'];
+      nameInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && savedName && !el.value) el.value = savedName;
+      });
+
+      const firstNameEl = document.getElementById('checkout-first-name');
+      if (firstNameEl && savedFirstName && !firstNameEl.value) firstNameEl.value = savedFirstName;
+
+      const lastNameEl = document.getElementById('checkout-last-name');
+      if (lastNameEl && savedLastName && !lastNameEl.value) lastNameEl.value = savedLastName;
+
+      const addrEl = document.getElementById('checkout-address');
+      if (addrEl && savedAddress && !addrEl.value) addrEl.value = savedAddress;
+
+      const cityEl = document.getElementById('checkout-city');
+      if (cityEl && savedCity && !cityEl.value) cityEl.value = savedCity;
+
+      const zipEl = document.getElementById('checkout-zip');
+      if (zipEl && savedZip && !zipEl.value) zipEl.value = savedZip;
+    } catch (e) {
+      console.error('Autofill error:', e);
+    }
+  }
+
+  function setupInputAutoSaveListeners() {
+    document.addEventListener('change', (e) => {
+      const target = e.target;
+      if (!target || !target.id) return;
+      if (target.id === 'checkout-email' || target.id === 'signin-email') {
+        if (target.value) localStorage.setItem('mtcg_saved_email', target.value.trim());
+      } else if (target.id === 'checkout-first-name') {
+        if (target.value) localStorage.setItem('mtcg_saved_first_name', target.value.trim());
+      } else if (target.id === 'checkout-last-name') {
+        if (target.value) localStorage.setItem('mtcg_saved_last_name', target.value.trim());
+      } else if (target.id === 'checkout-address') {
+        if (target.value) localStorage.setItem('mtcg_saved_address', target.value.trim());
+      } else if (target.id === 'checkout-city') {
+        if (target.value) localStorage.setItem('mtcg_saved_city', target.value.trim());
+      } else if (target.id === 'checkout-zip') {
+        if (target.value) localStorage.setItem('mtcg_saved_zip', target.value.trim());
+      }
+    });
+  }
+
   /* ── Helpers ── */
   function hashPassword(str) {
-    // Simple deterministic hash (good enough for client-side only)
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
@@ -57,8 +146,13 @@
   }
 
   function setCurrentUser(user) {
-    if (user) localStorage.setItem('mtcg_current_user', JSON.stringify(user));
-    else localStorage.removeItem('mtcg_current_user');
+    if (user) {
+      localStorage.setItem('mtcg_current_user', JSON.stringify(user));
+      localStorage.setItem('mtcg_saved_email', user.email);
+      if (user.displayName) localStorage.setItem('mtcg_saved_name', user.displayName);
+    } else {
+      localStorage.removeItem('mtcg_current_user');
+    }
   }
 
   /* ── Auth actions ── */
@@ -71,7 +165,7 @@
     saveUsers(users);
     setCurrentUser(user);
 
-    // Direct Email Alert to Admin
+    // Direct Email Alert to Admin & Customer Confirmation
     if (typeof window.sendDirectEmailNotification === 'function') {
       window.sendDirectEmailNotification('New User Account Registered 👤', {
         DisplayName: user.displayName,
@@ -80,6 +174,7 @@
       });
     }
 
+    autoFillFormInputs();
     return { ok: true, user };
   }
 
@@ -91,6 +186,17 @@
     if (record.passwordHash !== hashPassword(password)) return { ok: false, error: 'Incorrect password.' };
     const user = { email: record.email, displayName: record.displayName, createdAt: record.createdAt };
     setCurrentUser(user);
+
+    // Send sign-in notification copy
+    if (typeof window.sendDirectEmailNotification === 'function') {
+      window.sendDirectEmailNotification('User Account Sign In 🔐', {
+        DisplayName: user.displayName,
+        UserEmail: user.email,
+        LoginTime: new Date().toLocaleString()
+      });
+    }
+
+    autoFillFormInputs();
     return { ok: true, user };
   }
 
@@ -343,6 +449,8 @@
 
     // Mobile drawer open-modal trigger (set up on drawer open)
     updateAllAuthUI();
+    autoFillFormInputs();
+    setupInputAutoSaveListeners();
   }
 
   if (document.readyState === 'loading') {
@@ -352,5 +460,5 @@
   }
 
   // Expose for external use if needed
-  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal };
+  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal, autoFillFormInputs };
 })();
