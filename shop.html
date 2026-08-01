@@ -184,17 +184,11 @@
     </div>
   </footer>
 
-  <script src="main.js?v=16"></script>
-  <script src="auth.js?v=16"></script>
+  <script src="main.js?v=17"></script>
+  <script src="auth.js?v=17"></script>
   <script>
     function getAllShopProducts() {
-      let community = [];
-      try {
-        community = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
-        if (!Array.isArray(community)) community = [];
-      } catch (e) {
-        community = [];
-      }
+      const community = typeof getCommunityListings === 'function' ? getCommunityListings() : [];
 
       const mappedCommunity = community.map(c => ({
         id: c.id,

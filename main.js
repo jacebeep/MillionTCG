@@ -55,6 +55,11 @@ function getCommunityListings() {
   try {
     list = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
     if (!Array.isArray(list)) list = [];
+    const cleanList = list.filter(item => item && item.id && !String(item.id).includes('seed'));
+    if (cleanList.length !== list.length) {
+      localStorage.setItem('milliontcg_community_listings', JSON.stringify(cleanList));
+    }
+    list = cleanList;
   } catch (e) {
     list = [];
   }
