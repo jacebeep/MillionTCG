@@ -236,6 +236,7 @@
 
   function updateAllAuthUI() {
     const user = getCurrentUser();
+    updateModalTabsVisibility();
 
     /* ─ Desktop header profile btn ─ */
     const desktopBtn = document.getElementById('auth-desktop-btn');
@@ -288,14 +289,49 @@
     }
   }
 
+  function updateModalTabsVisibility() {
+    const user = getCurrentUser();
+    const signinTabBtn = document.querySelector('.auth-tab-btn[data-tab="signin"]');
+    const signupTabBtn = document.querySelector('.auth-tab-btn[data-tab="signup"]');
+    const profileTabBtn = document.querySelector('.auth-tab-btn[data-tab="profile"]');
+    const bankingTabBtn = document.querySelector('.auth-tab-btn[data-tab="banking"]');
+    const settingsTabBtn = document.querySelector('.auth-tab-btn[data-tab="settings"]');
+    const colorsTabBtn = document.querySelector('.auth-tab-btn[data-tab="colors"]');
+
+    if (user) {
+      if (signinTabBtn) signinTabBtn.style.display = 'none';
+      if (signupTabBtn) signupTabBtn.style.display = 'none';
+      if (profileTabBtn) profileTabBtn.style.display = 'inline-flex';
+      if (bankingTabBtn) bankingTabBtn.style.display = 'inline-flex';
+      if (settingsTabBtn) settingsTabBtn.style.display = 'inline-flex';
+      if (colorsTabBtn) colorsTabBtn.style.display = 'inline-flex';
+    } else {
+      if (signinTabBtn) signinTabBtn.style.display = 'inline-flex';
+      if (signupTabBtn) signupTabBtn.style.display = 'inline-flex';
+      if (profileTabBtn) profileTabBtn.style.display = 'none';
+      if (bankingTabBtn) bankingTabBtn.style.display = 'none';
+      if (settingsTabBtn) settingsTabBtn.style.display = 'none';
+      if (colorsTabBtn) colorsTabBtn.style.display = 'none';
+    }
+  }
+
   /* ── Modal ── */
   function openAuthModal(tab = 'signin') {
+    const user = getCurrentUser();
     let modal = document.getElementById('auth-modal');
     if (!modal) {
       modal = buildModal();
       document.body.appendChild(modal);
     }
     modal.classList.add('active');
+
+    if (user && (tab === 'signin' || tab === 'signup')) {
+      tab = 'profile';
+    } else if (!user && (tab === 'profile' || tab === 'banking' || tab === 'settings' || tab === 'colors')) {
+      tab = 'signin';
+    }
+
+    updateModalTabsVisibility();
     switchTab(tab);
     populateProfileFields();
     checkAuthGate();

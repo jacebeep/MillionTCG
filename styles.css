@@ -3557,33 +3557,34 @@ html, body {
   z-index: 20;
 }
 
-.zoom-thumb {
-  width: 60px;
-  height: 60px;
-  border-radius: 6px;
-  object-fit: cover;
-  border: 2px solid transparent;
-  cursor: pointer;
-  opacity: 0.6;
-  transition: all 0.2s;
-  background: #000;
+position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.05);
+  background: #0d0d12;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.zoom-thumb.active,
-.zoom-thumb:hover {
-  border-color: #ffffff;
-  opacity: 1;
+.card-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
 }
 
-/* ═══════════════════════════════════════
-   DYNAMIC THEME & USER PROFILE SETTINGS
-═══════════════════════════════════════ */
+.card-face.back {
+  transform: rotateY(180deg);
+}
 
-/* Dynamic theme overrides for buttons & highlights */
-.btn-primary,
-#shop-now-btn,
-.btn-submit-listing,
-.auth-submit-btn,
 /* Specular Holographic Glare Overlay */
 .card-hologram-glare {
   position: absolute;
@@ -4692,5 +4693,42 @@ body.auth-locked #auth-desktop-btn {
 #shop-now-btn svg {
   stroke: currentColor !important;
 }
+
+/* ═══════════════════════════════════════
+   AUTH MODAL TABS & SECTION TITLES POLISH
+═══════════════════════════════════════ */
+.auth-tab-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: #a0a0a0 !important;
+  border-radius: 8px !important;
+  padding: 8px 14px !important;
+  font-weight: 700 !important;
+  font-size: 0.8rem !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+}
+
+.auth-tab-btn:hover {
+  background: rgba(255, 255, 255, 0.18) !important;
+  color: #ffffff !important;
+}
+
+.auth-tab-btn.active {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.3) !important;
+}
+
+.profile-section-title {
+  font-size: 0.88rem !important;
+  font-weight: 900 !important;
+  color: #ffffff !important;
+  letter-spacing: 1px !important;
+  text-transform: uppercase !important;
+}
+
 
 
