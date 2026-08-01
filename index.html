@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MillionTCG | Your Ultimate TCG Destination</title>
   <meta name="description" content="MillionTCG - Collect, trade, and compete. Premier destination for trading card game booster packs, singles, and sealed products.">
+  <!-- Strip index.html from URL so iOS "Add to Home Screen" saves the clean link -->
   <script>if(location.pathname.endsWith('/index.html'))history.replaceState(null,'',location.pathname.replace('/index.html','/')+location.search+location.hash);</script>
-  <script>(function(){try{var r=localStorage.getItem('milliontcg_community_listings');if(r){var a=JSON.parse(r);if(Array.isArray(a)){var c=a.filter(function(i){return i&&i.id&&String(i.id).indexOf('seed')===-1;});localStorage.setItem('milliontcg_community_listings',JSON.stringify(c));}}}catch(e){}})();</script>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=8">
+  <link rel="stylesheet" href="styles.css?v=7">
   <!-- Three.js 3D WebGL Engine -->
   <script src="js/three.min.js"></script>
 </head>
@@ -101,8 +101,9 @@
     </ul>
   </div>
 
-  <!-- Hero Landing Section - Real 3D WebGL Stage -->
+  <!-- Hero Landing Section - Real 3D WebGL Game Homescreen -->
   <section class="hero-section">
+    <!-- WebGL 3D Canvas Stage -->
     <div class="hero-3d-container" id="hero-3d-container">
       <canvas id="hero-3d-canvas"></canvas>
 
@@ -137,36 +138,6 @@
     </div>
   </section>
 
-  <!-- Featured Products / Live Marketplace Section -->
-  <section class="products-section" id="shop">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-      <div>
-        <h2 class="section-title" style="margin-bottom: 4px;">LIVE MARKETPLACE & FEATURED DROPS 🔥</h2>
-        <p class="section-subtitle">Browse products created by verified sellers and store catalog items</p>
-      </div>
-      <a href="shop.html" class="btn-primary" style="padding: 10px 20px; font-size: 0.85rem; border-radius: 6px;">View Full Shop Catalog →</a>
-    </div>
-
-    <div class="product-grid" id="home-product-grid">
-      <!-- Default static item rendered before JS updates with user listings -->
-      <div class="product-card">
-        <span class="card-badge" style="background: #ff4757; color: #fff;">PRE-ORDER</span>
-        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">
-          <img src="images/pokemon-30th-vol2-boxes.jpg" alt="Pokemon 30th Anniversary Collection Vol.2">
-        </div>
-        <div class="product-info">
-          <span class="product-category">Sealed Product</span>
-          <h3 class="product-name" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">Pokemon 30th Anniversary Collection – Original Partners Vol.2 (2 Boxes)</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Original Factory Sealed Boxes & Case. Features 9 special art foil promo cards.</p>
-          <div class="product-footer">
-            <span class="product-price">$250.00</span>
-            <button class="btn-primary" onclick="window.location.href='product.html?id=17'" style="padding: 8px 14px; font-size: 0.8rem; border-radius: 6px;">View Product</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- Features Strip -->
   <section class="features-section">
     <div class="features-container">
@@ -193,18 +164,27 @@
     </div>
   </section>
 
-  <!-- Featured Products / Live Marketplace Section -->
+  <!-- Featured Products Section -->
   <section class="products-section" id="shop">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-      <div>
-        <h2 class="section-title" style="margin-bottom: 4px;">LIVE MARKETPLACE & FEATURED DROPS 🔥</h2>
-        <p class="section-subtitle">Browse products created by verified sellers and store catalog items</p>
-      </div>
-      <a href="shop.html" class="btn-primary" style="padding: 10px 20px; font-size: 0.85rem; border-radius: 6px;">View Full Shop Catalog →</a>
-    </div>
+    <h2 class="section-title">FEATURED TCG DROP</h2>
+    <p class="section-subtitle">Hand-picked collection of premium cards and sealed booster packs</p>
 
-    <div class="product-grid" id="home-product-grid">
-      <!-- Populated dynamically with all seller listings & products -->
+    <div class="product-grid">
+      <!-- Featured Product 1: Pokemon 30th Anniversary -->
+      <div class="product-card">
+        <span class="card-badge">PRE-ORDER</span>
+        <div class="product-img-wrapper" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">
+          <img src="images/pokemon-30th-vol2-boxes.jpg" alt="Pokemon 30th Anniversary Vol.2" style="max-width: 100%; max-height: 100%; object-fit: cover;">
+        </div>
+        <div class="product-info">
+          <span class="product-category">Sealed 2-Box Bundle</span>
+          <h3 class="product-name" onclick="window.location.href='product.html?id=17'" style="cursor: pointer;">Pokemon 30th Anniversary Collection – Original Partners Vol.2 (2 Boxes)</h3>
+          <div class="product-footer">
+            <span class="product-price">$250.00</span>
+            <button class="btn-secondary" onclick="addToCart(17)">Add to Cart</button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -368,7 +348,7 @@
     </div>
   </footer>
 
-  <script src="main.js?v=19"></script>
+  <script src="main.js?v=20"></script>
   <script>setTimeout(function() { if (typeof initHero3DScene === 'function') initHero3DScene(); }, 100);</script>
   <script src="auth.js?v=7"></script>
   <script>
