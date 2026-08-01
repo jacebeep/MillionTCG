@@ -3007,16 +3007,21 @@ html, body {
   margin: 24px auto !important;
   padding: 0 16px !important;
   gap: 28px !important;
+  box-sizing: border-box !important;
 }
 
 .detail-gallery {
   padding: 20px !important;
-  max-height: 380px !important;
+  max-height: none !important;
+  min-height: 280px !important;
   border-radius: 10px !important;
 }
 
 .detail-gallery img {
-  max-height: 280px !important;
+  max-height: 380px !important;
+  width: auto !important;
+  max-width: 100% !important;
+  object-fit: contain !important;
 }
 
 .detail-content h1 {
@@ -3216,17 +3221,27 @@ html, body {
 
   .product-detail-container {
     margin: 12px auto !important;
-    padding: 0 10px !important;
+    padding: 0 12px !important;
     gap: 16px !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-gallery {
-    padding: 12px !important;
-    max-height: 240px !important;
+    padding: 16px !important;
+    max-height: none !important;
+    min-height: 220px !important;
+    height: auto !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .detail-gallery img {
-    max-height: 190px !important;
+    max-height: 320px !important;
+    width: auto !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
   }
 
   .spec-item {

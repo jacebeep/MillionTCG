@@ -865,7 +865,7 @@ function initCanvas2DFallback(canvas, container) {
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.strokeStyle = '#00e5ff66';
+    ctx.strokeStyle = '#ffffff33';
     ctx.lineWidth = 1.8;
     const horizon = canvas.height * 0.55;
     const vanX = canvas.width * 0.5;
@@ -968,7 +968,7 @@ function initCanvas2DFallback(canvas, container) {
       const cx = canvas.width * (0.2 + idx * 0.22);
       const cy = horizon - 80 + Math.sin(animTime * 1.5 + idx) * 15;
       ctx.fillStyle = '#111115';
-      ctx.strokeStyle = '#00e5ff';
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
       ctx.beginPath();
       drawRoundRect(ctx, cx, cy, 45, 65, 6);
