@@ -2,12 +2,12 @@
   "name": "MillionTCG",
   "short_name": "MillionTCG",
   "description": "Your Premier Destination for Authentic Trading Cards & Sealed Products",
-  "start_url": "https://jacebeep.github.io/MillionTCG/",
+  "start_url": "https://milliontcg.com/",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
   "orientation": "portrait-primary",
-  "scope": "https://jacebeep.github.io/MillionTCG/",
+  "scope": "https://milliontcg.com/",
   "icons": [
     {
       "src": "images/icon-192.png",
