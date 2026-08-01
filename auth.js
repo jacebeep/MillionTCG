@@ -519,11 +519,11 @@
               <label>Email Address</label>
               <input type="email" id="profile-display-email" placeholder="you@example.com" readonly style="opacity:0.7; cursor:not-allowed;">
             </div>
-            <div style="display:flex; gap:10px; margin-top:14px;">
-              <button type="button" class="auth-submit-btn" id="save-profile-btn" style="flex:2;">
+            <div style="display:flex; gap:10px; margin-top:16px; width:100%;">
+              <button type="button" id="save-profile-btn" style="flex:2; background:#ffffff; color:#000000; font-weight:900; border:none; border-radius:8px; padding:12px 16px; font-size:0.88rem; cursor:pointer;">
                 SAVE PROFILE NAME 💾
               </button>
-              <button type="button" class="auth-submit-btn" id="profile-signout-btn" style="flex:1; background:rgba(255,255,255,0.08) !important; color:#fff !important; border-color:rgba(255,255,255,0.2) !important;">
+              <button type="button" id="profile-signout-btn" style="flex:1; background:rgba(255,255,255,0.1); color:#ffffff; font-weight:700; border:1px solid rgba(255,255,255,0.2); border-radius:8px; padding:12px 16px; font-size:0.88rem; cursor:pointer;">
                 SIGN OUT 🚪
               </button>
             </div>

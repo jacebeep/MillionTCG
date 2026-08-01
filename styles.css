@@ -4649,49 +4649,70 @@ body.auth-locked #auth-desktop-btn {
 }
 
 /* ═══════════════════════════════════════
-   PRIMARY CTA & SHOP NOW BUTTONS (WHITE ON BLACK)
+   HERO SHOP NOW & PRIMARY CTA BUTTONS
 ═══════════════════════════════════════ */
-.btn-primary,
 #shop-now-btn,
-.btn-submit-listing,
-.auth-submit-btn,
+.btn-primary,
 .checkout-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
   background-color: #ffffff !important;
   background: #ffffff !important;
   color: #000000 !important;
   border: 2px solid #ffffff !important;
   font-weight: 900 !important;
-  padding: 14px 36px !important;
+  padding: 16px 40px !important;
   border-radius: 6px !important;
-  font-size: 1.05rem !important;
-  letter-spacing: 1px !important;
+  font-size: 1.1rem !important;
+  letter-spacing: 1.5px !important;
   text-transform: uppercase !important;
   cursor: pointer !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  gap: 10px !important;
-  transition: all 0.2s ease !important;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.25) !important;
   text-decoration: none !important;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.3) !important;
+  transition: all 0.2s ease !important;
 }
 
-.btn-primary:hover,
 #shop-now-btn:hover,
-.btn-submit-listing:hover,
-.auth-submit-btn:hover,
+.btn-primary:hover,
 .checkout-btn:hover {
   background-color: #000000 !important;
   background: #000000 !important;
   color: #ffffff !important;
   border-color: #ffffff !important;
-  box-shadow: 0 0 30px rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.6) !important;
   transform: translateY(-2px) !important;
 }
 
-.btn-primary svg,
-#shop-now-btn svg {
+#shop-now-btn svg,
+.btn-primary svg {
   stroke: currentColor !important;
+}
+
+/* Auth Modal Submit Buttons */
+.auth-submit-btn,
+.btn-submit-listing {
+  width: 100% !important;
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  color: #000000 !important;
+  border: 1px solid #ffffff !important;
+  font-weight: 900 !important;
+  padding: 12px 18px !important;
+  border-radius: 8px !important;
+  font-size: 0.95rem !important;
+  letter-spacing: 0.5px !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.15) !important;
+}
+
+.auth-submit-btn:hover,
+.btn-submit-listing:hover {
+  background-color: #e4e4e7 !important;
+  background: #e4e4e7 !important;
+  color: #000000 !important;
 }
 
 /* ═══════════════════════════════════════
