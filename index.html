@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>MillionTCG | Your Ultimate TCG Destination</title>
   <meta name="description" content="MillionTCG - Collect, trade, and compete. Premier destination for trading card game booster packs, singles, and sealed products.">
-  <!-- Strip index.html from URL so iOS "Add to Home Screen" saves the clean link -->
   <script>if(location.pathname.endsWith('/index.html'))history.replaceState(null,'',location.pathname.replace('/index.html','/')+location.search+location.hash);</script>
+  <script>(function(){try{var r=localStorage.getItem('milliontcg_community_listings');if(r){var a=JSON.parse(r);if(Array.isArray(a)){var c=a.filter(function(i){return i&&i.id&&String(i.id).indexOf('seed')===-1;});localStorage.setItem('milliontcg_community_listings',JSON.stringify(c));}}}catch(e){}})();</script>
   <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
@@ -385,7 +385,7 @@
     </div>
   </footer>
 
-  <script src="main.js?v=17"></script>
+  <script src="main.js?v=18"></script>
   <script>setTimeout(function() { if (typeof initHero3DScene === 'function') initHero3DScene(); }, 100);</script>
   <script src="auth.js?v=7"></script>
   <script>
