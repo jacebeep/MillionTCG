@@ -12,6 +12,14 @@
   --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --transition-fast: 0.2s ease;
   --transition-normal: 0.3s ease;
+
+  /* Dynamic Theme & Color Customization Variables */
+  --primary-color: #ff4757;
+  --primary-rgb: 255, 71, 87;
+  --primary-hover: #e84118;
+  --primary-glow: rgba(255, 71, 87, 0.4);
+  --accent-color: #ff6b81;
+  --btn-gradient: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
 }
 
 * {
@@ -3566,5 +3574,158 @@ html, body {
   border-color: #ffffff;
   opacity: 1;
 }
+
+/* ═══════════════════════════════════════
+   DYNAMIC THEME & USER PROFILE SETTINGS
+═══════════════════════════════════════ */
+
+/* Dynamic theme overrides for buttons & highlights */
+.btn-primary,
+.btn-submit-listing,
+.btn-save-payout,
+.auth-submit-btn,
+.checkout-btn {
+  background: var(--btn-gradient) !important;
+  box-shadow: 0 4px 15px var(--primary-glow) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-submit-listing:hover,
+.btn-save-payout:hover,
+.auth-submit-btn:hover,
+.checkout-btn:hover {
+  filter: brightness(1.15);
+  box-shadow: 0 6px 20px var(--primary-glow) !important;
+}
+
+.auth-tab-btn.active {
+  border-bottom-color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+.seller-badge,
+.vip-badge,
+.card-tag {
+  background: rgba(var(--primary-rgb), 0.15) !important;
+  border: 1px solid var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+
+/* User Profile Modal Customizations */
+.profile-modal-box {
+  max-width: 580px !important;
+}
+
+.profile-section-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 18px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Theme Swatches Selector */
+.theme-swatches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.theme-swatch-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #a0a0a0;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.theme-swatch-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+}
+
+.theme-swatch-btn.active {
+  border-color: var(--primary-color);
+  background: rgba(var(--primary-rgb), 0.15);
+  color: #ffffff;
+}
+
+.swatch-color-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.custom-color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 8px;
+}
+
+.custom-color-input {
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  background: none;
+}
+
+.banking-info-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.banking-badge-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.banking-badge-status.unlinked {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+  border-color: rgba(255, 107, 107, 0.3);
+}
+
 
 

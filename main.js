@@ -1310,25 +1310,13 @@ function initSellerSystem() {
       navAuthBtn.textContent = currentUser ? `@${currentUser.handle}` : 'ACCOUNT';
     }
 
-    if (accountStateBox) {
-      if (currentUser) {
-        accountStateBox.innerHTML = `
-          <div class="user-logged-badge">
-            <span>Logged in as: <strong>@${currentUser.handle}</strong> ✓ Verified Seller</span>
-            <button class="btn-logout" id="btn-logout">Log Out</button>
-          </div>
-        `;
-        document.getElementById('btn-logout').addEventListener('click', () => {
-          currentUser = null;
-          localStorage.removeItem('milliontcg_user_account');
-          updateAccountUI();
-        });
-      } else {
-        accountStateBox.innerHTML = `
-          <button class="btn-primary" id="hero-create-acc-btn" style="padding: 10px 24px; font-size: 0.85rem;">CREATE SELLER ACCOUNT TO LIST CARDS</button>
-        `;
-        document.getElementById('hero-create-acc-btn').addEventListener('click', () => openAuthModal('signup'));
-      }
+    const openProfileBankingBtn = document.getElementById('open-profile-banking-btn');
+    if (openProfileBankingBtn) {
+      openProfileBankingBtn.addEventListener('click', () => {
+        if (window.MillionAuth && typeof window.MillionAuth.openAuthModal === 'function') {
+          window.MillionAuth.openAuthModal('profile');
+        }
+      });
     }
 
     if (sellerWorkspace) {
@@ -1360,11 +1348,15 @@ function initSellerSystem() {
   const accountVerifiedStatus = document.getElementById('account-verified-status');
 
   function updatePayoutAccountUI() {
-    if (currentUser && currentUser.payoutAccount) {
-      if (payoutDestInput) payoutDestInput.value = currentUser.payoutAccount.dest || '';
-      if (payoutNameInput) payoutNameInput.value = currentUser.payoutAccount.name || '';
-      if (payoutRoutingInput) payoutRoutingInput.value = currentUser.payoutAccount.routing || '';
-      if (payoutMethodSelect) payoutMethodSelect.value = currentUser.payoutAccount.type || 'bank';
+    const bankingInfo = (window.MillionAuth && typeof window.MillionAuth.getBankingInfo === 'function') 
+      ? window.MillionAuth.getBankingInfo() 
+      : ((currentUser && currentUser.payoutAccount) ? currentUser.payoutAccount : {});
+
+    if (bankingInfo && (bankingInfo.dest || bankingInfo.name)) {
+      if (payoutDestInput) payoutDestInput.value = bankingInfo.dest || '';
+      if (payoutNameInput) payoutNameInput.value = bankingInfo.name || '';
+      if (payoutRoutingInput) payoutRoutingInput.value = bankingInfo.routing || '';
+      if (payoutMethodSelect) payoutMethodSelect.value = bankingInfo.type || 'bank';
 
       if (accountVerifiedStatus) {
         accountVerifiedStatus.textContent = '✓ Linked & Verified Account';
@@ -1380,7 +1372,6 @@ function initSellerSystem() {
 
   if (savePayoutBtn) {
     savePayoutBtn.addEventListener('click', () => {
-      if (!currentUser) return;
       const dest = payoutDestInput ? payoutDestInput.value.trim() : '';
       const name = payoutNameInput ? payoutNameInput.value.trim() : '';
       const routing = payoutRoutingInput ? payoutRoutingInput.value.trim() : '';
@@ -1391,10 +1382,16 @@ function initSellerSystem() {
         return;
       }
 
-      currentUser.payoutAccount = { type, name, dest, routing, verified: true, linkedAt: Date.now() };
-      localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
+      const info = { type, name, dest, routing, verified: true, linkedAt: Date.now() };
+      if (window.MillionAuth && typeof window.MillionAuth.saveBankingInfo === 'function') {
+        window.MillionAuth.saveBankingInfo(info);
+      }
+      if (currentUser) {
+        currentUser.payoutAccount = info;
+        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
+      }
       updatePayoutAccountUI();
-      alert(`🎉 SUCCESS! Your ${type.toUpperCase()} Payout Account has been linked & verified. 90% net funds from all card sales will automatically route here!`);
+      alert(`🎉 SUCCESS! Your ${type.toUpperCase()} Payout Account has been saved to your User Profile Settings! 90% net funds from all card sales will automatically route here.`);
     });
   }
 
@@ -1402,11 +1399,13 @@ function initSellerSystem() {
   function renderMyListings() {
     if (!myListingsContainer) return;
     myListingsContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
-    if (!currentUser) { myListingsContainer.innerHTML = ''; return; }
+    
+    // Auto-create seller profile handle if not set
+    const sellerHandle = currentUser ? currentUser.handle : (localStorage.getItem('mtcg_saved_handle') || 'Collector_Portal');
 
     getCommunityListingsAsync().then(allListings => {
       communityListings = allListings;
-      const userItems = allListings.filter(item => item.sellerName === currentUser.handle);
+      const userItems = allListings.filter(item => item.sellerName === sellerHandle || (currentUser && item.sellerName === currentUser.handle));
 
       // Calculate Earnings Breakdown
       const grossTotal = userItems.reduce((acc, i) => acc + (parseFloat(i.price) || 0), 0);
@@ -1439,7 +1438,7 @@ function initSellerSystem() {
           <img class="my-listing-img" src="${item.image || 'images/logo.png'}" alt="${item.title}">
           <div class="my-listing-info">
             <div class="my-listing-title">${item.title}</div>
-            <div class="my-listing-meta">${item.condition} • ${item.category}</div>
+            <div class="my-listing-meta">${item.condition} • ${item.category} • <strong style="color:#4ade80;">READY TO SELL</strong></div>
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
           <div style="display: flex; gap: 8px; align-items: center;">
@@ -1493,10 +1492,11 @@ if (soldOrders.length === 0) {
 
 function renderSoldOrders() {
   const soldContainer = document.getElementById('sold-orders-list');
-  if (!soldContainer || !currentUser) return;
+  if (!soldContainer) return;
   soldContainer.innerHTML = '';
 
-  const userSold = soldOrders.filter(order => order.sellerHandle === currentUser.handle || currentUser.handle === 'PokeVault');
+  const activeHandle = currentUser ? currentUser.handle : 'PokeVault';
+  const userSold = soldOrders.filter(order => order.sellerHandle === activeHandle || activeHandle === 'PokeVault');
 
   if (userSold.length === 0) {
     soldContainer.innerHTML = `
@@ -1709,23 +1709,12 @@ function renderSoldOrders() {
     });
   }
 
-  // Handle Submission
+  // Handle Submission (Instant Readiness & Ready to Sell)
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // Auto-create anonymous seller session if not logged in
-      if (!currentUser) {
-        currentUser = {
-          name: 'Verified Seller',
-          handle: 'PokeSeller_' + Math.floor(1000 + Math.random() * 9000),
-          email: 'seller@milliontcg.com',
-          isVerified: true,
-          joined: Date.now()
-        };
-        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
-        updateAccountUI();
-      }
+      const sellerHandle = currentUser ? currentUser.handle : (localStorage.getItem('mtcg_saved_handle') || ('Collector_' + Math.floor(1000 + Math.random() * 9000)));
 
       const title = document.getElementById('card-title').value.trim();
       const category = document.getElementById('card-category').value;
@@ -1747,17 +1736,21 @@ function renderSoldOrders() {
         category,
         condition,
         price,
-        sellerName: currentUser.handle,
+        sellerName: sellerHandle,
         image,
         gallery,
         desc: description,
+        status: 'active',
+        readyToSell: true,
+        inStock: true,
+        quantity: 1,
         date: Date.now()
       };
 
       // Show saving indicator
       const submitBtn = form.querySelector('[type="submit"]');
       const origText = submitBtn ? submitBtn.textContent : '';
-      if (submitBtn) { submitBtn.textContent = 'Saving...'; submitBtn.disabled = true; }
+      if (submitBtn) { submitBtn.textContent = 'Publishing Live...'; submitBtn.disabled = true; }
 
       saveCommunityListing(newListing).then(() => {
         // Trigger email notification
@@ -1767,10 +1760,11 @@ function renderSoldOrders() {
             Category: category,
             Condition: condition,
             ListingPrice: `$${price.toFixed(2)}`,
-            SellerHandle: `@${currentUser.handle}`,
-            SellerEmail: currentUser.email || 'N/A',
+            SellerHandle: `@${sellerHandle}`,
+            SellerEmail: (currentUser && currentUser.email) ? currentUser.email : 'N/A',
             PhotoCount: `${gallery.length} picture(s) uploaded`,
-            Description: description || 'No description provided'
+            Description: description || 'No description provided',
+            Status: 'ACTIVE - READY TO SELL'
           });
         }
 
@@ -1780,7 +1774,7 @@ function renderSoldOrders() {
         renderMyListings();
 
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
-        alert(`✅ "${title}" with ${gallery.length} photo(s) has been published to the marketplace!\n\nIt will now appear on the Home page and Shop.`);
+        alert(`🚀 SUCCESS! "${title}" is LIVE and READY TO BE SOLD!\n\nYour product is now published on the Home page, Shop, and Product view.`);
       }).catch(err => {
         console.error('[MillionTCG] Submission error:', err);
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }

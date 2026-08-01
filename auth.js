@@ -207,7 +207,7 @@
 
   /* ── UI rendering ── */
   function getInitials(user) {
-    const name = user.displayName || user.email;
+    const name = user ? (user.displayName || user.email) : 'C';
     return name.slice(0, 1).toUpperCase();
   }
 
@@ -222,7 +222,7 @@
         desktopBtn.title = user.displayName;
       } else {
         desktopBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-        desktopBtn.title = 'Sign In';
+        desktopBtn.title = 'Account & Settings';
       }
     }
 
@@ -238,21 +238,28 @@
               <div class="drawer-user-email">${user.email}</div>
             </div>
           </div>
-          <button class="drawer-signout-btn" id="drawer-signout-btn">Sign Out</button>
+          <div style="display:flex; gap:8px;">
+            <button class="drawer-signout-btn" id="drawer-settings-btn" style="flex:1; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2);">⚙️ Settings</button>
+            <button class="drawer-signout-btn" id="drawer-signout-btn" style="flex:1;">Sign Out</button>
+          </div>
         `;
+        document.getElementById('drawer-settings-btn')?.addEventListener('click', () => {
+          document.getElementById('mobile-nav-drawer')?.classList.remove('open');
+          document.getElementById('mobile-nav-overlay')?.classList.remove('active');
+          openAuthModal('profile');
+        });
         document.getElementById('drawer-signout-btn')?.addEventListener('click', signOut);
       } else {
         drawerProfile.innerHTML = `
           <button class="drawer-signin-btn" id="drawer-signin-trigger">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Sign In / Create Account
+            Account / Settings / Colors
           </button>
         `;
         document.getElementById('drawer-signin-trigger')?.addEventListener('click', () => {
-          // close drawer if open
           document.getElementById('mobile-nav-drawer')?.classList.remove('open');
           document.getElementById('mobile-nav-overlay')?.classList.remove('active');
-          openAuthModal('signin');
+          openAuthModal('profile');
         });
       }
     }
@@ -267,6 +274,7 @@
     }
     modal.classList.add('active');
     switchTab(tab);
+    populateProfileFields();
   }
 
   function closeAuthModal() {
@@ -282,14 +290,50 @@
     });
   }
 
+  function populateProfileFields() {
+    const user = getCurrentUser();
+    const banking = getBankingInfo();
+    const savedColor = localStorage.getItem('mtcg_theme_color') || '#ff4757';
+
+    const nameInput = document.getElementById('profile-display-name');
+    const emailInput = document.getElementById('profile-display-email');
+    if (nameInput) nameInput.value = (user && user.displayName) ? user.displayName : localStorage.getItem('mtcg_saved_name') || '';
+    if (emailInput) emailInput.value = (user && user.email) ? user.email : localStorage.getItem('mtcg_saved_email') || '';
+
+    const bankName = document.getElementById('profile-bank-name');
+    const bankMethod = document.getElementById('profile-bank-method');
+    const bankDest = document.getElementById('profile-bank-dest');
+    const bankRouting = document.getElementById('profile-bank-routing');
+    const bankStatus = document.getElementById('profile-banking-status');
+
+    if (bankName) bankName.value = banking.name || '';
+    if (bankMethod) bankMethod.value = banking.type || 'bank';
+    if (bankDest) bankDest.value = banking.dest || '';
+    if (bankRouting) bankRouting.value = banking.routing || '';
+
+    if (bankStatus) {
+      if (banking.name && banking.dest) {
+        bankStatus.textContent = '✓ Linked Payout Account';
+        bankStatus.classList.remove('unlinked');
+      } else {
+        bankStatus.textContent = '⚠️ Unlinked Account';
+        bankStatus.classList.add('unlinked');
+      }
+    }
+
+    applyThemeColor(savedColor);
+  }
+
   function switchTab(tab) {
     const signinPanel = document.getElementById('auth-signin-panel');
     const signupPanel = document.getElementById('auth-signup-panel');
+    const profilePanel = document.getElementById('auth-profile-panel');
     const tabs = document.querySelectorAll('.auth-tab-btn');
     clearErrors();
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
     if (signinPanel) signinPanel.style.display = tab === 'signin' ? 'flex' : 'none';
     if (signupPanel) signupPanel.style.display = tab === 'signup' ? 'flex' : 'none';
+    if (profilePanel) profilePanel.style.display = tab === 'profile' ? 'flex' : 'none';
   }
 
   function buildModal() {
@@ -297,21 +341,22 @@
     modal.id = 'auth-modal';
     modal.className = 'auth-modal-overlay';
     modal.innerHTML = `
-      <div class="auth-modal-box" role="dialog" aria-modal="true" aria-label="Sign In">
+      <div class="auth-modal-box profile-modal-box" role="dialog" aria-modal="true" aria-label="Account Settings">
         <button class="auth-modal-close" id="auth-modal-close" aria-label="Close">✕</button>
 
         <div class="auth-modal-logo">
-          <img src="images/logo.png" alt="MillionTCG" style="height:54px;width:auto;">
-          <div class="auth-modal-brand">MILLION TCG</div>
+          <img src="images/logo.png" alt="MillionTCG" style="height:48px;width:auto;">
+          <div class="auth-modal-brand">MILLION TCG HUB</div>
         </div>
 
         <div class="auth-tabs">
-          <button class="auth-tab-btn active" data-tab="signin">Sign In</button>
+          <button class="auth-tab-btn" data-tab="signin">Sign In</button>
           <button class="auth-tab-btn" data-tab="signup">Create Account</button>
+          <button class="auth-tab-btn active" data-tab="profile">User Profile & Settings ⚙️</button>
         </div>
 
         <!-- Sign In Panel -->
-        <div id="auth-signin-panel" class="auth-panel" style="display:flex;">
+        <div id="auth-signin-panel" class="auth-panel" style="display:none;">
           <p class="auth-panel-sub">Welcome back, collector.</p>
           <div class="auth-error" id="auth-signin-error"></div>
           <div class="auth-field">
@@ -345,6 +390,80 @@
           <button class="auth-submit-btn" id="signup-submit-btn">Create Account</button>
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
+
+        <!-- Profile & Settings Panel -->
+        <div id="auth-profile-panel" class="auth-panel" style="display:flex; flex-direction:column; gap:12px;">
+          <p class="auth-panel-sub">Manage your profile, banking payouts, & theme colors.</p>
+          
+          <!-- Banking & Payout Settings -->
+          <div class="profile-section-title">🏦 Banking Information Settings</div>
+          <div class="banking-info-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <span style="font-size:0.78rem; font-weight:700; color:#aaa;">PAYOUT ACCOUNT STATUS</span>
+              <span class="banking-badge-status" id="profile-banking-status">⚠️ Unlinked</span>
+            </div>
+            <div class="auth-field">
+              <label>Account Holder Legal Name</label>
+              <input type="text" id="profile-bank-name" placeholder="Full Legal Name (e.g. Alex Mercer)">
+            </div>
+            <div class="auth-field" style="margin-top:10px;">
+              <label>Payout Method</label>
+              <select id="profile-bank-method" style="background:#1a1a1a; border:1px solid #333; color:#fff; padding:10px; border-radius:8px; width:100%;">
+                <option value="bank">Bank ACH Direct Deposit</option>
+                <option value="paypal">PayPal Business</option>
+                <option value="venmo">Venmo Account</option>
+                <option value="stripe">Stripe Express</option>
+                <option value="zelle">Zelle Pay</option>
+              </select>
+            </div>
+            <div class="auth-field" style="margin-top:10px;">
+              <label>Email / Account # / Handle</label>
+              <input type="text" id="profile-bank-dest" placeholder="e.g. alex@paypal.com or Account #123456">
+            </div>
+            <div class="auth-field" style="margin-top:10px;">
+              <label>Bank Routing # (9 Digits)</label>
+              <input type="text" id="profile-bank-routing" placeholder="e.g. 021000021">
+            </div>
+            <button type="button" class="auth-submit-btn" id="save-banking-btn" style="margin-top:14px;">
+              SAVE BANKING INFORMATION 🏦
+            </button>
+          </div>
+
+          <!-- Color & Theme Customizations -->
+          <div class="profile-section-title">🎨 Color & Theme Customization</div>
+          <p style="font-size:0.78rem; color:#a0a0a0; margin-bottom:6px;">Choose an accent color theme for the site:</p>
+          <div class="theme-swatches-grid">
+            <button type="button" class="theme-swatch-btn active" data-color="#ff4757">
+              <div class="swatch-color-dot" style="background:#ff4757;"></div>
+              <span>Crimson</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-color="#a855f7">
+              <div class="swatch-color-dot" style="background:#a855f7;"></div>
+              <span>Violet</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-color="#00d2d3">
+              <div class="swatch-color-dot" style="background:#00d2d3;"></div>
+              <span>Cyan</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-color="#ffd700">
+              <div class="swatch-color-dot" style="background:#ffd700;"></div>
+              <span>Gold</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-color="#2ecc71">
+              <div class="swatch-color-dot" style="background:#2ecc71;"></div>
+              <span>Emerald</span>
+            </button>
+            <button type="button" class="theme-swatch-btn" data-color="#ff007f">
+              <div class="swatch-color-dot" style="background:#ff007f;"></div>
+              <span>Rose</span>
+            </button>
+          </div>
+
+          <div class="custom-color-picker-wrapper">
+            <span style="font-size:0.8rem; font-weight:700;">Custom Primary Color</span>
+            <input type="color" id="profile-custom-color" class="custom-color-input" value="#ff4757">
+          </div>
+        </div>
       </div>
     `;
 
@@ -354,6 +473,39 @@
         e.preventDefault();
         switchTab(el.dataset.tab);
       });
+    });
+
+    // Theme Swatches
+    modal.querySelectorAll('.theme-swatch-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const color = btn.dataset.color;
+        applyThemeColor(color);
+      });
+    });
+
+    // Custom Color Picker
+    const customColorInput = modal.querySelector('#profile-custom-color');
+    if (customColorInput) {
+      customColorInput.addEventListener('input', (e) => {
+        applyThemeColor(e.target.value);
+      });
+    }
+
+    // Save Banking Info
+    modal.querySelector('#save-banking-btn')?.addEventListener('click', () => {
+      const name = document.getElementById('profile-bank-name').value.trim();
+      const type = document.getElementById('profile-bank-method').value;
+      const dest = document.getElementById('profile-bank-dest').value.trim();
+      const routing = document.getElementById('profile-bank-routing').value.trim();
+
+      if (!name || !dest) {
+        alert('Please enter your Legal Account Holder Name and Account/Email details.');
+        return;
+      }
+
+      saveBankingInfo({ name, type, dest, routing, verified: true, linkedAt: Date.now() });
+      populateProfileFields();
+      alert(`🎉 SUCCESS! Banking Information saved to your profile (${type.toUpperCase()}).`);
     });
 
     // Close
@@ -401,7 +553,6 @@
   function handleDesktopAuthClick() {
     const user = getCurrentUser();
     if (user) {
-      // Toggle a small dropdown
       let dd = document.getElementById('auth-desktop-dropdown');
       if (!dd) {
         dd = document.createElement('div');
@@ -415,16 +566,20 @@
               <div class="auth-dd-email">${user.email}</div>
             </div>
           </div>
-          <hr class="auth-dd-divider">
+          <button class="auth-dd-signout" id="auth-dd-profile-btn" style="margin-bottom:8px; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2);">⚙️ Profile & Settings</button>
           <button class="auth-dd-signout" id="auth-dd-signout">Sign Out</button>
         `;
         document.getElementById('auth-desktop-btn').parentElement.style.position = 'relative';
         document.getElementById('auth-desktop-btn').parentElement.appendChild(dd);
+        
+        document.getElementById('auth-dd-profile-btn').addEventListener('click', () => {
+          dd.remove();
+          openAuthModal('profile');
+        });
         document.getElementById('auth-dd-signout').addEventListener('click', () => {
           signOut();
           dd.remove();
         });
-        // Close on outside click
         setTimeout(() => {
           document.addEventListener('click', function onOutside(e) {
             if (!dd.contains(e.target) && e.target !== document.getElementById('auth-desktop-btn')) {
@@ -437,17 +592,16 @@
         dd.remove();
       }
     } else {
-      openAuthModal('signin');
+      openAuthModal('profile');
     }
   }
 
   /* ── Init ── */
   function init() {
-    // Desktop button
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
 
-    // Mobile drawer open-modal trigger (set up on drawer open)
+    loadSavedThemeColor();
     updateAllAuthUI();
     autoFillFormInputs();
     setupInputAutoSaveListeners();
@@ -459,6 +613,6 @@
     init();
   }
 
-  // Expose for external use if needed
-  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal, autoFillFormInputs };
+  // Expose for external use
+  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal, autoFillFormInputs, applyThemeColor, getBankingInfo, saveBankingInfo };
 })();
