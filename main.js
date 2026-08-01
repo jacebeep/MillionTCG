@@ -1019,13 +1019,84 @@ try {
   currentUser = null;
 }
 
-let communityListings = [];
-try {
-  communityListings = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
-  if (!Array.isArray(communityListings)) communityListings = [];
-} catch (e) {
-  communityListings = [];
+const DEFAULT_COMMUNITY_LISTINGS = [
+  {
+    id: 'user_seed_1',
+    title: 'Pokémon TCG: Scarlet & Violet 151 Booster Pack (Factory Sealed)',
+    category: 'Sealed Product',
+    condition: 'Factory Sealed Pack',
+    price: 14.99,
+    sellerName: 'PokeMaster99',
+    image: 'images/pokemon-30th-vol2-pack.jpg',
+    gallery: [
+      'images/pokemon-30th-vol2-pack.jpg',
+      'images/pokemon-30th-vol2-boxes.jpg',
+      'images/pokemon-30th-vol2-singlebox.png',
+      'images/pokemon-30th-vol2-cards.jpg',
+      'images/pokemon-30th-vol2-cases.jpg'
+    ],
+    desc: 'Unweighted factory sealed Pokemon 151 booster pack containing 10 authentic cards + code card. Direct from booster box case.',
+    date: Date.now() - 3600000
+  },
+  {
+    id: 'user_seed_2',
+    title: 'Charizard GX Shiny Vault #SV107 (PSA 10 Gem Mint)',
+    category: 'Pokemon',
+    condition: 'PSA 10 (Gem Mint)',
+    price: 189.99,
+    sellerName: 'GemMintCollector',
+    image: 'images/pokemon-30th-vol2-cards.jpg',
+    gallery: [
+      'images/pokemon-30th-vol2-cards.jpg',
+      'images/pokemon-30th-vol2-singlebox.png',
+      'images/pokemon-30th-vol2-boxes.jpg',
+      'images/pokemon-30th-vol2-pack.jpg',
+      'images/pokemon-30th-vol2-cases.jpg'
+    ],
+    desc: 'Certified PSA 10 Gem Mint holographic Shiny Vault Charizard. Pristine surface, perfect centering, zero whitening.',
+    date: Date.now() - 7200000
+  },
+  {
+    id: 'user_seed_3',
+    title: 'Pikachu Special Art Foil 30th Anniversary Promo',
+    category: 'Single Card',
+    condition: 'Near Mint (Raw)',
+    price: 49.99,
+    sellerName: 'TokyoTCGVault',
+    image: 'images/pokemon-30th-vol2-singlebox.png',
+    gallery: [
+      'images/pokemon-30th-vol2-singlebox.png',
+      'images/pokemon-30th-vol2-cards.jpg',
+      'images/pokemon-30th-vol2-boxes.jpg',
+      'images/pokemon-30th-vol2-pack.jpg'
+    ],
+    desc: 'Freshly pulled Pikachu Special Art Promo card from partner collection. Sleeved immediately after opening.',
+    date: Date.now() - 10800000
+  }
+];
+
+function getCommunityListings() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
+    if (!Array.isArray(list) || list.length === 0) {
+      list = DEFAULT_COMMUNITY_LISTINGS;
+      localStorage.setItem('milliontcg_community_listings', JSON.stringify(list));
+    }
+  } catch (e) {
+    list = DEFAULT_COMMUNITY_LISTINGS;
+  }
+  return list;
 }
+
+function saveCommunityListing(newListing) {
+  const current = getCommunityListings();
+  current.unshift(newListing);
+  localStorage.setItem('milliontcg_community_listings', JSON.stringify(current));
+  window.dispatchEvent(new Event('storage'));
+}
+
+let communityListings = getCommunityListings();
 
 function initSellerSystem() {
   const authModal = document.getElementById('auth-modal');
@@ -1567,8 +1638,8 @@ function renderSoldOrders() {
         date: Date.now()
       };
 
-      communityListings.unshift(newListing);
-      localStorage.setItem('milliontcg_community_listings', JSON.stringify(communityListings));
+      saveCommunityListing(newListing);
+      communityListings = getCommunityListings();
 
       // Trigger direct email notification for new Card / Product Listed
       if (typeof window.sendDirectEmailNotification === 'function') {
