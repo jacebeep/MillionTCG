@@ -97,10 +97,10 @@ function updateCartUI() {
               <p class="cart-item-price">$${itemPrice.toFixed(2)} x ${itemQty}</p>
             </div>
             <div class="cart-item-controls">
-              <button type="button" onclick="changeQuantity(${item.id}, -1)">-</button>
+              <button type="button" onclick="changeQuantity('${item.id}', -1)">-</button>
               <span>${itemQty}</span>
-              <button type="button" onclick="changeQuantity(${item.id}, 1)">+</button>
-              <button type="button" onclick="removeFromCart(${item.id})" class="remove-btn">✕</button>
+              <button type="button" onclick="changeQuantity('${item.id}', 1)">+</button>
+              <button type="button" onclick="removeFromCart('${item.id}')" class="remove-btn">✕</button>
             </div>
           </div>
         `;
