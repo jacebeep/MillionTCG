@@ -3566,85 +3566,148 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   background: #ffffff;
   color: #000000;
-  font-weight: 800;
-  font-size: 0.85rem;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  font-weight: 900;
+  font-size: 0.9rem;
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.auth-avatar:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.4);
 }
 
 .auth-desktop-dropdown {
   position: absolute;
   top: 100%;
   right: 0;
-  margin-top: 8px;
+  margin-top: 10px;
   background: #111116;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 14px;
-  width: 220px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8);
+  width: 270px;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9);
   z-index: 99999;
-}
-
-.auth-dd-user {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
 }
 
+.auth-dd-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .auth-dd-avatar {
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: #ffffff;
   color: #000000;
-  font-weight: 800;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.auth-dd-user-info {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .auth-dd-name {
-  font-weight: 800;
-  font-size: 0.85rem;
+  font-weight: 900;
+  font-size: 0.9rem;
   color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .auth-dd-email {
   font-size: 0.72rem;
   color: #a0a0a0;
-  word-break: break-all;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.auth-dd-divider {
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  margin: 10px 0;
+.auth-dd-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.auth-dd-signout {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #ffffff;
-  padding: 8px;
+.auth-dd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e4e4e7;
+  padding: 10px 12px;
   border-radius: 8px;
+  font-size: 0.82rem;
   font-weight: 700;
-  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.auth-dd-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  transform: translateX(2px);
+}
+
+.auth-dd-icon {
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-dd-footer {
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.auth-dd-signout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 10px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.82rem;
   cursor: pointer;
   width: 100%;
-  text-align: center;
   transition: all 0.2s ease;
 }
 
-.auth-dd-signout:hover {
+.auth-dd-signout-btn:hover {
   background: #ffffff;
   color: #000000;
+  border-color: #ffffff;
 }
 
 /* Shop Now Button Explicit Styling */
