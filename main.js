@@ -36,32 +36,6 @@ const PRODUCTS = [
     shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
     condition: "Original Sealed Boxes & Case",
     bulkNegotiable: true
-  },
-const PRODUCTS = [
-  { 
-    id: 17, 
-    name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
-    price: 250.00, 
-    category: "Sealed Product", 
-    image: "images/pokemon-30th-vol2-boxes.jpg", 
-    tag: "PRE-ORDER", 
-    desc: "Original Factory Sealed Boxes & Case. Official release June 19, 2026. Features Chikorita, Cyndaquil, Totodile & 9 special art foil promo cards.",
-    gallery: [
-      "images/pokemon-30th-vol2-boxes.jpg",
-      "images/pokemon-30th-vol2-cases.jpg",
-      "images/pokemon-30th-vol2-singlebox.png",
-      "images/pokemon-30th-vol2-cards.jpg",
-      "images/pokemon-30th-vol2-pack.jpg"
-    ],
-    bundleOptions: [
-      { count: 2, label: "2 Boxes Bundle", price: 250.00 },
-      { count: 4, label: "4 Boxes Bundle", price: 400.00 },
-      { count: 8, label: "8 Boxes (Sealed Case)", price: 600.00 }
-    ],
-    dispatchTime: "2 Days after order date",
-    shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
-    condition: "Original Sealed Boxes & Case",
-    bulkNegotiable: true
   }
 ];
 
