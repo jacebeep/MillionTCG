@@ -743,8 +743,8 @@ function initHero3DScene() {
       packGroup.position.set(0.65, 0.96, 0);
     } else {
       // Desktop default offset
-      benchGroup.position.set(0.8, 0, -0.2);
-      packGroup.position.set(1.4, 0.96, 0);
+      benchGroup.position.set(0.5, 0, -0.2);
+      packGroup.position.set(1.1, 0.96, 0);
     }
   }
   updateLayoutForMobile();
@@ -801,7 +801,7 @@ function initHero3DScene() {
         armRightGroup.rotation.x = Math.cos(time * 2) * 0.05;
       }
 
-      const nerdBaseX = isMobile ? 0 : 0.8;
+      const nerdBaseX = isMobile ? 0 : 0.5;
       const nerdBaseY = 0.95;
 
       nerd.position.set(nerdBaseX, nerdBaseY + Math.sin(time * 2) * 0.02, -0.1);
