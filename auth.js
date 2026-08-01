@@ -293,10 +293,18 @@
     });
   }
 
+  function apply3DBackgroundColor(hexColor) {
+    if (!hexColor) return;
+    localStorage.setItem('mtcg_3d_bg_color', hexColor);
+    if (typeof window.update3DBackgroundColor === 'function') {
+      window.update3DBackgroundColor(hexColor);
+    }
+  }
+
   function populateProfileFields() {
     const user = getCurrentUser();
     const banking = getBankingInfo();
-    const savedColor = localStorage.getItem('mtcg_theme_color') || '#ff4757';
+    const saved3DColor = localStorage.getItem('mtcg_3d_bg_color') || '#141416';
 
     // Profile Name & Email
     const nameInput = document.getElementById('profile-display-name');
@@ -341,19 +349,30 @@
     if (netEl) netEl.textContent = '$' + netPayout.toFixed(2);
     if (countEl) countEl.textContent = myListings.length;
 
-    applyThemeColor(savedColor);
+    // 3D Color Picker input
+    const colorPicker = document.getElementById('profile-3d-color-picker');
+    if (colorPicker) colorPicker.value = saved3DColor.startsWith('#') ? saved3DColor : '#141416';
+
+    apply3DBackgroundColor(saved3DColor);
   }
 
   function switchTab(tab) {
     const signinPanel = document.getElementById('auth-signin-panel');
     const signupPanel = document.getElementById('auth-signup-panel');
     const profilePanel = document.getElementById('auth-profile-panel');
+    const bankingPanel = document.getElementById('auth-banking-panel');
+    const settingsPanel = document.getElementById('auth-settings-panel');
+    const colorsPanel = document.getElementById('auth-colors-panel');
     const tabs = document.querySelectorAll('.auth-tab-btn');
     clearErrors();
     tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+
     if (signinPanel) signinPanel.style.display = tab === 'signin' ? 'flex' : 'none';
     if (signupPanel) signupPanel.style.display = tab === 'signup' ? 'flex' : 'none';
     if (profilePanel) profilePanel.style.display = tab === 'profile' ? 'flex' : 'none';
+    if (bankingPanel) bankingPanel.style.display = tab === 'banking' ? 'flex' : 'none';
+    if (settingsPanel) settingsPanel.style.display = tab === 'settings' ? 'flex' : 'none';
+    if (colorsPanel) colorsPanel.style.display = tab === 'colors' ? 'flex' : 'none';
   }
 
   function buildModal() {
@@ -361,22 +380,34 @@
     modal.id = 'auth-modal';
     modal.className = 'auth-modal-overlay';
     modal.innerHTML = `
-      <div class="auth-modal-box profile-modal-box" role="dialog" aria-modal="true" aria-label="Account Settings">
-        <button class="auth-modal-close" id="auth-modal-close" aria-label="Close">✕</button>
+      <div class="auth-modal-box profile-modal-box" role="dialog" aria-modal="true" aria-label="Account & Profile Settings">
+        
+        <!-- Modal Top Bar with Back Button -->
+        <div class="auth-modal-top-bar" style="display:flex; justify-content:space-between; align-items:center; width:100%; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; margin-bottom:8px;">
+          <button class="auth-modal-back-btn" id="auth-modal-back-btn" type="button" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:6px 14px; border-radius:8px; font-weight:700; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; gap:6px;">
+            ← Back to Store
+          </button>
 
-        <div class="auth-modal-logo">
-          <img src="images/logo.png" alt="MillionTCG" style="height:48px;width:auto;">
-          <div class="auth-modal-brand">MILLION TCG HUB</div>
+          <div class="auth-modal-logo" style="display:flex; align-items:center; gap:8px;">
+            <img src="images/logo.png" alt="MillionTCG" style="height:32px;width:auto;">
+            <div class="auth-modal-brand" style="font-weight:900; font-size:0.95rem; letter-spacing:1px;">MILLION TCG HUB</div>
+          </div>
+
+          <button class="auth-modal-close" id="auth-modal-close" aria-label="Close" style="background:none; border:none; color:#aaa; font-size:1.2rem; cursor:pointer; padding:4px 8px;">✕</button>
         </div>
 
-        <div class="auth-tabs">
+        <!-- Navigation Tabs -->
+        <div class="auth-tabs" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
           <button class="auth-tab-btn" data-tab="signin">Sign In</button>
           <button class="auth-tab-btn" data-tab="signup">Create Account</button>
-          <button class="auth-tab-btn active" data-tab="profile">User Profile & Settings ⚙️</button>
+          <button class="auth-tab-btn active" data-tab="profile">Profile & Earnings 👤</button>
+          <button class="auth-tab-btn" data-tab="banking">Banking Payouts 🏦</button>
+          <button class="auth-tab-btn" data-tab="settings">Settings & Layout ⚙️</button>
+          <button class="auth-tab-btn" data-tab="colors">3D Background Color 🎨</button>
         </div>
 
         <!-- Sign In Panel -->
-        <div id="auth-signin-panel" class="auth-panel" style="display:none;">
+        <div id="auth-signin-panel" class="auth-panel" style="display:none; flex-direction:column; gap:12px;">
           <p class="auth-panel-sub">Welcome back, collector.</p>
           <div class="auth-error" id="auth-signin-error"></div>
           <div class="auth-field">
@@ -392,7 +423,7 @@
         </div>
 
         <!-- Sign Up Panel -->
-        <div id="auth-signup-panel" class="auth-panel" style="display:none;">
+        <div id="auth-signup-panel" class="auth-panel" style="display:none; flex-direction:column; gap:12px;">
           <p class="auth-panel-sub">Join the MillionTCG community.</p>
           <div class="auth-error" id="auth-signup-error"></div>
           <div class="auth-field">
@@ -411,12 +442,12 @@
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
 
-        <!-- Profile & Settings Panel -->
+        <!-- Profile & Earnings Panel -->
         <div id="auth-profile-panel" class="auth-panel" style="display:flex; flex-direction:column; gap:12px;">
-          <p class="auth-panel-sub">Manage your profile, earnings, banking payouts, & theme colors.</p>
+          <p class="auth-panel-sub">Manage your account profile details & seller earnings.</p>
 
           <!-- User Account Info -->
-          <div class="profile-section-title">👤 Account Information</div>
+          <div class="profile-section-title">👤 Account Details</div>
           <div class="banking-info-card">
             <div class="auth-field">
               <label>Display Name</label>
@@ -432,9 +463,9 @@
           </div>
 
           <!-- Seller Earnings & Payouts -->
-          <div class="profile-section-title">💰 Seller Earnings & Payouts</div>
+          <div class="profile-section-title">💰 Seller Earnings & Payout Summary</div>
           <div class="banking-info-card">
-            <div class="payout-stats-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin-bottom:16px;">
+            <div class="payout-stats-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; margin-bottom:12px;">
               <div class="payout-stat" style="background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:12px; text-align:center;">
                 <span style="display:block; font-size:0.7rem; font-weight:700; color:#a0a0a0; letter-spacing:1px; margin-bottom:6px;">TOTAL GROSS</span>
                 <span style="font-size:1.3rem; font-weight:900; color:#fff;" id="profile-gross-sales">$0.00</span>
@@ -453,9 +484,12 @@
               </div>
             </div>
           </div>
-          
-          <!-- Banking & Payout Settings -->
-          <div class="profile-section-title">🏦 Banking Information Settings</div>
+        </div>
+
+        <!-- Banking Panel -->
+        <div id="auth-banking-panel" class="auth-panel" style="display:none; flex-direction:column; gap:12px;">
+          <p class="auth-panel-sub">Manage your direct deposit banking & automated payout details.</p>
+          <div class="profile-section-title">🏦 Banking & Payout Settings</div>
           <div class="banking-info-card">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
               <span style="font-size:0.78rem; font-weight:700; color:#aaa;">PAYOUT ACCOUNT STATUS</span>
@@ -487,44 +521,108 @@
               SAVE BANKING INFORMATION 🏦
             </button>
           </div>
+        </div>
 
-          <!-- Color & Theme Customizations -->
-          <div class="profile-section-title">🎨 Color & Theme Customization</div>
-          <p style="font-size:0.78rem; color:#a0a0a0; margin-bottom:6px;">Choose an accent color theme for the site:</p>
-          <div class="theme-swatches-grid">
-            <button type="button" class="theme-swatch-btn active" data-color="#ff4757">
-              <div class="swatch-color-dot" style="background:#ff4757;"></div>
-              <span>Crimson</span>
-            </button>
-            <button type="button" class="theme-swatch-btn" data-color="#a855f7">
-              <div class="swatch-color-dot" style="background:#a855f7;"></div>
-              <span>Violet</span>
-            </button>
-            <button type="button" class="theme-swatch-btn" data-color="#00d2d3">
-              <div class="swatch-color-dot" style="background:#00d2d3;"></div>
-              <span>Cyan</span>
-            </button>
-            <button type="button" class="theme-swatch-btn" data-color="#ffd700">
-              <div class="swatch-color-dot" style="background:#ffd700;"></div>
-              <span>Gold</span>
-            </button>
-            <button type="button" class="theme-swatch-btn" data-color="#2ecc71">
-              <div class="swatch-color-dot" style="background:#2ecc71;"></div>
-              <span>Emerald</span>
-            </button>
-            <button type="button" class="theme-swatch-btn" data-color="#ff007f">
-              <div class="swatch-color-dot" style="background:#ff007f;"></div>
-              <span>Rose</span>
-            </button>
-          </div>
+        <!-- Settings & Layout Panel -->
+        <div id="auth-settings-panel" class="auth-panel" style="display:none; flex-direction:column; gap:12px;">
+          <p class="auth-panel-sub">Configure user options, card grid views, & store layout preferences.</p>
+          <div class="profile-section-title">⚙️ User Settings & Layout Preferences</div>
+          
+          <div class="banking-info-card">
+            <div class="auth-field">
+              <label>Default Store View Layout</label>
+              <select id="setting-layout-mode" style="background:#1a1a1a; border:1px solid #333; color:#fff; padding:10px; border-radius:8px; width:100%;">
+                <option value="grid">Standard 4-Column Card Grid</option>
+                <option value="compact">Compact Dense Grid (Mobile Optimized)</option>
+                <option value="large">Featured Showcase Large Cards</option>
+              </select>
+            </div>
 
-          <div class="custom-color-picker-wrapper">
-            <span style="font-size:0.8rem; font-weight:700;">Custom Primary Color</span>
-            <input type="color" id="profile-custom-color" class="custom-color-input" value="#ff4757">
+            <div class="auth-field" style="margin-top:12px;">
+              <label>3D Hero Stage Animation</label>
+              <select id="setting-3d-motion" style="background:#1a1a1a; border:1px solid #333; color:#fff; padding:10px; border-radius:8px; width:100%;">
+                <option value="enabled">Active 3D Interactive Bench & Motion</option>
+                <option value="reduced">Reduced Motion (Static Lighting)</option>
+              </select>
+            </div>
+
+            <div class="auth-field" style="margin-top:12px;">
+              <label>Persistent Sign In Session</label>
+              <select id="setting-auto-session" style="background:#1a1a1a; border:1px solid #333; color:#fff; padding:10px; border-radius:8px; width:100%;">
+                <option value="1">Remember My Account Always (Enabled)</option>
+                <option value="0">Ask Each Session</option>
+              </select>
+            </div>
+
+            <button type="button" class="auth-submit-btn" id="save-settings-btn" style="margin-top:14px;">
+              SAVE LAYOUT PREFERENCES ⚙️
+            </button>
           </div>
         </div>
+
+        <!-- 3D Background Color Panel -->
+        <div id="auth-colors-panel" class="auth-panel" style="display:none; flex-direction:column; gap:12px;">
+          <p class="auth-panel-sub">Customize the color tint of the 3D background stage to make it fit your aesthetic!</p>
+          <div class="profile-section-title">🎨 3D Stage Background Color</div>
+          
+          <div class="banking-info-card">
+            <p style="font-size:0.8rem; color:#a0a0a0; margin-bottom:12px;">Select a preset background color swatch or pick a custom hex color. This tints ONLY the 3D background scene so the rest of the store stays sleek & fits perfectly:</p>
+            
+            <div class="theme-swatches-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap:10px; margin-bottom:16px;">
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#141416">
+                <div class="swatch-color-dot" style="background:#141416; border:1px solid #555;"></div>
+                <span>Studio Dark</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#ff4757">
+                <div class="swatch-color-dot" style="background:#ff4757;"></div>
+                <span>Crimson</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#a855f7">
+                <div class="swatch-color-dot" style="background:#a855f7;"></div>
+                <span>Violet</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#00d2d3">
+                <div class="swatch-color-dot" style="background:#00d2d3;"></div>
+                <span>Cyan</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#ffd700">
+                <div class="swatch-color-dot" style="background:#ffd700;"></div>
+                <span>Gold</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#2ecc71">
+                <div class="swatch-color-dot" style="background:#2ecc71;"></div>
+                <span>Emerald</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#2563eb">
+                <div class="swatch-color-dot" style="background:#2563eb;"></div>
+                <span>Sapphire</span>
+              </button>
+              <button type="button" class="theme-swatch-btn" data-3dcolor="#ff007f">
+                <div class="swatch-color-dot" style="background:#ff007f;"></div>
+                <span>Rose</span>
+              </button>
+            </div>
+
+            <div class="custom-color-picker-wrapper" style="display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:10px 14px; margin-bottom:14px;">
+              <span style="font-size:0.8rem; font-weight:700;">Custom 3D Background Hex Color</span>
+              <input type="color" id="profile-3d-color-picker" class="custom-color-input" value="#141416" style="width:38px; height:38px; border:none; border-radius:50%; cursor:pointer; background:none;">
+            </div>
+
+            <div style="display:flex; gap:10px;">
+              <button type="button" class="auth-submit-btn" id="reset-3d-color-btn" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; flex:1;">
+                RESET TO DEFAULT DARK ↺
+              </button>
+            </div>
+          </div>
+        </div>
+
       </div>
     `;
+
+    // Back button & Close button handlers
+    modal.querySelector('#auth-modal-back-btn')?.addEventListener('click', closeAuthModal);
+    modal.querySelector('#auth-modal-close')?.addEventListener('click', closeAuthModal);
+    modal.addEventListener('click', e => { if (e.target === modal) closeAuthModal(); });
 
     // Tab switching
     modal.querySelectorAll('.auth-tab-btn, .auth-switch-link').forEach(el => {
@@ -534,21 +632,30 @@
       });
     });
 
-    // Theme Swatches
+    // 3D Color Swatches
     modal.querySelectorAll('.theme-swatch-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const color = btn.dataset.color;
-        applyThemeColor(color);
+        const color = btn.dataset['3dcolor'] || btn.dataset.color;
+        apply3DBackgroundColor(color);
+        const picker = document.getElementById('profile-3d-color-picker');
+        if (picker && color && color.startsWith('#')) picker.value = color;
       });
     });
 
-    // Custom Color Picker
-    const customColorInput = modal.querySelector('#profile-custom-color');
+    // Custom 3D Color Picker
+    const customColorInput = modal.querySelector('#profile-3d-color-picker');
     if (customColorInput) {
       customColorInput.addEventListener('input', (e) => {
-        applyThemeColor(e.target.value);
+        apply3DBackgroundColor(e.target.value);
       });
     }
+
+    // Reset 3D Color
+    modal.querySelector('#reset-3d-color-btn')?.addEventListener('click', () => {
+      apply3DBackgroundColor('#141416');
+      const picker = document.getElementById('profile-3d-color-picker');
+      if (picker) picker.value = '#141416';
+    });
 
     // Save Profile Name
     modal.querySelector('#save-profile-btn')?.addEventListener('click', () => {
@@ -558,7 +665,6 @@
       if (user) {
         user.displayName = newName;
         setCurrentUser(user);
-        // Also update in users store
         const users = getUsers();
         if (users[user.email]) { users[user.email].displayName = newName; saveUsers(users); }
         updateAllAuthUI();
@@ -586,12 +692,21 @@
       alert(`🎉 SUCCESS! Banking Information saved to your profile (${type.toUpperCase()}).`);
     });
 
-    // Close
-    modal.querySelector('#auth-modal-close').addEventListener('click', closeAuthModal);
-    modal.addEventListener('click', e => { if (e.target === modal) closeAuthModal(); });
+    // Save Settings & Layout Preferences
+    modal.querySelector('#save-settings-btn')?.addEventListener('click', () => {
+      const layoutMode = document.getElementById('setting-layout-mode')?.value;
+      const motion3D = document.getElementById('setting-3d-motion')?.value;
+      const autoSession = document.getElementById('setting-auto-session')?.value;
+
+      localStorage.setItem('mtcg_layout_mode', layoutMode || 'grid');
+      localStorage.setItem('mtcg_3d_motion', motion3D || 'enabled');
+      localStorage.setItem('mtcg_auto_session', autoSession || '1');
+
+      alert('⚙️ Store Layout & Settings preferences saved!');
+    });
 
     // Sign In submit
-    modal.querySelector('#signin-submit-btn').addEventListener('click', () => {
+    modal.querySelector('#signin-submit-btn')?.addEventListener('click', () => {
       const email = document.getElementById('signin-email').value.trim();
       const password = document.getElementById('signin-password').value;
       const errEl = document.getElementById('auth-signin-error');
@@ -603,7 +718,7 @@
     });
 
     // Sign Up submit
-    modal.querySelector('#signup-submit-btn').addEventListener('click', () => {
+    modal.querySelector('#signup-submit-btn')?.addEventListener('click', () => {
       const name = document.getElementById('signup-name').value.trim();
       const email = document.getElementById('signup-email').value.trim();
       const password = document.getElementById('signup-password').value;
@@ -619,9 +734,9 @@
     // Enter key submits
     modal.addEventListener('keydown', e => {
       if (e.key !== 'Enter') return;
-      const signinVisible = document.getElementById('auth-signin-panel').style.display !== 'none';
-      if (signinVisible) modal.querySelector('#signin-submit-btn').click();
-      else modal.querySelector('#signup-submit-btn').click();
+      const signinVisible = document.getElementById('auth-signin-panel')?.style.display !== 'none';
+      if (signinVisible) modal.querySelector('#signin-submit-btn')?.click();
+      else modal.querySelector('#signup-submit-btn')?.click();
     });
 
     return modal;
@@ -679,7 +794,9 @@
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
 
-    loadSavedThemeColor();
+    const saved3DColor = localStorage.getItem('mtcg_3d_bg_color') || '#141416';
+    apply3DBackgroundColor(saved3DColor);
+
     updateAllAuthUI();
     autoFillFormInputs();
     setupInputAutoSaveListeners();
@@ -692,5 +809,5 @@
   }
 
   // Expose for external use
-  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal, autoFillFormInputs, applyThemeColor, getBankingInfo, saveBankingInfo };
+  window.MillionAuth = { signIn, signUp, signOut, getCurrentUser, openAuthModal, autoFillFormInputs, apply3DBackgroundColor, getBankingInfo, saveBankingInfo };
 })();

@@ -503,6 +503,8 @@ function initHero3DScene() {
   scene.background = new THREE.Color(0x141416); // High-contrast monochrome dark studio room
   scene.fog = new THREE.FogExp2(0x141416, 0.015);
 
+  window._heroThreeScene = scene;
+
   // --- CAMERA (Zoomed Out for Wide 3D Stage Field of View) ---
   const aspect = width / height;
   const camera = new THREE.PerspectiveCamera(55, aspect, 0.1, 100);
@@ -518,6 +520,8 @@ function initHero3DScene() {
     renderer.setClearColor(0x141416, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+    window._heroThreeRenderer = renderer;
 
     // Store renderer so bfcache re-init can dispose it before re-creating
     canvas.userData.renderer = renderer;
@@ -548,6 +552,33 @@ function initHero3DScene() {
   spotLight.position.set(0, 8, 5);
   spotLight.castShadow = true;
   scene.add(spotLight);
+
+  window._heroThreeSpotLight = spotLight;
+
+  // Global helper to dynamically update ONLY 3D background color
+  window.update3DBackgroundColor = function(hexColor) {
+    if (!hexColor) return;
+    localStorage.setItem('mtcg_3d_bg_color', hexColor);
+    try {
+      if (window._heroThreeScene && typeof THREE !== 'undefined') {
+        const c = new THREE.Color(hexColor);
+        window._heroThreeScene.background = c;
+        if (window._heroThreeScene.fog) window._heroThreeScene.fog.color = c;
+        if (window._heroThreeRenderer) window._heroThreeRenderer.setClearColor(c, 1);
+      }
+    } catch(e) {}
+    window._hero2DCustomColor = hexColor;
+    const heroBgContainer = document.getElementById('hero-3d-container');
+    if (heroBgContainer) {
+      heroBgContainer.style.background = hexColor;
+    }
+  };
+
+  // Restore saved 3D background color if set
+  const saved3DColor = localStorage.getItem('mtcg_3d_bg_color');
+  if (saved3DColor && typeof window.update3DBackgroundColor === 'function') {
+    window.update3DBackgroundColor(saved3DColor);
+  }
 
   // --- 3D PERSPECTIVE GRID FLOOR (Monochrome White/Grey Grid) ---
   const floorGeo = new THREE.PlaneGeometry(40, 40);
@@ -1061,8 +1092,9 @@ function initCanvas2DFallback(canvas, container) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const grad = ctx.createRadialGradient(canvas.width * 0.5, canvas.height * 0.4, 50, canvas.width * 0.5, canvas.height * 0.5, canvas.width);
-    grad.addColorStop(0, '#3a3d4d');
-    grad.addColorStop(1, '#22242e');
+    const custom3DCol = window._hero2DCustomColor || localStorage.getItem('mtcg_3d_bg_color') || '#141416';
+    grad.addColorStop(0, custom3DCol);
+    grad.addColorStop(1, '#0a0a0c');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
