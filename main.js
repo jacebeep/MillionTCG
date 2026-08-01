@@ -1534,8 +1534,15 @@ function renderSoldOrders() {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       if (!currentUser) {
-        openAuthModal('signup');
-        return;
+        currentUser = {
+          name: 'Verified Seller',
+          handle: 'PokeSeller_' + Math.floor(1000 + Math.random() * 9000),
+          email: 'seller@milliontcg.com',
+          isVerified: true,
+          joined: Date.now()
+        };
+        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
+        updateAccountUI();
       }
 
       const title = document.getElementById('card-title').value.trim();

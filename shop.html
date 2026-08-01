@@ -184,8 +184,8 @@
     </div>
   </footer>
 
-  <script src="main.js?v=8"></script>
-  <script src="auth.js?v=8"></script>
+  <script src="main.js?v=9"></script>
+  <script src="auth.js?v=9"></script>
   <script>
     function getAllShopProducts() {
       let community = [];
@@ -264,10 +264,27 @@
         }
       });
 
-      if (category === 'All') {
+      if (!category || category === 'All') {
         renderCatalog(all);
+      } else if (category === 'Sealed Product') {
+        const filtered = all.filter(p => 
+          p.category === 'Sealed Product' || 
+          (p.name && /pack|booster|box|sealed/i.test(p.name)) ||
+          (p.desc && /pack|booster|box|sealed/i.test(p.desc))
+        );
+        renderCatalog(filtered);
+      } else if (category === 'Single Card') {
+        const filtered = all.filter(p => 
+          p.category === 'Single Card' || 
+          ['Pokemon', 'Yu-Gi-Oh!', 'Magic The Gathering', 'One Piece', 'Lorcana', 'Other'].includes(p.category)
+        );
+        renderCatalog(filtered);
       } else {
-        const filtered = all.filter(p => p.category === category || (category === 'Single Card' && p.category.includes('Card')));
+        const catLower = category.toLowerCase();
+        const filtered = all.filter(p => 
+          (p.category && p.category.toLowerCase().includes(catLower)) ||
+          (p.name && p.name.toLowerCase().includes(catLower))
+        );
         renderCatalog(filtered);
       }
     }
