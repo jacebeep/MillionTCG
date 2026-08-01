@@ -37,23 +37,31 @@ const PRODUCTS = [
     condition: "Original Sealed Boxes & Case",
     bulkNegotiable: true
   },
-  {
-    id: 101,
-    name: "Charizard VMAX Shiny Vault #SV107 (PSA 10 Gem Mint)",
-    price: 189.99,
-    category: "Single Card",
-    image: "images/pokemon-30th-vol2-cards.jpg",
-    tag: "PSA 10 GEM MINT",
-    desc: "Authentic PSA 10 Gem Mint graded Charizard card with holographic foil finish and certified PSA slab cert #8821941.",
+const PRODUCTS = [
+  { 
+    id: 17, 
+    name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
+    price: 250.00, 
+    category: "Sealed Product", 
+    image: "images/pokemon-30th-vol2-boxes.jpg", 
+    tag: "PRE-ORDER", 
+    desc: "Original Factory Sealed Boxes & Case. Official release June 19, 2026. Features Chikorita, Cyndaquil, Totodile & 9 special art foil promo cards.",
     gallery: [
-      "images/pokemon-30th-vol2-cards.jpg",
-      "images/pokemon-30th-vol2-singlebox.png",
       "images/pokemon-30th-vol2-boxes.jpg",
-      "images/pokemon-30th-vol2-pack.jpg",
-      "images/pokemon-30th-vol2-cases.jpg"
+      "images/pokemon-30th-vol2-cases.jpg",
+      "images/pokemon-30th-vol2-singlebox.png",
+      "images/pokemon-30th-vol2-cards.jpg",
+      "images/pokemon-30th-vol2-pack.jpg"
     ],
-    condition: "PSA 10 Gem Mint Graded",
-    dispatchTime: "1 Day Dispatch"
+    bundleOptions: [
+      { count: 2, label: "2 Boxes Bundle", price: 250.00 },
+      { count: 4, label: "4 Boxes Bundle", price: 400.00 },
+      { count: 8, label: "8 Boxes (Sealed Case)", price: 600.00 }
+    ],
+    dispatchTime: "2 Days after order date",
+    shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
+    condition: "Original Sealed Boxes & Case",
+    bulkNegotiable: true
   }
 ];
 
@@ -66,67 +74,21 @@ try {
   cart = [];
 }
 
-const DEFAULT_COMMUNITY_LISTINGS = [
-  {
-    id: 'user_seed_1',
-    title: 'Pokémon TCG: Scarlet & Violet 151 Booster Pack (Factory Sealed)',
-    category: 'Sealed Product',
-    condition: 'Factory Sealed Pack',
-    price: 14.99,
-    sellerName: 'PokeMaster99',
-    image: 'images/pokemon-30th-vol2-pack.jpg',
-    gallery: [
-      'images/pokemon-30th-vol2-pack.jpg',
-      'images/pokemon-30th-vol2-boxes.jpg',
-      'images/pokemon-30th-vol2-singlebox.png',
-      'images/pokemon-30th-vol2-cards.jpg',
-      'images/pokemon-30th-vol2-cases.jpg'
-    ],
-    desc: 'Unweighted factory sealed Pokemon 151 booster pack containing 10 authentic cards + code card. Direct from booster box case.',
-    date: Date.now() - 3600000
-  },
-  {
-    id: 'user_seed_2',
-    title: 'Charizard GX Shiny Vault #SV107 (PSA 10 Gem Mint)',
-    category: 'Pokemon',
-    condition: 'PSA 10 (Gem Mint)',
-    price: 189.99,
-    sellerName: 'GemMintCollector',
-    image: 'images/pokemon-30th-vol2-cards.jpg',
-    gallery: [
-      'images/pokemon-30th-vol2-cards.jpg',
-      'images/pokemon-30th-vol2-singlebox.png',
-      'images/pokemon-30th-vol2-boxes.jpg',
-      'images/pokemon-30th-vol2-pack.jpg',
-      'images/pokemon-30th-vol2-cases.jpg'
-    ],
-    desc: 'Certified PSA 10 Gem Mint holographic Shiny Vault Charizard. Pristine surface, perfect centering, zero whitening.',
-    date: Date.now() - 7200000
-  }
-];
+const DEFAULT_COMMUNITY_LISTINGS = [];
 
 function getCommunityListings() {
   let list = [];
   try {
     list = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
-    if (!Array.isArray(list) || list.length === 0) {
-      list = DEFAULT_COMMUNITY_LISTINGS;
-      localStorage.setItem('milliontcg_community_listings', JSON.stringify(list));
-    }
+    if (!Array.isArray(list)) list = [];
   } catch (e) {
-    list = DEFAULT_COMMUNITY_LISTINGS;
+    list = [];
   }
   return list;
 }
 
 function saveCommunityListing(newListing) {
-  let current = [];
-  try {
-    current = JSON.parse(localStorage.getItem('milliontcg_community_listings') || '[]');
-    if (!Array.isArray(current)) current = [];
-  } catch (e) {
-    current = [];
-  }
+  let current = getCommunityListings();
   current.unshift(newListing);
   localStorage.setItem('milliontcg_community_listings', JSON.stringify(current));
   try { renderHomeProducts(); } catch (e) {}
@@ -155,7 +117,7 @@ function renderHomeProducts() {
 
   grid.innerHTML = allItems.map(p => `
     <div class="product-card">
-      <span class="card-badge" style="background: ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.2)'}; color: ${p.tag === 'PRE-ORDER' ? '#fff' : '#4ade80'}; border: 1px solid ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.4)'};">${p.tag || 'SELLER LISTING'}</span>
+      ${p.tag ? `<span class="card-badge" style="background: ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.2)'}; color: ${p.tag === 'PRE-ORDER' ? '#fff' : '#4ade80'}; border: 1px solid ${p.tag === 'PRE-ORDER' ? '#ff4757' : 'rgba(74, 222, 128, 0.4)'};">${p.tag}</span>` : ''}
       <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         <img src="${p.image}" alt="${p.name}">
       </div>
@@ -165,7 +127,7 @@ function renderHomeProducts() {
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4;">${p.desc || ''}</p>
         <div class="product-footer">
           <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-          <button class="btn-primary" onclick="window.location.href='product.html?id=${p.id}'" style="padding: 8px 14px; font-size: 0.8rem; border-radius: 6px;">View 3D & Buy 🛒</button>
+          <button class="btn-primary" onclick="window.location.href='product.html?id=${p.id}'" style="padding: 8px 14px; font-size: 0.8rem; border-radius: 6px;">View Product</button>
         </div>
       </div>
     </div>
@@ -1447,7 +1409,7 @@ function initSellerSystem() {
         </div>
         <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View 3D & Zoom 👁️</a>
+          <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View Listing</a>
           <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
         </div>
       `;
