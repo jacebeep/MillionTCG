@@ -180,7 +180,7 @@ openDB().then(() => {
 
 
 
-function renderHomeProducts() {
+function renderHomeProducts(showAll = false) {
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 
@@ -197,8 +197,11 @@ function renderHomeProducts() {
     }));
 
     const allItems = [...mappedCommunity, ...PRODUCTS];
+    const isMobile = window.innerWidth <= 768;
+    const limit = (isMobile && !showAll) ? 6 : (showAll ? allItems.length : 8);
+    const displayItems = allItems.slice(0, limit);
 
-    grid.innerHTML = allItems.map(p => `
+    grid.innerHTML = displayItems.map(p => `
       <div class="product-card">
         ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
@@ -207,18 +210,30 @@ function renderHomeProducts() {
         <div class="product-info">
           <span class="product-category">${p.category}</span>
           <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
-          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc || ''}</p>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View</button>
           </div>
         </div>
       </div>
     `).join('');
+
+    const existingBtn = document.getElementById('load-more-home-products');
+    if (existingBtn) existingBtn.remove();
+
+    if (allItems.length > displayItems.length) {
+      const loadBtn = document.createElement('button');
+      loadBtn.id = 'load-more-home-products';
+      loadBtn.className = 'load-more-products-btn';
+      loadBtn.innerHTML = `EXPLORE ALL PRODUCTS (${allItems.length}) ↓`;
+      loadBtn.onclick = () => renderHomeProducts(true);
+      if (grid.parentElement) {
+        grid.parentElement.appendChild(loadBtn);
+      }
+    }
   }).catch(err => {
     console.error('[MillionTCG] renderHomeProducts error:', err);
-    // Fallback: show only static products
-    grid.innerHTML = PRODUCTS.map(p => `
+    grid.innerHTML = PRODUCTS.slice(0, 6).map(p => `
       <div class="product-card">
         <span class="card-badge">${p.tag || ''}</span>
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
@@ -229,7 +244,7 @@ function renderHomeProducts() {
           <h3 class="product-name" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">${p.name}</h3>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View Product</button>
+            <button class="btn-secondary" onclick="window.location.href='product.html?id=${p.id}'">View</button>
           </div>
         </div>
       </div>

@@ -203,9 +203,29 @@
     return { ok: true, user };
   }
 
+  function checkAuthGate() {
+    const user = getCurrentUser();
+    const body = document.body;
+    if (!user) {
+      body.classList.add('auth-locked');
+      openAuthModal('signin');
+      const backBtn = document.getElementById('auth-modal-back-btn');
+      const closeBtn = document.getElementById('auth-modal-close');
+      if (backBtn) backBtn.style.display = 'none';
+      if (closeBtn) closeBtn.style.display = 'none';
+    } else {
+      body.classList.remove('auth-locked');
+      const backBtn = document.getElementById('auth-modal-back-btn');
+      const closeBtn = document.getElementById('auth-modal-close');
+      if (backBtn) backBtn.style.display = 'flex';
+      if (closeBtn) closeBtn.style.display = 'block';
+    }
+  }
+
   function signOut() {
     setCurrentUser(null);
     updateAllAuthUI();
+    checkAuthGate();
   }
 
   /* ── UI rendering ── */
@@ -278,9 +298,15 @@
     modal.classList.add('active');
     switchTab(tab);
     populateProfileFields();
+    checkAuthGate();
   }
 
   function closeAuthModal() {
+    const user = getCurrentUser();
+    if (!user) {
+      // Must be signed in to dismiss auth modal
+      return;
+    }
     const modal = document.getElementById('auth-modal');
     if (modal) modal.classList.remove('active');
     clearErrors();
@@ -457,9 +483,14 @@
               <label>Email Address</label>
               <input type="email" id="profile-display-email" placeholder="you@example.com" readonly style="opacity:0.7; cursor:not-allowed;">
             </div>
-            <button type="button" class="auth-submit-btn" id="save-profile-btn" style="margin-top:14px;">
-              SAVE PROFILE NAME 💾
-            </button>
+            <div style="display:flex; gap:10px; margin-top:14px;">
+              <button type="button" class="auth-submit-btn" id="save-profile-btn" style="flex:2;">
+                SAVE PROFILE NAME 💾
+              </button>
+              <button type="button" class="auth-submit-btn" id="profile-signout-btn" style="flex:1; background:rgba(255,255,255,0.08) !important; color:#fff !important; border-color:rgba(255,255,255,0.2) !important;">
+                SIGN OUT 🚪
+              </button>
+            </div>
           </div>
 
           <!-- Seller Earnings & Payouts -->
@@ -622,7 +653,12 @@
     // Back button & Close button handlers
     modal.querySelector('#auth-modal-back-btn')?.addEventListener('click', closeAuthModal);
     modal.querySelector('#auth-modal-close')?.addEventListener('click', closeAuthModal);
-    modal.addEventListener('click', e => { if (e.target === modal) closeAuthModal(); });
+    modal.addEventListener('click', e => {
+      if (e.target === modal) closeAuthModal();
+    });
+
+    // Sign out button in profile
+    modal.querySelector('#profile-signout-btn')?.addEventListener('click', signOut);
 
     // Tab switching
     modal.querySelectorAll('.auth-tab-btn, .auth-switch-link').forEach(el => {
@@ -713,8 +749,11 @@
       if (!email || !password) { errEl.textContent = 'Please fill in all fields.'; return; }
       const result = signIn(email, password);
       if (!result.ok) { errEl.textContent = result.error; return; }
-      closeAuthModal();
       updateAllAuthUI();
+      checkAuthGate();
+      const modalEl = document.getElementById('auth-modal');
+      if (modalEl) modalEl.classList.remove('active');
+      clearErrors();
     });
 
     // Sign Up submit
@@ -727,8 +766,11 @@
       if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
       const result = signUp(email, password, name);
       if (!result.ok) { errEl.textContent = result.error; return; }
-      closeAuthModal();
       updateAllAuthUI();
+      checkAuthGate();
+      const modalEl = document.getElementById('auth-modal');
+      if (modalEl) modalEl.classList.remove('active');
+      clearErrors();
     });
 
     // Enter key submits
@@ -743,61 +785,32 @@
   }
 
   /* ── Desktop auth button click ── */
-  function handleDesktopAuthClick() {
+  function handleDesktopAuthClick(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const user = getCurrentUser();
     if (user) {
-      let dd = document.getElementById('auth-desktop-dropdown');
-      if (!dd) {
-        dd = document.createElement('div');
-        dd.id = 'auth-desktop-dropdown';
-        dd.className = 'auth-desktop-dropdown';
-        dd.innerHTML = `
-          <div class="auth-dd-user">
-            <div class="auth-dd-avatar">${getInitials(user)}</div>
-            <div>
-              <div class="auth-dd-name">${user.displayName}</div>
-              <div class="auth-dd-email">${user.email}</div>
-            </div>
-          </div>
-          <button class="auth-dd-signout" id="auth-dd-profile-btn" style="margin-bottom:8px; background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.2);">⚙️ Profile & Settings</button>
-          <button class="auth-dd-signout" id="auth-dd-signout">Sign Out</button>
-        `;
-        document.getElementById('auth-desktop-btn').parentElement.style.position = 'relative';
-        document.getElementById('auth-desktop-btn').parentElement.appendChild(dd);
-        
-        document.getElementById('auth-dd-profile-btn').addEventListener('click', () => {
-          dd.remove();
-          openAuthModal('profile');
-        });
-        document.getElementById('auth-dd-signout').addEventListener('click', () => {
-          signOut();
-          dd.remove();
-        });
-        setTimeout(() => {
-          document.addEventListener('click', function onOutside(e) {
-            if (!dd.contains(e.target) && e.target !== document.getElementById('auth-desktop-btn')) {
-              dd.remove();
-              document.removeEventListener('click', onOutside);
-            }
-          });
-        }, 0);
-      } else {
-        dd.remove();
-      }
-    } else {
       openAuthModal('profile');
+    } else {
+      openAuthModal('signin');
     }
   }
 
   /* ── Init ── */
   function init() {
     const desktopBtn = document.getElementById('auth-desktop-btn');
-    if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
+    if (desktopBtn) {
+      desktopBtn.removeEventListener('click', handleDesktopAuthClick);
+      desktopBtn.addEventListener('click', handleDesktopAuthClick);
+    }
 
     const saved3DColor = localStorage.getItem('mtcg_3d_bg_color') || '#141416';
     apply3DBackgroundColor(saved3DColor);
 
     updateAllAuthUI();
+    checkAuthGate();
     autoFillFormInputs();
     setupInputAutoSaveListeners();
   }
