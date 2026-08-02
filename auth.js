@@ -1,6 +1,6 @@
 /**
- * MillionTCG Multi-Device Auth & Profile System
- * Cloud-synchronized SHA-256 User Accounts & Local Caching
+ * MillionTCG Multi-Device Auth & Account Management Engine
+ * Expanded 900px Wide Dashboard Center
  */
 
 (function () {
@@ -22,26 +22,16 @@
         ...detailsData
       };
 
-      // 1. Send alert to Admin (Jacep0230@gmail.com)
       fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
-      }).then(res => res.json())
-        .then(data => console.log('Direct admin email notification sent:', data))
-        .catch(err => console.log('Admin notification background push error:', err));
+      }).catch(err => console.log('Admin notification error:', err));
 
-      // 2. Send confirmation copy to Customer Email if provided
       if (userContactEmail && userContactEmail.toLowerCase() !== adminEmail.toLowerCase() && userContactEmail.includes('@')) {
         fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userContactEmail.trim())}`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          },
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
             _subject: `MillionTCG Confirmation: ${eventTitle}`,
             _template: 'table',
@@ -50,9 +40,7 @@
             Timestamp: new Date().toLocaleString(),
             ...detailsData
           })
-        }).then(res => res.json())
-          .then(data => console.log('Customer confirmation email sent:', data))
-          .catch(err => console.log('Customer confirmation push error:', err));
+        }).catch(err => console.log('Customer confirmation error:', err));
       }
     } catch (e) {
       console.error('Email notification error:', e);
@@ -380,7 +368,7 @@
     if (drawerProfile) {
       if (user) {
         drawerProfile.innerHTML = `
-          <div class="drawer-user-info" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;">
+          <div class="drawer-user-info" onclick="window.MillionAuth.openAuthModal('profile')" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;cursor:pointer;">
             <div class="drawer-user-avatar" style="background:#eab308;color:#000;font-weight:700;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;">${getInitials(user)}</div>
             <div class="drawer-user-details" style="overflow:hidden;">
               <div class="drawer-user-name" style="font-weight:600;color:#fff;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${user.displayName}</div>
@@ -416,10 +404,10 @@
     if (user) {
       // USER IS SIGNED IN: REMOVE "Sign In" & "Create Account" tabs!
       tabsContainer.innerHTML = `
-        <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">Profile</button>
-        <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">Banking & Payouts</button>
-        <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">Store Settings</button>
-        <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">3D Stage Color</button>
+        <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">👤 Profile & Shipping</button>
+        <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">🏦 Banking & Payouts</button>
+        <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Store Settings</button>
+        <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
       `;
     } else {
       // USER IS NOT SIGNED IN: Show "Sign In" & "Create Account"
@@ -471,12 +459,10 @@
 
     // Enforce tab access permissions based on login state:
     if (user) {
-      // Signed-in users should NOT see signin or signup panels
       if (tab === 'signin' || tab === 'signup') {
         tab = 'profile';
       }
     } else {
-      // Signed-out users should NOT see profile, banking, settings, or colors panels
       if (tab !== 'signin' && tab !== 'signup') {
         tab = 'signin';
       }
@@ -536,14 +522,18 @@
 
   function populateColorsPanel() {
     const picker = document.getElementById('stage-bg-picker');
+    const preview = document.getElementById('modal-stage-color-preview');
     const currentColor = localStorage.getItem('mtcg_stage_bg_color') || '#141416';
+    
     if (picker) {
       picker.value = currentColor;
+      if (preview) preview.style.backgroundColor = currentColor;
 
       // Live Color Preview Listener
       if (!picker.dataset.liveBound) {
         picker.dataset.liveBound = 'true';
         const updateLive = () => {
+          if (preview) preview.style.backgroundColor = picker.value;
           if (window.set3DStageBackgroundColor) {
             window.set3DStageBackgroundColor(picker.value);
           }
@@ -554,25 +544,26 @@
     }
   }
 
+  /* ── Build 900px Wide Dashboard Modal ── */
   function buildModal() {
     const modal = document.createElement('div');
     modal.id = 'auth-modal';
     modal.className = 'auth-modal-overlay';
     modal.innerHTML = `
-      <div class="auth-modal-box" role="dialog" aria-modal="true" aria-label="Account Center">
+      <div class="auth-modal-box" role="dialog" aria-modal="true" aria-label="Account Center" style="max-width:900px;width:94%;box-sizing:border-box;padding:36px 40px;border-radius:24px;">
         <button class="auth-modal-close" id="auth-modal-close" aria-label="Close">✕</button>
 
         <div class="auth-modal-logo">
           <img src="images/logo.png" alt="MillionTCG" style="height:54px;width:auto;">
-          <div class="auth-modal-brand">MILLION TCG</div>
+          <div class="auth-modal-brand">MILLION TCG ACCOUNT CENTER</div>
         </div>
 
-        <div class="auth-tabs" id="auth-tabs">
+        <div class="auth-tabs" id="auth-tabs" style="display:flex;gap:8px;background:#18181b;border-radius:12px;padding:6px;margin-bottom:28px;">
           <!-- Dynamically populated based on login status -->
         </div>
 
         <!-- Sign In Panel -->
-        <div id="auth-signin-panel" class="auth-panel" style="display:none;">
+        <div id="auth-signin-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;">
           <p class="auth-panel-sub">Welcome back, collector. Sign in across any device.</p>
           <div class="auth-error" id="auth-signin-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
           <div class="auth-field">
@@ -588,7 +579,7 @@
         </div>
 
         <!-- Sign Up Panel -->
-        <div id="auth-signup-panel" class="auth-panel" style="display:none;">
+        <div id="auth-signup-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;">
           <p class="auth-panel-sub">Join the MillionTCG community. Multi-device cloud sync included.</p>
           <div class="auth-error" id="auth-signup-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
           <div class="auth-field">
@@ -607,79 +598,94 @@
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
 
-        <!-- Profile Panel -->
+        <!-- Profile & Shipping Panel (Spacious 2-Column Layout) -->
         <div id="auth-profile-panel" class="auth-panel" style="display:none;">
-          <p class="auth-panel-sub">Manage your account and shipping details.</p>
-          <div class="auth-error" id="auth-profile-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
-          <div class="auth-field">
-            <label>Display Name</label>
-            <input type="text" id="profile-name" placeholder="Display name">
-          </div>
-          <div class="auth-field">
-            <label>Email Address</label>
-            <input type="email" id="profile-email" disabled style="opacity:0.7;">
-          </div>
-          <div class="auth-field">
-            <label>Shipping Address</label>
-            <input type="text" id="profile-address" placeholder="123 Main St">
-          </div>
-          <div style="display:flex;gap:10px;">
-            <div class="auth-field" style="flex:2;">
+          <p class="auth-panel-sub" style="margin-bottom:18px;">Manage your profile and default shipping location across all orders.</p>
+          <div class="auth-error" id="auth-profile-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
+          
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:20px;">
+            <div class="auth-field">
+              <label>Collector Display Name</label>
+              <input type="text" id="profile-name" placeholder="Display name" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field">
+              <label>Email Address (Cloud Verified)</label>
+              <input type="email" id="profile-email" disabled style="opacity:0.7;box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field" style="grid-column:1/-1;">
+              <label>Street Shipping Address</label>
+              <input type="text" id="profile-address" placeholder="123 Main St, Apt 4B" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field">
               <label>City</label>
-              <input type="text" id="profile-city" placeholder="City">
+              <input type="text" id="profile-city" placeholder="City" style="box-sizing:border-box;width:100%;">
             </div>
-            <div class="auth-field" style="flex:1;">
-              <label>ZIP Code</label>
-              <input type="text" id="profile-zip" placeholder="ZIP">
+            <div class="auth-field">
+              <label>ZIP / Postal Code</label>
+              <input type="text" id="profile-zip" placeholder="ZIP Code" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field" style="grid-column:1/-1;">
+              <label>New Password (Optional)</label>
+              <input type="password" id="profile-new-password" placeholder="Leave blank to keep current password" style="box-sizing:border-box;width:100%;">
             </div>
           </div>
-          <div class="auth-field">
-            <label>New Password (Optional)</label>
-            <input type="password" id="profile-new-password" placeholder="Leave blank to keep current">
-          </div>
-          <button class="auth-submit-btn" id="profile-save-btn">Save Profile Changes</button>
+          <button class="auth-submit-btn" id="profile-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Profile Changes</button>
         </div>
 
         <!-- Banking & Payouts Panel -->
         <div id="auth-banking-panel" class="auth-panel" style="display:none;">
-          <p class="auth-panel-sub">Direct Payouts & Seller Banking Information.</p>
-          <div class="auth-error" id="auth-banking-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
-          <div class="auth-field">
-            <label>Payout Email / Handle</label>
-            <input type="email" id="banking-payout-email" placeholder="payouts@example.com">
+          <p class="auth-panel-sub" style="margin-bottom:18px;">Direct Payouts & Seller Banking Information for card marketplace sales.</p>
+          <div class="auth-error" id="auth-banking-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
+          
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:20px;">
+            <div class="auth-field">
+              <label>Payout Email / Handle</label>
+              <input type="email" id="banking-payout-email" placeholder="payouts@example.com" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field">
+              <label>Payout Method</label>
+              <select id="banking-payout-method" style="width:100%;padding:14px;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;font-size:0.95rem;box-sizing:border-box;">
+                <option value="Direct Deposit">Direct Deposit (ACH / Bank Transfer)</option>
+                <option value="Venmo">Venmo</option>
+                <option value="Zelle">Zelle</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Wire Transfer">Wire Transfer (High Value)</option>
+              </select>
+            </div>
           </div>
-          <div class="auth-field">
-            <label>Payout Method</label>
-            <select id="banking-payout-method" style="width:100%;padding:10px;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:6px;">
-              <option value="Direct Deposit">Direct Deposit (ACH / Bank Transfer)</option>
-              <option value="Venmo">Venmo</option>
-              <option value="Zelle">Zelle</option>
-              <option value="PayPal">PayPal</option>
-            </select>
-          </div>
-          <button class="auth-submit-btn" id="banking-save-btn">Save Banking Preferences</button>
+          <button class="auth-submit-btn" id="banking-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Banking Preferences</button>
         </div>
 
         <!-- Store Settings Panel -->
         <div id="auth-settings-panel" class="auth-panel" style="display:none;">
-          <p class="auth-panel-sub">Store & Display Preferences.</p>
-          <div style="padding:15px;background:rgba(255,255,255,0.03);border-radius:8px;margin-bottom:15px;">
-            <label style="display:flex;align-items:center;gap:10px;cursor:pointer;">
-              <input type="checkbox" id="settings-email-alerts" checked style="width:18px;height:18px;">
-              <span>Receive Order & Price Alert Notifications</span>
+          <p class="auth-panel-sub" style="margin-bottom:18px;">Store & Display Preferences.</p>
+          <div style="padding:20px;background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:20px;display:flex;flex-direction:column;gap:14px;">
+            <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+              <input type="checkbox" id="settings-email-alerts" checked style="width:20px;height:20px;">
+              <span style="font-weight:600;color:#fff;">Receive Order & Price Alert Notifications</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:12px;cursor:pointer;">
+              <input type="checkbox" checked style="width:20px;height:20px;">
+              <span style="font-weight:600;color:#fff;">New Pre-Order Drops & Rare Single Notifications</span>
             </label>
           </div>
-          <button class="auth-submit-btn" id="settings-save-btn">Save Settings</button>
+          <button class="auth-submit-btn" id="settings-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Settings</button>
         </div>
 
         <!-- 3D Stage Colors Panel -->
         <div id="auth-colors-panel" class="auth-panel" style="display:none;">
-          <p class="auth-panel-sub">Customize 3D Showcase Stage Background Color in Real Time.</p>
-          <div class="auth-field">
-            <label>Stage Color</label>
-            <input type="color" id="stage-bg-picker" value="#141416" style="width:100%;height:45px;border:none;border-radius:6px;cursor:pointer;">
+          <p class="auth-panel-sub" style="margin-bottom:18px;">Customize 3D Showcase Stage Background Color in Real Time.</p>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;margin-bottom:24px;">
+            <div class="auth-field">
+              <label>Select Stage Color</label>
+              <input type="color" id="stage-bg-picker" value="#141416" style="width:100%;height:54px;border:none;border-radius:10px;cursor:pointer;background:none;box-sizing:border-box;">
+            </div>
+            <div id="modal-stage-color-preview" style="height:80px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,0.8);">
+              Live 3D Stage Preview
+            </div>
           </div>
-          <button class="auth-submit-btn" id="colors-save-btn">Apply 3D Stage Background</button>
+          <button class="auth-submit-btn" id="colors-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Apply 3D Stage Background</button>
         </div>
       </div>
     `;
@@ -768,7 +774,7 @@
       const res = await updateProfile({ displayName: name, address, city, zip, newPassword });
       if (res.ok) {
         closeAuthModal();
-        alert('Profile details saved successfully!');
+        alert('✅ Profile details saved successfully!');
       } else {
         errEl.textContent = res.error || 'Failed to save profile.';
       }
@@ -786,7 +792,7 @@
       btn.textContent = 'Saving...';
       await updateProfile({ payoutEmail, payoutMethod });
       closeAuthModal();
-      alert('Banking & Payout preferences updated successfully!');
+      alert('✅ Banking & Payout preferences updated successfully!');
       btn.disabled = false;
       btn.textContent = 'Save Banking Preferences';
     });
@@ -794,7 +800,7 @@
     // Settings Save
     modal.querySelector('#settings-save-btn')?.addEventListener('click', () => {
       closeAuthModal();
-      alert('Store settings saved!');
+      alert('✅ Store settings saved!');
     });
 
     // Colors Save
@@ -804,6 +810,7 @@
         window.set3DStageBackgroundColor(val);
       }
       closeAuthModal();
+      alert('🎨 3D Stage Background color updated successfully!');
     });
 
     // Enter key submits
@@ -903,7 +910,6 @@
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
 
-    // Apply saved stage color on load if set
     const savedColor = localStorage.getItem('mtcg_stage_bg_color');
     if (savedColor && window.set3DStageBackgroundColor) {
       window.set3DStageBackgroundColor(savedColor);
