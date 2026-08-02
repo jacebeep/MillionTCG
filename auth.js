@@ -603,7 +603,7 @@
           <p class="auth-panel-sub" style="margin-bottom:18px;">Manage your profile and default shipping location across all orders.</p>
           <div class="auth-error" id="auth-profile-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
           
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:20px;">
+          <div class="auth-grid-responsive">
             <div class="auth-field">
               <label>Collector Display Name</label>
               <input type="text" id="profile-name" placeholder="Display name" style="box-sizing:border-box;width:100%;">
@@ -637,7 +637,7 @@
           <p class="auth-panel-sub" style="margin-bottom:18px;">Direct Payouts & Seller Banking Information for card marketplace sales.</p>
           <div class="auth-error" id="auth-banking-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
           
-          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:20px;margin-bottom:20px;">
+          <div class="auth-grid-responsive">
             <div class="auth-field">
               <label>Payout Email / Handle</label>
               <input type="email" id="banking-payout-email" placeholder="payouts@example.com" style="box-sizing:border-box;width:100%;">
@@ -676,7 +676,7 @@
         <div id="auth-colors-panel" class="auth-panel" style="display:none;">
           <p class="auth-panel-sub" style="margin-bottom:18px;">Customize 3D Showcase Stage Background Color in Real Time.</p>
           
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:center;margin-bottom:24px;">
+          <div class="auth-grid-responsive auth-grid-colors">
             <div class="auth-field">
               <label>Select Stage Color</label>
               <input type="color" id="stage-bg-picker" value="#141416" style="width:100%;height:54px;border:none;border-radius:10px;cursor:pointer;background:none;box-sizing:border-box;">
