@@ -2868,16 +2868,24 @@ html, body {
   border-radius: 10px;
   padding: 4px;
   margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.auth-tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .auth-tab-btn {
   flex: 1;
+  white-space: nowrap;
   background: none;
   border: none;
-  color: #666;
-  font-size: 0.88rem;
+  color: #a1a1aa;
+  font-size: 0.82rem;
   font-weight: 700;
-  padding: 9px 14px;
+  padding: 9px 12px;
   border-radius: 7px;
   cursor: pointer;
   transition: all 0.2s ease;

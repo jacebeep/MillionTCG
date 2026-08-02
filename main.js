@@ -521,6 +521,20 @@ function initHero3DScene() {
 
     // Store renderer so bfcache re-init can dispose it before re-creating
     canvas.userData.renderer = renderer;
+    canvas.userData.scene = scene;
+    canvas.userData.fog = scene.fog;
+
+    // Apply saved background color if set
+    const savedBgColor = localStorage.getItem('mtcg_stage_bg_color');
+    if (savedBgColor) {
+      try {
+        scene.background = new THREE.Color(savedBgColor);
+        if (scene.fog) scene.fog.color = new THREE.Color(savedBgColor);
+        renderer.setClearColor(savedBgColor, 1);
+        if (container) container.style.backgroundColor = savedBgColor;
+        if (canvas) canvas.style.backgroundColor = savedBgColor;
+      } catch(e) {}
+    }
 
     canvas.addEventListener('webglcontextlost', (e) => {
       e.preventDefault();
@@ -1791,3 +1805,38 @@ function renderSoldOrders() {
 
   updateAccountUI();
 }
+
+/* ── Global 3D Stage Background Customizer ── */
+window.set3DStageBackgroundColor = function(colorHex) {
+  if (!colorHex) return;
+  try {
+    localStorage.setItem('mtcg_stage_bg_color', colorHex);
+
+    const canvas = document.getElementById('hero-3d-canvas');
+    const container = document.getElementById('hero-3d-container') || document.querySelector('.hero-3d-stage') || document.querySelector('.hero-section');
+
+    if (canvas && canvas.userData) {
+      if (canvas.userData.scene) {
+        canvas.userData.scene.background = new THREE.Color(colorHex);
+        if (canvas.userData.scene.fog) {
+          canvas.userData.scene.fog.color = new THREE.Color(colorHex);
+        }
+      }
+      if (canvas.userData.renderer) {
+        canvas.userData.renderer.setClearColor(colorHex, 1);
+      }
+      canvas.style.backgroundColor = colorHex;
+    }
+
+    if (container) {
+      container.style.backgroundColor = colorHex;
+    }
+
+    const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+      heroSection.style.backgroundColor = colorHex;
+    }
+  } catch (e) {
+    console.error('set3DStageBackgroundColor error:', e);
+  }
+};

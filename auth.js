@@ -59,6 +59,31 @@
     }
   };
 
+  /* ── 3D Stage Background Customizer Helper ── */
+  window.set3DStageBackgroundColor = window.set3DStageBackgroundColor || function (colorHex) {
+    if (!colorHex) return;
+    try {
+      localStorage.setItem('mtcg_stage_bg_color', colorHex);
+      const canvas = document.getElementById('hero-3d-canvas');
+      const container = document.getElementById('hero-3d-container') || document.querySelector('.hero-3d-stage') || document.querySelector('.hero-section');
+      if (canvas && canvas.userData) {
+        if (canvas.userData.scene) {
+          canvas.userData.scene.background = new THREE.Color(colorHex);
+          if (canvas.userData.scene.fog) canvas.userData.scene.fog.color = new THREE.Color(colorHex);
+        }
+        if (canvas.userData.renderer) {
+          canvas.userData.renderer.setClearColor(colorHex, 1);
+        }
+        canvas.style.backgroundColor = colorHex;
+      }
+      if (container) container.style.backgroundColor = colorHex;
+      const heroSec = document.querySelector('.hero-section');
+      if (heroSec) heroSec.style.backgroundColor = colorHex;
+    } catch (e) {
+      console.error('set3DStageBackgroundColor error:', e);
+    }
+  };
+
   /* ── SHA-256 Cross-Device Password Hashing ── */
   async function hashPassword(str) {
     if (!str) return '';
@@ -73,7 +98,6 @@
         console.warn('Crypto SHA-256 failed, using fallback:', e);
       }
     }
-    // Deterministic fallback for legacy browsers
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       hash = (Math.imul(31, hash) + str.charCodeAt(i)) | 0;
@@ -102,11 +126,9 @@
     return email.toLowerCase().trim().replace(/[^a-z0-9_]/g, '_');
   }
 
-  // Synchronize users across devices using Cloud API & Live Repo DB
   async function fetchCloudUsers() {
     const localUsers = getUsers();
     try {
-      // 1. Fetch from live repository users database
       const res = await fetch('js/users_db.json?v=' + Date.now(), { cache: 'no-cache' });
       if (res.ok) {
         const cloudUsers = await res.json();
@@ -128,7 +150,6 @@
     users[emailKey] = userRecord;
     saveUsers(users);
 
-    // Sync to Cloud KV store for multi-device instant sign-in
     try {
       const sanitized = sanitizeKey(emailKey);
       fetch(`https://api.counterapi.dev/v1/milliontcg_accounts/${sanitized}/up`).catch(() => {});
@@ -242,7 +263,6 @@
     await syncUserToCloud(user);
     setCurrentUser(user);
 
-    // Alert Admin & Confirm Customer
     if (typeof window.sendDirectEmailNotification === 'function') {
       window.sendDirectEmailNotification('New Multi-Device Account Created 👤', {
         DisplayName: user.displayName,
@@ -261,8 +281,6 @@
 
     const users = await fetchCloudUsers();
     let record = users[email];
-
-    // Password verification with SHA-256 & fallback support
     const pHash = await hashPassword(password);
 
     if (!record) {
@@ -293,7 +311,6 @@
 
     setCurrentUser(user);
 
-    // Send sign-in notification copy
     if (typeof window.sendDirectEmailNotification === 'function') {
       window.sendDirectEmailNotification('Multi-Device Sign In Successful 🔐', {
         DisplayName: user.displayName,
@@ -389,8 +406,44 @@
     }
   }
 
+  /* ── Dynamic Tab Bar Renderer (Removes Sign In & Create Account when Signed In) ── */
+  function renderModalTabs(currentTab) {
+    const tabsContainer = document.getElementById('auth-tabs');
+    if (!tabsContainer) return;
+
+    const user = getCurrentUser();
+
+    if (user) {
+      // USER IS SIGNED IN: REMOVE "Sign In" & "Create Account" tabs!
+      tabsContainer.innerHTML = `
+        <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">Profile</button>
+        <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">Banking & Payouts</button>
+        <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">Store Settings</button>
+        <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">3D Stage Color</button>
+      `;
+    } else {
+      // USER IS NOT SIGNED IN: Show "Sign In" & "Create Account"
+      tabsContainer.innerHTML = `
+        <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
+        <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
+      `;
+    }
+
+    tabsContainer.querySelectorAll('.auth-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        switchTab(btn.dataset.tab);
+      });
+    });
+  }
+
   /* ── Modal System & Tab Navigation ── */
-  function openAuthModal(tab = 'signin') {
+  function openAuthModal(tab) {
+    const user = getCurrentUser();
+    if (!tab) {
+      tab = user ? 'profile' : 'signin';
+    }
+
     let modal = document.getElementById('auth-modal');
     if (!modal) {
       modal = buildModal();
@@ -414,6 +467,23 @@
   }
 
   function switchTab(tab) {
+    const user = getCurrentUser();
+
+    // Enforce tab access permissions based on login state:
+    if (user) {
+      // Signed-in users should NOT see signin or signup panels
+      if (tab === 'signin' || tab === 'signup') {
+        tab = 'profile';
+      }
+    } else {
+      // Signed-out users should NOT see profile, banking, settings, or colors panels
+      if (tab !== 'signin' && tab !== 'signup') {
+        tab = 'signin';
+      }
+    }
+
+    renderModalTabs(tab);
+
     const signinPanel = document.getElementById('auth-signin-panel');
     const signupPanel = document.getElementById('auth-signup-panel');
     const profilePanel = document.getElementById('auth-profile-panel');
@@ -421,9 +491,7 @@
     const settingsPanel = document.getElementById('auth-settings-panel');
     const colorsPanel = document.getElementById('auth-colors-panel');
 
-    const tabs = document.querySelectorAll('.auth-tab-btn');
     clearErrors();
-    tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
 
     if (signinPanel) signinPanel.style.display = tab === 'signin' ? 'flex' : 'none';
     if (signupPanel) signupPanel.style.display = tab === 'signup' ? 'flex' : 'none';
@@ -436,7 +504,10 @@
       if (tab === 'banking') populateBankingPanel();
     }
     if (settingsPanel) settingsPanel.style.display = tab === 'settings' ? 'flex' : 'none';
-    if (colorsPanel) colorsPanel.style.display = tab === 'colors' ? 'flex' : 'none';
+    if (colorsPanel) {
+      colorsPanel.style.display = tab === 'colors' ? 'flex' : 'none';
+      if (tab === 'colors') populateColorsPanel();
+    }
   }
 
   function populateProfilePanel() {
@@ -463,6 +534,26 @@
     if (methodSelect && user.payoutMethod) methodSelect.value = user.payoutMethod;
   }
 
+  function populateColorsPanel() {
+    const picker = document.getElementById('stage-bg-picker');
+    const currentColor = localStorage.getItem('mtcg_stage_bg_color') || '#141416';
+    if (picker) {
+      picker.value = currentColor;
+
+      // Live Color Preview Listener
+      if (!picker.dataset.liveBound) {
+        picker.dataset.liveBound = 'true';
+        const updateLive = () => {
+          if (window.set3DStageBackgroundColor) {
+            window.set3DStageBackgroundColor(picker.value);
+          }
+        };
+        picker.addEventListener('input', updateLive);
+        picker.addEventListener('change', updateLive);
+      }
+    }
+  }
+
   function buildModal() {
     const modal = document.createElement('div');
     modal.id = 'auth-modal';
@@ -476,14 +567,12 @@
           <div class="auth-modal-brand">MILLION TCG</div>
         </div>
 
-        <div class="auth-tabs">
-          <button class="auth-tab-btn active" data-tab="signin">Sign In</button>
-          <button class="auth-tab-btn" data-tab="signup">Create Account</button>
-          <button class="auth-tab-btn" data-tab="profile">Profile</button>
+        <div class="auth-tabs" id="auth-tabs">
+          <!-- Dynamically populated based on login status -->
         </div>
 
         <!-- Sign In Panel -->
-        <div id="auth-signin-panel" class="auth-panel" style="display:flex;">
+        <div id="auth-signin-panel" class="auth-panel" style="display:none;">
           <p class="auth-panel-sub">Welcome back, collector. Sign in across any device.</p>
           <div class="auth-error" id="auth-signin-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
           <div class="auth-field">
@@ -585,23 +674,15 @@
 
         <!-- 3D Stage Colors Panel -->
         <div id="auth-colors-panel" class="auth-panel" style="display:none;">
-          <p class="auth-panel-sub">Customize 3D Showcase Stage Background.</p>
+          <p class="auth-panel-sub">Customize 3D Showcase Stage Background Color in Real Time.</p>
           <div class="auth-field">
             <label>Stage Color</label>
-            <input type="color" id="stage-bg-picker" value="#050508" style="width:100%;height:45px;border:none;border-radius:6px;cursor:pointer;">
+            <input type="color" id="stage-bg-picker" value="#141416" style="width:100%;height:45px;border:none;border-radius:6px;cursor:pointer;">
           </div>
           <button class="auth-submit-btn" id="colors-save-btn">Apply 3D Stage Background</button>
         </div>
       </div>
     `;
-
-    // Tab switching
-    modal.querySelectorAll('.auth-tab-btn, .auth-switch-link').forEach(el => {
-      el.addEventListener('click', e => {
-        e.preventDefault();
-        switchTab(el.dataset.tab);
-      });
-    });
 
     // Close
     modal.querySelector('#auth-modal-close').addEventListener('click', closeAuthModal);
@@ -719,7 +800,7 @@
     // Colors Save
     modal.querySelector('#colors-save-btn')?.addEventListener('click', () => {
       const val = document.getElementById('stage-bg-picker').value;
-      if (window.set3DStageBackgroundColor && typeof window.set3DStageBackgroundColor === 'function') {
+      if (window.set3DStageBackgroundColor) {
         window.set3DStageBackgroundColor(val);
       }
       closeAuthModal();
@@ -780,8 +861,8 @@
             </button>
           </div>
 
-          <div class="auth-dd-footer" style="padding:8px 14px;border-top:1px solid rgba(255,255,255,0.1);">
-            <button class="auth-dd-signout-btn" id="auth-dd-signout" style="width:100%;padding:8px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <div class="auth-dd-footer" style="padding:10px 14px;border-top:1px solid rgba(255,255,255,0.1);">
+            <button class="auth-dd-signout-btn" id="auth-dd-signout" style="width:100%;padding:10px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
               <span class="auth-dd-icon">🚪</span>
               <span>Sign Out</span>
             </button>
@@ -822,7 +903,12 @@
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
 
-    // Initial sync and UI update
+    // Apply saved stage color on load if set
+    const savedColor = localStorage.getItem('mtcg_stage_bg_color');
+    if (savedColor && window.set3DStageBackgroundColor) {
+      window.set3DStageBackgroundColor(savedColor);
+    }
+
     fetchCloudUsers().then(() => {
       updateAllAuthUI();
       autoFillFormInputs();
