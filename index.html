@@ -18,7 +18,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=100">
+  <link rel="stylesheet" href="styles.css?v=9999">
   <!-- Three.js 3D WebGL Engine -->
   <script src="js/three.min.js"></script>
 </head>
@@ -348,8 +348,8 @@
     </div>
   </footer>
 
-  <script src="main.js?v=100"></script>
-  <script src="auth.js?v=100"></script>
+  <script src="main.js?v=9999"></script>
+  <script src="auth.js?v=9999"></script>
   <script>
     // Init 3D scene on first load
     function tryInit3D() {
@@ -379,12 +379,13 @@
     });
   </script>
   <script>
-    // PWA: Register service worker
+    // Force immediate live site refresh by unregistering old cached service worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/MillionTCG/sw.js').catch(() => {
-          navigator.serviceWorker.register('sw.js');
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          for (let r of regs) r.unregister();
         });
+        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
       });
     }
 
