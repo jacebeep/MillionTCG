@@ -1,0 +1,713 @@
+PLEASE STOP BEING A DUMB ASS ITS SUPADGITN GINDEXHTML NOT GIT HUB REREPLEASE STOP BEING A DUMB ASS ITS SUPADGITN
+GINDEXHTML NOT GIT HUB RERE
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Account Settings & Control Center | MillionTCG</title>
+  <meta name="description"
+    content="Manage your MillionTCG account, shipping address, seller payouts, order history, and 3D showcase stage settings.">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a0a0a">
+  <link rel="apple-touch-icon" href="images/logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=102">
+  <script src="js/three.min.js"></script>
+  <style>
+    .account-wrapper {
+      max-width: 1280px;
+      margin: 40px auto 80px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 32px;
+    }
+
+    @media (max-width: 900px) {
+      .account-wrapper {
+        grid-template-columns: 1fr;
+        margin: 20px auto 60px;
+        gap: 20px;
+      }
+    }
+
+    .account-sidebar {
+      background: #121214;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 24px 16px;
+      height: fit-content;
+    }
+
+    .account-user-card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .account-avatar {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #eab308;
+      color: #000;
+      font-size: 22px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .account-user-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .account-user-email {
+      font-size: 0.85rem;
+      color: #a1a1aa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .account-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .account-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: none;
+      border: none;
+      border-radius: 10px;
+      color: #a1a1aa;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .account-nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+    }
+
+    .account-nav-btn.active {
+      background: #ffffff;
+      color: #000000;
+      font-weight: 800;
+    }
+
+    .account-nav-btn .icon {
+      font-size: 1.1rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .account-content {
+      background: #121214;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 36px 40px;
+    }
+
+    @media (max-width: 600px) {
+      .account-content {
+        padding: 24px 20px;
+      }
+    }
+
+    .panel-header {
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .panel-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .panel-sub {
+      font-size: 0.95rem;
+      color: #a1a1aa;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: #a1a1aa;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #1a1a1e;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: #fff;
+      font-size: 0.98rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: #eab308;
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+    }
+
+    .form-group input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .save-btn {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 10px;
+      padding: 16px 36px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-top: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .save-btn:hover {
+      background: #e4e4e7;
+      transform: translateY(-1px);
+    }
+
+    .order-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .order-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .order-id {
+      font-weight: 700;
+      color: #fff;
+      font-size: 1.05rem;
+    }
+
+    .order-badge {
+      background: rgba(34, 197, 94, 0.15);
+      color: #4ade80;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .color-preview-box {
+      width: 100%;
+      height: 120px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      transition: background-color 0.2s ease;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar">
+    <span>🔥 FREE EXPRESS SHIPPING ON ALL ORDERS OVER $75 | HIGH-GRADE SINGLES & SEALED BOXES 🔥</span>
+  </div>
+
+  <!-- Header -->
+  <header class="site-header">
+    <div class="header-container">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Mobile Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      </button>
+
+      <a href="index.html" class="brand-logo">
+        <img src="images/logo.png" alt="MillionTCG Logo">
+        <span class="brand-title">MILLION TCG</span>
+      </a>
+
+      <nav class="main-nav">
+        <ul>
+          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="shop.html" class="nav-link">Shop All</a></li>
+          <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
+          <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
+          <li><a href="sell.html" class="nav-link" style="color: #ffffff; font-weight: 800;">Sell Cards 🏷️</a></li>
+        </ul>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-btn" id="auth-desktop-btn" aria-label="Sign In / Account">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+            <circle cx="12" cy="7" r="4" />
+          </svg>
+        </button>
+        <button class="icon-btn" id="cart-toggle-btn" aria-label="Shopping Cart">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1" />
+            <circle cx="20" cy="21" r="1" />
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
+          </svg>
+          <span class="cart-count">0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Account Dashboard -->
+  <main class="account-wrapper">
+    <!-- Sidebar Navigation -->
+    <aside class="account-sidebar">
+      <div class="account-user-card">
+        <div class="account-avatar" id="acc-avatar-initial">J</div>
+        <div style="overflow:hidden;">
+          <div class="account-user-name" id="acc-user-name">Account User</div>
+          <div class="account-user-email" id="acc-user-email">user@example.com</div>
+        </div>
+      </div>
+
+      <nav class="account-nav">
+        <button class="account-nav-btn active" data-panel="profile">
+          <span class="icon">👤</span>
+          <span>Profile & Shipping</span>
+        </button>
+        <button class="account-nav-btn" data-panel="orders">
+          <span class="icon">📦</span>
+          <span>Orders & History</span>
+        </button>
+        <button class="account-nav-btn" data-panel="banking">
+          <span class="icon">🏦</span>
+          <span>Seller Banking & Payouts</span>
+        </button>
+        <button class="account-nav-btn" data-panel="stage">
+          <span class="icon">🎨</span>
+          <span>3D Showcase Theme</span>
+        </button>
+        <button class="account-nav-btn" data-panel="security">
+          <span class="icon">🔒</span>
+          <span>Security & Password</span>
+        </button>
+        <button class="account-nav-btn" data-panel="notifications">
+          <span class="icon">🔔</span>
+          <span>Notification Preferences</span>
+        </button>
+        <button class="account-nav-btn" id="acc-signout-btn" style="color:#ef4444;margin-top:16px;">
+          <span class="icon">🚪</span>
+          <span>Sign Out</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main Content Panels -->
+    <section class="account-content">
+      <!-- 1. Profile & Shipping Panel -->
+      <div id="panel-profile" class="account-panel" style="display:block;">
+        <div class="panel-header">
+          <h1 class="panel-title">Profile & Shipping Address</h1>
+          <p class="panel-sub">Manage your personal information and default shipping destination.</p>
+        </div>
+
+        <form id="acc-profile-form">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Collector Display Name</label>
+              <input type="text" id="acc-display-name" placeholder="Your Name" required>
+            </div>
+            <div class="form-group">
+              <label>Email Address</label>
+              <input type="email" id="acc-email" disabled>
+            </div>
+            <div class="form-group">
+              <label>Phone Number (Optional)</label>
+              <input type="tel" id="acc-phone" placeholder="(555) 000-0000">
+            </div>
+            <div class="form-group">
+              <label>Country / Region</label>
+              <select id="acc-country">
+                <option value="United States">United States 🇺🇸</option>
+                <option value="Canada">Canada 🇨🇦</option>
+                <option value="United Kingdom">United Kingdom 🇬🇧</option>
+                <option value="Australia">Australia 🇦🇺</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Street Shipping Address</label>
+              <input type="text" id="acc-address" placeholder="123 Collector Way, Suite 400">
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="acc-city" placeholder="City">
+            </div>
+            <div class="form-group">
+              <label>State / Province</label>
+              <input type="text" id="acc-state" placeholder="State">
+            </div>
+            <div class="form-group">
+              <label>ZIP / Postal Code</label>
+              <input type="text" id="acc-zip" placeholder="ZIP Code">
+            </div>
+          </div>
+          <button type="submit" class="save-btn" id="save-profile-btn">Save Profile Changes</button>
+        </form>
+      </div>
+
+      <!-- 2. Orders & History Panel -->
+      <div id="panel-orders" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">Order History & Purchases</h1>
+          <p class="panel-sub">View your past card orders, tracking numbers, and delivery status.</p>
+        </div>
+
+        <div id="orders-list-container">
+          <div class="order-card">
+            <div class="order-header">
+              <span class="order-id">Order #MTCG-88219</span>
+              <span class="order-badge">Delivered 🚚</span>
+            </div>
+            <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:8px;">Purchased on Aug 1, 2026 • 2 Items • Total:
+              $250.00</p>
+            <p style="color:#fff;font-weight:600;">Pokemon 30th Anniversary Collection – Original Partners Vol.2 (2
+              Boxes)</p>
+          </div>
+          <div class="order-card">
+            <div class="order-header">
+              <span class="order-id">Order #MTCG-74102</span>
+              <span class="order-badge" style="background:rgba(59,130,246,0.15);color:#60a5fa;">In Transit 📦</span>
+            </div>
+            <p style="color:#a1a1aa;font-size:0.9rem;margin-bottom:8px;">Purchased on Jul 28, 2026 • 1 Item • Total:
+              $185.00</p>
+            <p style="color:#fff;font-weight:600;">Charizard VMAX Secret Rare PSA 10 Slab</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Seller Banking & Payouts Panel -->
+      <div id="panel-banking" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">Seller Banking & Direct Payouts</h1>
+          <p class="panel-sub">Configure how you receive payouts when collectors buy your cards on MillionTCG.</p>
+        </div>
+
+        <form id="acc-banking-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Payout Email / Handle</label>
+              <input type="email" id="acc-payout-email" placeholder="payouts@example.com" required>
+            </div>
+            <div class="form-group">
+              <label>Preferred Payout Method</label>
+              <select id="acc-payout-method">
+                <option value="Direct Deposit">Direct Deposit (ACH / Bank Transfer)</option>
+                <option value="Venmo">Venmo</option>
+                <option value="Zelle">Zelle</option>
+                <option value="PayPal">PayPal</option>
+                <option value="Wire Transfer">Wire Transfer (High Value)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Payout Schedule</label>
+              <select id="acc-payout-schedule">
+                <option value="Instant">Instant (Daily Automated Payouts)</option>
+                <option value="Weekly">Weekly (Every Monday)</option>
+                <option value="Monthly">Monthly</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label>Tax Identification / SSN (Required for >$600 Annual Sales)</label>
+              <input type="password" id="acc-tax-id" placeholder="•••-••-•••• (Encrypted)">
+            </div>
+          </div>
+          <button type="submit" class="save-btn">Save Banking Preferences</button>
+        </form>
+      </div>
+
+      <!-- 4. 3D Stage & Visual Customizer Panel -->
+      <div id="panel-stage" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">3D Showcase Stage Background Color</h1>
+          <p class="panel-sub">Customize the WebGL 3D showcase environment and studio background color.</p>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group full-width">
+            <label>Select Stage Background Color</label>
+            <input type="color" id="page-stage-color-picker" value="#141416" style="height:54px;cursor:pointer;">
+            <div class="color-preview-box" id="stage-color-preview">Live 3D Stage Background Preview</div>
+          </div>
+        </div>
+        <button type="button" class="save-btn" id="apply-stage-color-btn" style="margin-top:20px;">Apply 3D Stage
+          Background</button>
+      </div>
+
+      <!-- 5. Security & Password Panel -->
+      <div id="panel-security" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">Security & Password</h1>
+          <p class="panel-sub">Update your password and secure your MillionTCG account across devices.</p>
+        </div>
+
+        <form id="acc-security-form">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>New Password</label>
+              <input type="password" id="acc-new-pass" placeholder="Min. 6 characters">
+            </div>
+            <div class="form-group full-width">
+              <label>Confirm New Password</label>
+              <input type="password" id="acc-confirm-pass" placeholder="Re-enter new password">
+            </div>
+          </div>
+          <button type="submit" class="save-btn">Update Password</button>
+        </form>
+      </div>
+
+      <!-- 6. Notifications Panel -->
+      <div id="panel-notifications" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">Notification Preferences</h1>
+          <p class="panel-sub">Control which email and order status updates you receive.</p>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <label
+            style="display:flex;align-items:center;gap:12px;cursor:pointer;background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;">
+            <input type="checkbox" checked style="width:20px;height:20px;">
+            <div>
+              <div style="font-weight:700;color:#fff;">Order & Shipment Alerts</div>
+              <div style="font-size:0.85rem;color:#a1a1aa;">Receive tracking updates and delivery notifications for your
+                card purchases.</div>
+            </div>
+          </label>
+          <label
+            style="display:flex;align-items:center;gap:12px;cursor:pointer;background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;">
+            <input type="checkbox" checked style="width:20px;height:20px;">
+            <div>
+              <div style="font-weight:700;color:#fff;">Seller Payout Receipts</div>
+              <div style="font-size:0.85rem;color:#a1a1aa;">Email confirmations whenever funds are deposited to your
+                bank/Venmo/Zelle.</div>
+            </div>
+          </label>
+          <label
+            style="display:flex;align-items:center;gap:12px;cursor:pointer;background:rgba(255,255,255,0.03);padding:16px;border-radius:10px;">
+            <input type="checkbox" checked style="width:20px;height:20px;">
+            <div>
+              <div style="font-weight:700;color:#fff;">New TCG Drop & Pre-Order Alerts</div>
+              <div style="font-size:0.85rem;color:#a1a1aa;">Be notified early when rare booster boxes or limited singles
+                drop on MillionTCG.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div class="footer-col">
+        <div class="brand-logo footer-logo">
+          <img src="images/logo.png" alt="MillionTCG Logo">
+          <span class="brand-title">MILLION TCG</span>
+        </div>
+        <p class="footer-desc">Your ultimate trading card game destination for authentic singles, sealed booster boxes,
+          and marketplace sales.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Customer Support</h4>
+        <ul>
+          <li><a href="contact-us.html">Contact Us</a></li>
+          <li><a href="track-order.html">Track Your Order</a></li>
+          <li><a href="shipping-policy.html">Shipping Policy</a></li>
+          <li><a href="returns-policy.html">Returns & Refunds</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 MillionTCG. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="main.js?v=102"></script>
+  <script src="auth.js?v=102"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check auth status
+      const user = window.MillionAuth ? window.MillionAuth.getCurrentUser() : null;
+      if (!user) {
+        // Prompt to sign in if not logged in
+        if (window.MillionAuth) window.MillionAuth.openAuthModal('signin');
+      } else {
+        populateAccountPage(user);
+      }
+
+      // Tab Navigation
+      const navBtns = document.querySelectorAll('.account-nav-btn[data-panel]');
+      const panels = document.querySelectorAll('.account-panel');
+
+      function switchPanel(targetPanel) {
+        navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.panel === targetPanel));
+        panels.forEach(panel => {
+          panel.style.display = panel.id === `panel-${targetPanel}` ? 'block' : 'none';
+        });
+      }
+
+      navBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchPanel(btn.dataset.panel));
+      });
+
+      // Handle URL Query tab (e.g. account.html?tab=banking)
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabParam = urlParams.get('tab');
+      if (tabParam) switchPanel(tabParam);
+
+      // Sign Out
+      document.getElementById('acc-signout-btn')?.addEventListener('click', () => {
+        if (window.MillionAuth) window.MillionAuth.signOut();
+        window.location.href = 'index.html';
+      });
+
+      // Populate User Details
+      function populateAccountPage(u) {
+        document.getElementById('acc-user-name').textContent = u.displayName || u.email.split('@')[0];
+        document.getElementById('acc-user-email').textContent = u.email;
+        document.getElementById('acc-avatar-initial').textContent = (u.displayName || u.email).slice(0, 1).toUpperCase();
+
+        document.getElementById('acc-display-name').value = u.displayName || '';
+        document.getElementById('acc-email').value = u.email;
+        document.getElementById('acc-address').value = u.address || '';
+        document.getElementById('acc-city').value = u.city || '';
+        document.getElementById('acc-zip').value = u.zip || '';
+        document.getElementById('acc-payout-email').value = u.payoutEmail || u.email || '';
+        if (u.payoutMethod) document.getElementById('acc-payout-method').value = u.payoutMethod;
+      }
+
+      // Profile Form Save
+      document.getElementById('acc-profile-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-profile-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving Changes...';
+
+        const name = document.getElementById('acc-display-name').value.trim();
+        const address = document.getElementById('acc-address').value.trim();
+        const city = document.getElementById('acc-city').value.trim();
+        const zip = document.getElementById('acc-zip').value.trim();
+
+        if (window.MillionAuth) {
+          const res = await window.MillionAuth.updateProfile({ displayName: name, address, city, zip });
+          if (res.ok) alert('✅ Profile and shipping address saved successfully!');
+          else alert('Failed to save profile: ' + (res.error || 'Unknown error'));
+        }
+        btn.disabled = false;
+        btn.textContent = 'Save Profile Changes';
+      });
+
+      // 3D Stage Color Customizer Live Preview
+      const picker = document.getElementById('page-stage-color-picker');
+      const preview = document.getElementById('stage-color-preview');
+      const currentBg = localStorage.getItem('mtcg_stage_bg_color') || '#141416';
+
+      if (picker && preview) {
+        picker.value = currentBg;
+        preview.style.backgroundColor = currentBg;
+
+        picker.addEventListener('input', () => {
+          preview.style.backgroundColor = picker.value;
+          if (window.set3DStageBackgroundColor) {
+            window.set3DStageBackgroundColor(picker.value);
+          }
+        });
+      }
+
+      document.getElementById('apply-stage-color-btn')?.addEventListener('click', () => {
+        if (picker && window.set3DStageBackgroundColor) {
+          window.set3DStageBackgroundColor(picker.value);
+          alert('🎨 3D Stage background color applied successfully!');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

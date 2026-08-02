@@ -3034,6 +3034,11 @@ html, body {
     margin: 0 auto !important;
   }
 
+  .account-page-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
   .auth-grid-responsive {
     grid-template-columns: 1fr !important;
     gap: 12px !important;
