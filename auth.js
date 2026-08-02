@@ -384,7 +384,7 @@
   function updateAllAuthUI() {
     const user = getCurrentUser();
 
-    /* ─ Desktop header profile btn ─ */
+    /* ─ Desktop header profile btn & nav btn ─ */
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) {
       if (user) {
@@ -393,6 +393,16 @@
       } else {
         desktopBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
         desktopBtn.title = 'Sign In';
+      }
+    }
+
+    const navAuthBtn = document.getElementById('nav-auth-btn');
+    if (navAuthBtn) {
+      if (user) {
+        navAuthBtn.textContent = `@${(user.displayName || user.email.split('@')[0]).toUpperCase()}`;
+        navAuthBtn.title = user.email;
+      } else {
+        navAuthBtn.textContent = 'ACCOUNT';
       }
     }
 
@@ -942,6 +952,21 @@
   function init() {
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) desktopBtn.addEventListener('click', handleDesktopAuthClick);
+
+    const navAuthBtn = document.getElementById('nav-auth-btn');
+    if (navAuthBtn) {
+      navAuthBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAuthModal();
+      });
+    }
+
+    document.querySelectorAll('.auth-btn-nav, .btn-account-trigger').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        openAuthModal();
+      });
+    });
 
     const savedColor = localStorage.getItem('mtcg_stage_bg_color');
     if (savedColor && window.set3DStageBackgroundColor) {
