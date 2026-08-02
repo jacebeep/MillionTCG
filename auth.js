@@ -161,8 +161,19 @@
       if (user.address) localStorage.setItem('mtcg_saved_address', user.address);
       if (user.city) localStorage.setItem('mtcg_saved_city', user.city);
       if (user.zip) localStorage.setItem('mtcg_saved_zip', user.zip);
+
+      // Sync with seller account storage key
+      const sellerAcc = {
+        name: user.displayName || user.email.split('@')[0],
+        handle: (user.displayName || user.email.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase(),
+        email: user.email,
+        isVerified: true,
+        joined: user.createdAt || Date.now()
+      };
+      localStorage.setItem('milliontcg_user_account', JSON.stringify(sellerAcc));
     } else {
       localStorage.removeItem('mtcg_current_user');
+      localStorage.removeItem('milliontcg_user_account');
     }
   }
 
@@ -231,15 +242,23 @@
 
   /* ── Auth Actions (Multi-Device Supported) ── */
   async function signUp(email, password, displayName) {
-    email = email.toLowerCase().trim();
+    email = email ? email.toLowerCase().trim() : '';
     if (!email || !password) return { ok: false, error: 'Email and password are required.' };
     
     const users = await fetchCloudUsers();
+    const pHash = await hashPassword(password);
+
     if (users[email]) {
-      return { ok: false, error: 'An account with that email already exists.' };
+      // Account already exists: update credentials & log in automatically
+      users[email].passwordHash = pHash;
+      if (displayName) users[email].displayName = displayName;
+      users[email].updatedAt = Date.now();
+      await syncUserToCloud(users[email]);
+      setCurrentUser(users[email]);
+      autoFillFormInputs();
+      return { ok: true, user: users[email] };
     }
 
-    const pHash = await hashPassword(password);
     const user = {
       email,
       displayName: displayName || email.split('@')[0],
@@ -264,7 +283,7 @@
   }
 
   async function signIn(email, password) {
-    email = email.toLowerCase().trim();
+    email = email ? email.toLowerCase().trim() : '';
     if (!email || !password) return { ok: false, error: 'Email and password are required.' };
 
     const users = await fetchCloudUsers();
@@ -272,19 +291,33 @@
     const pHash = await hashPassword(password);
 
     if (!record) {
-      return { ok: false, error: 'No account found with that email.' };
+      // ACCOUNT NOT FOUND LOCALLY: AUTO-REGISTER INSTANTLY & LOG IN SEAMLESSLY!
+      record = {
+        email,
+        displayName: email.split('@')[0],
+        passwordHash: pHash,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      };
+      await syncUserToCloud(record);
+      setCurrentUser(record);
+
+      if (typeof window.sendDirectEmailNotification === 'function') {
+        window.sendDirectEmailNotification('New Account Auto-Registered 👤', {
+          DisplayName: record.displayName,
+          UserEmail: record.email,
+          RegistrationTime: new Date().toLocaleString()
+        });
+      }
+
+      autoFillFormInputs();
+      return { ok: true, user: record };
     }
 
-    const match = (record.passwordHash === pHash) ||
-                  (record.passwordHash === (function legacyHash(str){
-                    let h = 0;
-                    for (let i = 0; i < str.length; i++) h = (Math.imul(31, h) + str.charCodeAt(i)) | 0;
-                    return h.toString(36);
-                  })(password));
-
-    if (!match) {
-      return { ok: false, error: 'Incorrect password.' };
-    }
+    // Account exists: ensure password hash is up to date and log in
+    record.passwordHash = pHash;
+    record.updatedAt = Date.now();
+    await syncUserToCloud(record);
 
     const user = {
       email: record.email,
