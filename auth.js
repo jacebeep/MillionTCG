@@ -10,16 +10,41 @@
   let activeVerificationEmail = '';
   let lastGeneratedVerificationCode = '';
 
-  /* ── In-App System Notification Logger (Zero External API Services) ── */
+  /* ── Direct API Key Email Notification Dispatcher ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
+      const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail || MAIN_BUSINESS_EMAIL;
       const timestamp = new Date().toLocaleString();
+
+      let detailsText = '';
+      for (const [key, val] of Object.entries(detailsData)) {
+        if (key !== 'UserEmail' && key !== 'CustomerEmail' && key !== 'Email') {
+          detailsText += `${key}: ${val}\n`;
+        }
+      }
+
+      // 1. Log to local notification store
       const logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
       logs.unshift({ eventTitle, detailsData, timestamp });
       localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
-      console.log(`[MillionTCG System Alert] ${eventTitle}:`, detailsData);
+
+      // 2. Dispatch API email to admin (tcgmillion@gmail.com)
+      sendAPIEmailNotification(
+        MAIN_BUSINESS_EMAIL,
+        `⚡ MillionTCG Alert: ${eventTitle}`,
+        `Event: ${eventTitle}\nTimestamp: ${timestamp}\n\n${detailsText}`
+      );
+
+      // 3. Dispatch API confirmation email to customer
+      if (userContactEmail && userContactEmail.toLowerCase() !== MAIN_BUSINESS_EMAIL.toLowerCase() && userContactEmail.includes('@')) {
+        sendAPIEmailNotification(
+          userContactEmail,
+          `MillionTCG Confirmation: ${eventTitle}`,
+          `Hello,\n\nThank you for choosing MillionTCG!\n\nDetails of your ${eventTitle}:\n\n${detailsText}\nTimestamp: ${timestamp}\n\nBest regards,\nMillionTCG Team\n${MAIN_BUSINESS_EMAIL}`
+        );
+      }
     } catch (e) {
-      console.error('Notification log error:', e);
+      console.error('Notification dispatch error:', e);
     }
   };
 
@@ -227,28 +252,25 @@
     });
   }
 
-  /* ── Direct Gmail Web Compose Dispatcher (Option 2) ── */
-  function sendVerificationEmailToUser(userEmail, code, displayName) {
+  /* ── Direct API Key Email Dispatcher (Web3Forms API Key Configured) ── */
+  async function sendAPIEmailNotification(toEmail, subject, messageText) {
     try {
-      const subject = encodeURIComponent(`MillionTCG Account Verification Code: ${code} 🔐`);
-      const body = encodeURIComponent(`Hello ${displayName || 'Collector'},\n\nYour 6-Digit Verification Code is: ${code}\n\nAccount Email: ${userEmail}\nTimestamp: ${new Date().toLocaleString()}`);
-      
-      // Gmail Web Compose URL + Fallback Mailto
-      const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${MAIN_BUSINESS_EMAIL}&su=${subject}&body=${body}`;
-      const mailtoUrl = `mailto:${MAIN_BUSINESS_EMAIL}?subject=${subject}&body=${body}`;
+      const payload = {
+        access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
+        subject: subject,
+        from_name: 'MillionTCG Official',
+        replyto: MAIN_BUSINESS_EMAIL,
+        email: toEmail || MAIN_BUSINESS_EMAIL,
+        message: messageText
+      };
 
-      const gmailBtn = document.getElementById('verify-gmail-btn');
-      if (gmailBtn) {
-        gmailBtn.href = gmailComposeUrl;
-      }
-
-      try {
-        window.open(gmailComposeUrl, '_blank');
-      } catch (err) {
-        window.location.href = mailtoUrl;
-      }
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.log('API email error:', err));
     } catch (e) {
-      console.error('sendVerificationEmailToUser error:', e);
+      console.error('sendAPIEmailNotification error:', e);
     }
   }
   async function signUp(email, password, displayName) {
@@ -501,12 +523,6 @@
         <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Store Settings</button>
         <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
       `;
-    } else if (currentTab === 'verify') {
-      tabsContainer.innerHTML = `
-        <button class="auth-tab-btn active" data-tab="verify">🔐 Verification</button>
-        <button class="auth-tab-btn" data-tab="signin">Sign In</button>
-        <button class="auth-tab-btn" data-tab="signup">Create Account</button>
-      `;
     } else {
       tabsContainer.innerHTML = `
         <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
@@ -713,27 +729,7 @@
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
 
-        <!-- Email Verification Panel -->
-        <div id="auth-verify-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;text-align:center;">
-          <div style="font-size:38px;margin-bottom:8px;">📩</div>
-          <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Check Your Email Inbox</h3>
-          <p class="auth-panel-sub" style="margin-bottom:16px;line-height:1.5;">Verification code generated for <strong id="verify-email-display" style="color:#eab308;"></strong>.<br>Send or confirm your code via your Gmail account.</p>
-
-          <a id="verify-gmail-btn" href="https://mail.google.com/mail/" target="_blank" class="auth-submit-btn" style="display:block;width:100%;margin-bottom:16px;padding:14px;background:#ea4335;color:#fff;font-weight:700;border-radius:10px;text-align:center;text-decoration:none;box-sizing:border-box;">
-            ✉️ Open Direct Gmail Draft (tcgmillion@gmail.com)
-          </a>
-
-          <div class="auth-error" id="auth-verify-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
-          <div class="auth-field" style="text-align:left;">
-            <label>Enter 6-Digit Code</label>
-            <input type="text" id="verify-code-input" placeholder="123456" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;">
-          </div>
-          <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify Email & Complete Sign Up</button>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:0.85rem;">
-            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Gmail Draft</button>
-            <a href="#" class="auth-switch-link" data-tab="signin" style="color:#a1a1aa;text-decoration:none;">← Back to Sign In</a>
-          </div>
-        </div>
+        <!-- Profile & Shipping Panel -->
 
         <!-- Profile & Shipping Panel -->
         <div id="auth-profile-panel" class="auth-panel" style="display:none;">
