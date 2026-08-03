@@ -9,20 +9,67 @@
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   let activeVerificationEmail = '';
 
-  /* ── Direct Admin & Customer Email Notification Helper (Zero FormSubmit) ── */
+  /* ── Authenticated Email Dispatcher (tcgmillion@gmail.com) ── */
+  async function sendAuthenticatedGmail({ to_email, subject, message_body, sender_name = 'MillionTCG Official' }) {
+    try {
+      const payload = {
+        access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
+        from_name: sender_name,
+        replyto: MAIN_BUSINESS_EMAIL,
+        email: to_email || MAIN_BUSINESS_EMAIL,
+        subject: subject,
+        message: message_body
+      };
+
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return await res.json();
+    } catch (e) {
+      console.error('sendAuthenticatedGmail error:', e);
+      return { success: false };
+    }
+  }
+
+  /* ── Direct Email Notification Dispatcher (tcgmillion@gmail.com) ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
+      const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail || MAIN_BUSINESS_EMAIL;
       const timestamp = new Date().toLocaleString();
+
+      let detailsText = '';
+      for (const [key, val] of Object.entries(detailsData)) {
+        if (key !== 'UserEmail' && key !== 'CustomerEmail' && key !== 'Email') {
+          detailsText += `${key}: ${val}\n`;
+        }
+      }
+
+      // 1. Log to local notification store
       const logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
-      logs.unshift({
-        eventTitle,
-        detailsData,
-        timestamp
-      });
+      logs.unshift({ eventTitle, detailsData, timestamp });
       localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
-      console.log(`[MillionTCG Notification] ${eventTitle}:`, detailsData);
+
+      // 2. Dispatch email to Admin (tcgmillion@gmail.com)
+      sendAuthenticatedGmail({
+        to_email: MAIN_BUSINESS_EMAIL,
+        subject: `⚡ MillionTCG Alert: ${eventTitle}`,
+        message_body: `Event: ${eventTitle}\nTimestamp: ${timestamp}\n\n${detailsText}\n\nOfficial Sender: tcgmillion@gmail.com`,
+        sender_name: 'MillionTCG System'
+      });
+
+      // 3. Dispatch confirmation email to Customer
+      if (userContactEmail && userContactEmail.toLowerCase() !== MAIN_BUSINESS_EMAIL.toLowerCase() && userContactEmail.includes('@')) {
+        sendAuthenticatedGmail({
+          to_email: userContactEmail,
+          subject: `MillionTCG Confirmation: ${eventTitle}`,
+          message_body: `Hello,\n\nThank you for choosing MillionTCG!\n\nDetails of your ${eventTitle}:\n\n${detailsText}\nTimestamp: ${timestamp}\n\nIf you have any questions, reply directly to this email.\n\nBest regards,\nMillionTCG Support\ntcgmillion@gmail.com`,
+          sender_name: 'MillionTCG Support (tcgmillion@gmail.com)'
+        });
+      }
     } catch (e) {
-      console.error('Notification log error:', e);
+      console.error('Notification dispatch error:', e);
     }
   };
 
