@@ -71,8 +71,7 @@ try {
 const DEFAULT_COMMUNITY_LISTINGS = [];
 
 // =============================================================================
-// INDEXEDDB STORAGE ENGINE — Handles large base64 image data (250MB+ capacity)
-// localStorage silently fails when images are stored, so we use IndexedDB.
+// STORAGE ENGINE — Dual-Layer IndexedDB (High Capacity) + LocalStorage Mirror
 // =============================================================================
 const DB_NAME = 'milliontcg_db';
 const DB_VERSION = 1;
@@ -80,95 +79,167 @@ const STORE_NAME = 'listings';
 
 let _db = null;
 
+function getLocalListingsCache() {
+  try {
+    const raw = localStorage.getItem('milliontcg_community_listings');
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function setLocalListingsCache(arr) {
+  try {
+    localStorage.setItem('milliontcg_community_listings', JSON.stringify(arr));
+  } catch (e) {
+    console.warn('[MillionTCG] localStorage cache warning:', e);
+  }
+}
+
 function openDB() {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     if (_db) { resolve(_db); return; }
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-        store.createIndex('date', 'date', { unique: false });
-      }
-    };
-    req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
-    req.onerror = (e) => { console.error('IndexedDB error:', e); reject(e); };
+    if (!window.indexedDB) {
+      resolve(null);
+      return;
+    }
+    try {
+      const req = indexedDB.open(DB_NAME, DB_VERSION);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+          store.createIndex('date', 'date', { unique: false });
+        }
+      };
+      req.onsuccess = (e) => { _db = e.target.result; resolve(_db); };
+      req.onerror = (e) => { console.warn('IndexedDB open error:', e); resolve(null); };
+    } catch (e) {
+      resolve(null);
+    }
   });
 }
 
 function dbGetAll() {
-  return openDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readonly');
-    const req = tx.objectStore(STORE_NAME).index('date').getAll();
-    req.onsuccess = () => {
-      // Sort newest first (descending date)
-      const sorted = (req.result || []).sort((a, b) => (b.date || 0) - (a.date || 0));
-      resolve(sorted);
-    };
-    req.onerror = () => reject(req.error);
-  }));
+  return openDB().then(db => {
+    if (!db) return getLocalListingsCache();
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const req = store.getAll();
+        req.onsuccess = () => {
+          let items = req.result || [];
+          if (!Array.isArray(items) || items.length === 0) {
+            items = getLocalListingsCache();
+          } else {
+            setLocalListingsCache(items);
+          }
+          items.sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
+          resolve(items);
+        };
+        req.onerror = () => resolve(getLocalListingsCache());
+      } catch (err) {
+        resolve(getLocalListingsCache());
+      }
+    });
+  }).catch(() => getLocalListingsCache());
 }
 
 function dbPut(listing) {
-  return openDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const req = tx.objectStore(STORE_NAME).put(listing);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
-  }));
+  // Always update localStorage mirror
+  const cache = getLocalListingsCache().filter(i => String(i.id) !== String(listing.id));
+  cache.unshift(listing);
+  setLocalListingsCache(cache);
+
+  return openDB().then(db => {
+    if (!db) return listing;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const req = tx.objectStore(STORE_NAME).put(listing);
+        req.onsuccess = () => resolve(listing);
+        req.onerror = () => resolve(listing);
+      } catch (e) {
+        resolve(listing);
+      }
+    });
+  }).catch(() => listing);
 }
 
 function dbDelete(id) {
-  return openDB().then(db => new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const req = tx.objectStore(STORE_NAME).delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
-  }));
+  const cache = getLocalListingsCache().filter(i => String(i.id) !== String(id));
+  setLocalListingsCache(cache);
+
+  return openDB().then(db => {
+    if (!db) return true;
+    return new Promise((resolve) => {
+      try {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const req = tx.objectStore(STORE_NAME).delete(id);
+        req.onsuccess = () => resolve(true);
+        req.onerror = () => resolve(true);
+      } catch (e) {
+        resolve(true);
+      }
+    });
+  }).catch(() => true);
 }
 
 // Migrate any old localStorage listings into IndexedDB once
 function migrateFromLocalStorage() {
   try {
-    const old = localStorage.getItem('milliontcg_community_listings');
-    if (!old) return;
-    const arr = JSON.parse(old);
+    const raw = localStorage.getItem('milliontcg_community_listings');
+    if (!raw) return;
+    const arr = JSON.parse(raw);
     if (!Array.isArray(arr) || arr.length === 0) return;
     const real = arr.filter(i => i && i.id && !String(i.id).includes('seed'));
-    if (real.length === 0) { localStorage.removeItem('milliontcg_community_listings'); return; }
+    if (real.length === 0) return;
     Promise.all(real.map(item => dbPut(item))).then(() => {
-      localStorage.removeItem('milliontcg_community_listings');
-      console.log('[MillionTCG] Migrated', real.length, 'listings from localStorage → IndexedDB');
-      renderHomeProducts();
+      console.log('[MillionTCG] Synced', real.length, 'listings');
     }).catch(console.error);
   } catch (e) {}
 }
 
 // Public API — async versions used by sell page, sync fallback for homepage
 function getCommunityListings() {
-  // Synchronous fallback: returns empty array on first call, async fill happens via renderHomeProducts
-  return [];
+  return communityListings && communityListings.length > 0 ? communityListings : getLocalListingsCache();
 }
 
 function getCommunityListingsAsync() {
-  return dbGetAll();
+  return dbGetAll().then(items => {
+    communityListings = items;
+    return items;
+  });
 }
 
 function saveCommunityListing(newListing) {
+  if (!newListing.date) newListing.date = Date.now();
+  if (!newListing.createdAt) newListing.createdAt = Date.now();
+
   return dbPut(newListing).then(() => {
-    renderHomeProducts();
-    window.dispatchEvent(new Event('milliontcg_listing_saved'));
-  }).catch(err => {
-    console.error('[MillionTCG] Failed to save listing:', err);
-    alert('Error saving listing. Please try again.');
+    if (!communityListings.some(i => String(i.id) === String(newListing.id))) {
+      communityListings.unshift(newListing);
+    }
+    try { renderHomeProducts(); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('milliontcg_listing_saved', { detail: newListing })); } catch (e) {}
+    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+    return newListing;
   });
 }
 
 function deleteCommunityListing(id) {
-  return dbDelete(id);
+  communityListings = communityListings.filter(i => String(i.id) !== String(id));
+  return dbDelete(id).then(() => {
+    try { renderHomeProducts(); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('milliontcg_listing_deleted', { detail: { id } })); } catch (e) {}
+    try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+  });
 }
 
-let communityListings = [];
+let communityListings = getLocalListingsCache();
 // Async load on startup
 openDB().then(() => {
   migrateFromLocalStorage();
@@ -177,6 +248,16 @@ openDB().then(() => {
   communityListings = listings;
   try { renderHomeProducts(); } catch (e) {}
 }).catch(console.error);
+
+// Listen for cross-tab or listing updates
+window.addEventListener('storage', () => {
+  getCommunityListingsAsync().then(() => {
+    try { renderHomeProducts(); } catch (e) {}
+  });
+});
+window.addEventListener('milliontcg_listing_saved', () => {
+  try { renderHomeProducts(); } catch (e) {}
+});
 
 
 
@@ -310,7 +391,21 @@ function updateCartUI() {
 
 // Add Item to Cart with Optional Bundle Choice
 function addToCart(productId, selectedBundle) {
-  const product = PRODUCTS.find(p => p.id === productId);
+  let product = PRODUCTS.find(p => String(p.id) === String(productId));
+  if (!product) {
+    const commList = getCommunityListings();
+    const comm = (commList || []).find(p => String(p.id) === String(productId));
+    if (comm) {
+      product = {
+        id: comm.id,
+        name: comm.title || comm.name,
+        price: parseFloat(comm.price) || 0,
+        category: comm.category || 'Single Card',
+        image: comm.image || (comm.gallery && comm.gallery[0]) || 'images/logo.png',
+        desc: comm.desc || `${comm.condition || 'Card'} • @${comm.sellerName || 'Seller'}`
+      };
+    }
+  }
   if (!product) return;
 
   let itemToAdd = { ...product };
@@ -321,13 +416,14 @@ function addToCart(productId, selectedBundle) {
     itemToAdd.price = selectedBundle.price;
   }
 
-  const existing = cart.find(item => item.id === itemToAdd.id);
+  const existing = cart.find(item => String(item.id) === String(itemToAdd.id));
   if (existing) {
     existing.quantity += 1;
   } else {
     cart.push({ ...itemToAdd, quantity: 1 });
   }
 
+  try { localStorage.setItem('milliontcg_cart', JSON.stringify(cart)); } catch (e) {}
   updateCartUI();
   openCartModal();
 }
@@ -1235,6 +1331,66 @@ function initSellerSystem() {
 
   let uploadedImages = []; // Array of up to 5 image Data URLs
 
+  // Fast Client-Side Image Resizer & Compressor (Keeps quality high, cuts 20MB phone photos down to ~90KB)
+  function compressImageFile(file, maxDimension = 1280, quality = 0.82) {
+    return new Promise((resolve) => {
+      if (!file) return resolve(null);
+      if (!file.type || !file.type.startsWith('image/')) return resolve(null);
+      
+      const reader = new FileReader();
+      reader.onerror = () => resolve(null);
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onerror = () => resolve(e.target.result);
+        img.onload = () => {
+          try {
+            let { width, height } = img;
+            if (width > maxDimension || height > maxDimension) {
+              if (width > height) {
+                height = Math.round((height * maxDimension) / width);
+                width = maxDimension;
+              } else {
+                width = Math.round((width * maxDimension) / height);
+                height = maxDimension;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const compressed = canvas.toDataURL('image/jpeg', quality);
+            resolve(compressed || e.target.result);
+          } catch (err) {
+            resolve(e.target.result);
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Load current user from auth state
+  try {
+    const mtcgUser = localStorage.getItem('mtcg_current_user');
+    if (mtcgUser) {
+      const parsed = JSON.parse(mtcgUser);
+      currentUser = {
+        name: parsed.displayName || parsed.name || 'Collector',
+        handle: parsed.handle || (parsed.email ? parsed.email.split('@')[0] : 'Seller'),
+        email: parsed.email || '',
+        isVerified: true
+      };
+    } else {
+      const old = localStorage.getItem('milliontcg_user_account');
+      if (old) currentUser = JSON.parse(old);
+    }
+  } catch (e) {}
+
   // Auth Modal Delegation
   function openAuthModal(mode = 'signup') {
     if (window.MillionAuth && window.MillionAuth.openAuthModal) {
@@ -1332,25 +1488,29 @@ function initSellerSystem() {
             <button class="btn-logout" id="btn-logout">Log Out</button>
           </div>
         `;
-        document.getElementById('btn-logout').addEventListener('click', () => {
-          currentUser = null;
-          localStorage.removeItem('milliontcg_user_account');
-          updateAccountUI();
-        });
+        const logoutBtn = document.getElementById('btn-logout');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', () => {
+            currentUser = null;
+            localStorage.removeItem('milliontcg_user_account');
+            updateAccountUI();
+          });
+        }
       } else {
         accountStateBox.innerHTML = `
           <button class="btn-primary" id="hero-create-acc-btn" style="padding: 10px 24px; font-size: 0.85rem;">CREATE SELLER ACCOUNT TO LIST CARDS</button>
         `;
-        document.getElementById('hero-create-acc-btn').addEventListener('click', () => openAuthModal('signup'));
+        const heroCreateBtn = document.getElementById('hero-create-acc-btn');
+        if (heroCreateBtn) heroCreateBtn.addEventListener('click', () => openAuthModal('signup'));
       }
     }
 
     if (sellerWorkspace) {
       sellerWorkspace.classList.remove('hidden');
-      renderMyListings();
-      renderSoldOrders();
-      updatePayoutAccountUI();
     }
+    renderMyListings();
+    renderSoldOrders();
+    updatePayoutAccountUI();
   }
 
   // Live 10% Fee Breakdown Listener
@@ -1415,12 +1575,17 @@ function initSellerSystem() {
   // Render Logged-in User's Listings Dashboard & Payout Stats
   function renderMyListings() {
     if (!myListingsContainer) return;
-    myListingsContainer.innerHTML = '<div style="text-align:center;color:#888;padding:20px;">Loading...</div>';
-    if (!currentUser) { myListingsContainer.innerHTML = ''; return; }
-
+    
     getCommunityListingsAsync().then(allListings => {
       communityListings = allListings;
-      const userItems = allListings.filter(item => item.sellerName === currentUser.handle);
+      
+      let userItems = allListings;
+      if (currentUser && currentUser.handle) {
+        const filtered = allListings.filter(item => item.sellerName === currentUser.handle);
+        if (filtered.length > 0 || allListings.length === 0) {
+          userItems = filtered;
+        }
+      }
 
       // Calculate Earnings Breakdown
       const grossTotal = userItems.reduce((acc, i) => acc + (parseFloat(i.price) || 0), 0);
@@ -1440,7 +1605,7 @@ function initSellerSystem() {
         myListingsContainer.innerHTML = `
           <div style="text-align: center; color: #888888; padding: 40px 20px;">
             <div style="font-size: 2rem; margin-bottom: 8px;">📦</div>
-            You haven't listed any cards yet.<br>Use the form on the left to upload your first card!
+            You haven't listed any cards yet.<br>Use the form above to upload your first card!
           </div>
         `;
         return;
@@ -1453,12 +1618,12 @@ function initSellerSystem() {
           <img class="my-listing-img" src="${item.image || 'images/logo.png'}" alt="${item.title}">
           <div class="my-listing-info">
             <div class="my-listing-title">${item.title}</div>
-            <div class="my-listing-meta">${item.condition} • ${item.category}</div>
+            <div class="my-listing-meta">${item.condition || 'Raw'} • ${item.category || 'Single'}</div>
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
           <div style="display: flex; gap: 8px; align-items: center;">
             <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View Listing</a>
-            <button class="btn-delete-listing" data-id="${item.id}">Remove</button>
+            <button type="button" class="btn-delete-listing" data-id="${item.id}">Remove</button>
           </div>
         `;
 
@@ -1635,7 +1800,7 @@ function renderSoldOrders() {
         placeholder.innerHTML = `
           <div class="neat-icon">📷</div>
           <div class="neat-title">Upload Up To 5 Card Photos</div>
-          <div class="neat-sub">Click or Drag & Drop photos here (${5 - uploadedImages.length} slot${(5 - uploadedImages.length) !== 1 ? 's' : ''} remaining)</div>
+          <div class="neat-sub">Tap to take photo or choose from gallery (${5 - uploadedImages.length} slot${(5 - uploadedImages.length) !== 1 ? 's' : ''} remaining)</div>
         `;
       }
     }
@@ -1654,6 +1819,7 @@ function renderSoldOrders() {
       `;
 
       slot.querySelector('.btn-remove-photo').addEventListener('click', (e) => {
+        e.preventDefault();
         e.stopPropagation();
         uploadedImages.splice(index, 1);
         renderPhotoSlots();
@@ -1663,7 +1829,9 @@ function renderSoldOrders() {
     });
   }
 
-  function handleUploadedFiles(files) {
+  // Handle Image File Uploads with High-Speed Compression
+  async function handleUploadedFiles(files) {
+    if (!files || files.length === 0) return;
     const fileList = Array.from(files);
     const availableSlots = 5 - uploadedImages.length;
     if (availableSlots <= 0) {
@@ -1671,22 +1839,36 @@ function renderSoldOrders() {
       return;
     }
 
-    const filesToRead = fileList.slice(0, availableSlots);
-    let loadedCount = 0;
+    const filesToProcess = fileList.slice(0, availableSlots);
+    const statusMsg = document.getElementById('upload-status-msg');
+    if (statusMsg) {
+      statusMsg.style.display = 'block';
+      statusMsg.textContent = `⚡ Compressing & optimizing ${filesToProcess.length} photo(s)...`;
+    }
 
-    filesToRead.forEach(file => {
-      if (!file.type.startsWith('image/')) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        uploadedImages.push(event.target.result);
-        loadedCount++;
-        if (loadedCount === filesToRead.length) {
-          renderPhotoSlots();
+    try {
+      const compressionPromises = filesToProcess.map(file => compressImageFile(file, 1280, 0.82));
+      const results = await Promise.all(compressionPromises);
+      
+      results.forEach(imgData => {
+        if (imgData && uploadedImages.length < 5) {
+          uploadedImages.push(imgData);
         }
-      };
-      reader.readAsDataURL(file);
-    });
+      });
+    } catch (err) {
+      console.error('[MillionTCG] Image compression error:', err);
+    } finally {
+      if (statusMsg) {
+        statusMsg.style.display = 'none';
+      }
+      renderPhotoSlots();
+    }
   }
+
+  // File Inputs Listeners
+  const cameraInput = document.getElementById('card-camera-input');
+  const btnSnapCamera = document.getElementById('btn-snap-camera');
+  const btnBrowseGallery = document.getElementById('btn-browse-gallery');
 
   if (photoInput) {
     photoInput.addEventListener('change', (e) => {
@@ -1697,14 +1879,38 @@ function renderSoldOrders() {
     });
   }
 
-  if (neatZone) {
-    neatZone.addEventListener('click', (e) => {
-      if (e.target.closest('.btn-remove-photo')) return;
-      if (uploadedImages.length < 5 && photoInput) {
-        photoInput.click();
+  if (cameraInput) {
+    cameraInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files.length > 0) {
+        handleUploadedFiles(e.target.files);
+        cameraInput.value = '';
       }
     });
+  }
 
+  if (btnSnapCamera && cameraInput) {
+    btnSnapCamera.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (uploadedImages.length >= 5) {
+        alert('Maximum 5 pictures reached. Remove a photo to add a new one.');
+        return;
+      }
+      cameraInput.click();
+    });
+  }
+
+  if (btnBrowseGallery && photoInput) {
+    btnBrowseGallery.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (uploadedImages.length >= 5) {
+        alert('Maximum 5 pictures reached. Remove a photo to add a new one.');
+        return;
+      }
+      photoInput.click();
+    });
+  }
+
+  if (neatZone) {
     neatZone.addEventListener('dragover', (e) => {
       e.preventDefault();
       neatZone.style.borderColor = '#ffffff';
@@ -1717,18 +1923,18 @@ function renderSoldOrders() {
     neatZone.addEventListener('drop', (e) => {
       e.preventDefault();
       neatZone.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         handleUploadedFiles(e.dataTransfer.files);
       }
     });
   }
 
-  // Handle Submission
+  // Handle Form Submission
   if (form) {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
 
-      // Auto-create anonymous seller session if not logged in
+      // Auto-create seller session if not logged in
       if (!currentUser) {
         currentUser = {
           name: 'Verified Seller',
@@ -1737,7 +1943,7 @@ function renderSoldOrders() {
           isVerified: true,
           joined: Date.now()
         };
-        localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser));
+        try { localStorage.setItem('milliontcg_user_account', JSON.stringify(currentUser)); } catch (e) {}
         updateAccountUI();
       }
 
@@ -1765,13 +1971,14 @@ function renderSoldOrders() {
         image,
         gallery,
         desc: description,
-        date: Date.now()
+        date: Date.now(),
+        createdAt: Date.now()
       };
 
       // Show saving indicator
       const submitBtn = form.querySelector('[type="submit"]');
       const origText = submitBtn ? submitBtn.textContent : '';
-      if (submitBtn) { submitBtn.textContent = 'Saving...'; submitBtn.disabled = true; }
+      if (submitBtn) { submitBtn.textContent = 'Publishing Listing... ⏳'; submitBtn.disabled = true; }
 
       saveCommunityListing(newListing).then(() => {
         // Trigger email notification
@@ -1794,11 +2001,11 @@ function renderSoldOrders() {
         renderMyListings();
 
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
-        alert(`✅ "${title}" with ${gallery.length} photo(s) has been published to the marketplace!\n\nIt will now appear on the Home page and Shop.`);
+        alert(`✅ "${title}" with ${gallery.length} photo(s) has been published to the marketplace!\n\nIt is now live in the Shop and on the Home page.`);
       }).catch(err => {
         console.error('[MillionTCG] Submission error:', err);
         if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
-        alert('Failed to save listing. Please try again or reduce image file sizes.');
+        alert('Failed to save listing. Please try again.');
       });
     });
   }

@@ -156,13 +156,28 @@
               </div>
               <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Upload up to 5 pictures (Front, Back, Hologram surface, Edges/Corners, PSA cert).</p>
               
-              <div class="neat-upload-zone" id="neat-upload-zone">
-                <input type="file" id="card-photo-input" accept="image/*" multiple class="file-input-hidden">
-                <div class="neat-drop-placeholder" id="drop-placeholder">
-                  <div class="neat-icon">📷</div>
-                  <div class="neat-title">Upload Up To 5 Card Photos</div>
-                  <div class="neat-sub">Click or Drag & Drop photos here</div>
+              <div class="neat-upload-zone-wrapper">
+                <input type="file" id="card-photo-input" accept="image/*" multiple style="display: none;">
+                <input type="file" id="card-camera-input" accept="image/*" capture="environment" style="display: none;">
+                
+                <label for="card-photo-input" class="neat-upload-zone" id="neat-upload-zone">
+                  <div class="neat-drop-placeholder" id="drop-placeholder">
+                    <div class="neat-icon">📷</div>
+                    <div class="neat-title">Upload Up To 5 Card Photos</div>
+                    <div class="neat-sub">Tap to take photo or choose from gallery</div>
+                  </div>
+                </label>
+
+                <!-- Mobile Action Bar (Take Photo vs Library) -->
+                <div class="upload-action-buttons" style="display: flex; gap: 8px; justify-content: center; margin-top: 10px;">
+                  <button type="button" class="btn-secondary" id="btn-snap-camera" style="padding: 8px 14px; font-size: 0.78rem; display: flex; align-items: center; gap: 6px; border-radius: 6px;">
+                    📸 Take Photo
+                  </button>
+                  <button type="button" class="btn-secondary" id="btn-browse-gallery" style="padding: 8px 14px; font-size: 0.78rem; display: flex; align-items: center; gap: 6px; border-radius: 6px;">
+                    🖼️ Photo Library
+                  </button>
                 </div>
+                <div id="upload-status-msg" style="display: none; font-size: 0.8rem; color: #4ade80; margin-top: 8px; text-align: center; font-weight: 600;"></div>
               </div>
 
               <!-- Multi-Photo Slots Grid -->

@@ -3246,57 +3246,79 @@ html, body {
   }
 
   .neat-upload-zone {
-    max-width: 140px !important;
-    aspect-ratio: 2.5 / 3.5 !important;
-    margin: 0 auto 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100px !important;
+    aspect-ratio: auto !important;
+    margin: 0 0 10px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
 
   .neat-drop-placeholder {
-    padding: 10px 8px !important;
+    padding: 14px 12px !important;
+    width: 100% !important;
+    text-align: center !important;
   }
 
   .neat-icon {
-    font-size: 1.6rem !important;
+    font-size: 1.8rem !important;
     margin-bottom: 4px !important;
   }
 
   .neat-title {
-    font-size: 0.75rem !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
   }
 
   .neat-sub {
-    font-size: 0.65rem !important;
+    font-size: 0.72rem !important;
+  }
+
+  .photo-slot-item {
+    width: 80px !important;
+    height: 105px !important;
+  }
+
+  .photo-slot-item .btn-remove-photo {
+    width: 22px !important;
+    height: 22px !important;
+    font-size: 0.75rem !important;
   }
 
   .card-form input[type="text"],
   .card-form input[type="number"],
   .card-form select,
   .card-form textarea {
-    padding: 8px 10px !important;
-    font-size: 0.82rem !important;
+    padding: 10px 12px !important;
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
     width: 100% !important;
     box-sizing: border-box !important;
   }
 
   .card-form label {
-    font-size: 0.75rem !important;
+    font-size: 0.8rem !important;
     margin-bottom: 4px !important;
   }
 
   .fee-breakdown-tag {
-    font-size: 0.7rem !important;
-    padding: 5px 8px !important;
-    gap: 2px 6px !important;
+    font-size: 0.75rem !important;
+    padding: 6px 10px !important;
+    gap: 4px 8px !important;
   }
 
   .form-row-2 {
     grid-template-columns: 1fr !important;
-    gap: 8px !important;
+    gap: 10px !important;
   }
 
   .btn-submit-listing {
-    padding: 11px !important;
-    font-size: 0.85rem !important;
+    padding: 14px !important;
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.05em !important;
   }
 
   .seller-dashboard-card {
