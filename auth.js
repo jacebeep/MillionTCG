@@ -717,41 +717,36 @@
 
         <!-- Profile & Shipping Panel -->
         <div id="auth-profile-panel" class="auth-panel" style="display:none;width:100%;">
-          <p class="auth-panel-sub">Manage your collector identity and default shipping address.</p>
-          <div class="auth-error" id="auth-profile-error"></div>
+          <p class="auth-panel-sub" style="margin-bottom:18px;">Manage your profile and default shipping location across all orders.</p>
+          <div class="auth-error" id="auth-profile-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
+          
           <div class="auth-grid-responsive">
             <div class="auth-field">
               <label>Collector Display Name</label>
-              <input type="text" id="profile-name" placeholder="Display name">
+              <input type="text" id="profile-name" placeholder="Display name" style="box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field">
-              <label>Email Address</label>
-              <input type="email" id="profile-email" disabled style="opacity:0.7;">
+              <label>Email Address (Cloud Verified)</label>
+              <input type="email" id="profile-email" disabled style="opacity:0.7;box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field" style="grid-column:1/-1;">
               <label>Street Shipping Address</label>
-              <input type="text" id="profile-address" placeholder="123 Main St, Apt 4B">
+              <input type="text" id="profile-address" placeholder="123 Main St, Apt 4B" style="box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field">
               <label>City</label>
-              <input type="text" id="profile-city" placeholder="City">
+              <input type="text" id="profile-city" placeholder="City" style="box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field">
               <label>ZIP / Postal Code</label>
-              <input type="text" id="profile-zip" placeholder="ZIP Code">
+              <input type="text" id="profile-zip" placeholder="ZIP Code" style="box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field" style="grid-column:1/-1;">
               <label>New Password (Optional)</label>
-              <input type="password" id="profile-new-password" placeholder="Leave blank to keep current password">
+              <input type="password" id="profile-new-password" placeholder="Leave blank to keep current password" style="box-sizing:border-box;width:100%;">
             </div>
           </div>
-          <button class="auth-submit-btn" id="profile-save-btn">Save Profile Changes</button>
-          
-          <!-- White on Black Sign Out Button -->
-          <button class="auth-signout-btn" id="modal-signout-btn" style="width:100%;margin-top:12px;padding:12px 18px;background:#000000;color:#ffffff;border:1px solid rgba(255,255,255,0.3);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.6);">
-            <span style="font-size:16px;">🚪</span>
-            <span>Sign Out</span>
-          </button>
+          <button class="auth-submit-btn" id="profile-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Profile Changes</button>
         </div>
 
         <!-- Banking & Payouts Panel -->
@@ -1008,12 +1003,6 @@
         btn.disabled = false;
         btn.textContent = 'Save Profile Changes';
       }
-    });
-
-    // Modal White on Black Sign Out handler
-    modal.querySelector('#modal-signout-btn')?.addEventListener('click', () => {
-      signOut();
-      closeAuthModal();
     });
 
     // Banking Save handler
