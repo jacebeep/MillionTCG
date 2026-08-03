@@ -648,7 +648,7 @@
     modal.className = 'auth-modal-overlay';
 
     modal.innerHTML = `
-      <div class="auth-modal-card">
+      <div class="auth-modal-card auth-modal-box">
         <button class="auth-modal-close" id="auth-modal-close" aria-label="Close modal">✕</button>
         
         <div class="auth-modal-header">
@@ -760,7 +760,7 @@
             </div>
             <div class="auth-field">
               <label>Preferred Payout Method</label>
-              <select id="banking-payout-method" style="padding:12px 16px;background:#1a1a1a;color:#fff;border:1px solid #2a2a2a;border-radius:10px;font-family:inherit;">
+              <select id="banking-payout-method">
                 <option value="Direct Deposit">Direct Deposit (ACH / Bank Transfer)</option>
                 <option value="Venmo">Venmo</option>
                 <option value="Zelle">Zelle</option>
@@ -774,7 +774,7 @@
             </div>
             <div class="auth-field">
               <label>Payout Schedule</label>
-              <select id="banking-payout-schedule" style="padding:12px 16px;background:#1a1a1a;color:#fff;border:1px solid #2a2a2a;border-radius:10px;font-family:inherit;">
+              <select id="banking-payout-schedule">
                 <option value="Instant">Instant (Daily Automated Payouts)</option>
                 <option value="Weekly">Weekly (Every Monday)</option>
                 <option value="Monthly">Monthly (1st of Month)</option>
