@@ -9,67 +9,16 @@
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   let activeVerificationEmail = '';
 
-  /* ── Authenticated Email Dispatcher (tcgmillion@gmail.com) ── */
-  async function sendAuthenticatedGmail({ to_email, subject, message_body, sender_name = 'MillionTCG Official' }) {
-    try {
-      const payload = {
-        access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
-        from_name: sender_name,
-        replyto: MAIN_BUSINESS_EMAIL,
-        email: to_email || MAIN_BUSINESS_EMAIL,
-        subject: subject,
-        message: message_body
-      };
-
-      const res = await fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      return await res.json();
-    } catch (e) {
-      console.error('sendAuthenticatedGmail error:', e);
-      return { success: false };
-    }
-  }
-
-  /* ── Direct Email Notification Dispatcher (tcgmillion@gmail.com) ── */
+  /* ── In-App System Notification Logger (Zero External API Services) ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
-      const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail || MAIN_BUSINESS_EMAIL;
       const timestamp = new Date().toLocaleString();
-
-      let detailsText = '';
-      for (const [key, val] of Object.entries(detailsData)) {
-        if (key !== 'UserEmail' && key !== 'CustomerEmail' && key !== 'Email') {
-          detailsText += `${key}: ${val}\n`;
-        }
-      }
-
-      // 1. Log to local notification store
       const logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
       logs.unshift({ eventTitle, detailsData, timestamp });
       localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
-
-      // 2. Dispatch email to Admin (tcgmillion@gmail.com)
-      sendAuthenticatedGmail({
-        to_email: MAIN_BUSINESS_EMAIL,
-        subject: `⚡ MillionTCG Alert: ${eventTitle}`,
-        message_body: `Event: ${eventTitle}\nTimestamp: ${timestamp}\n\n${detailsText}\n\nOfficial Sender: tcgmillion@gmail.com`,
-        sender_name: 'MillionTCG System'
-      });
-
-      // 3. Dispatch confirmation email to Customer
-      if (userContactEmail && userContactEmail.toLowerCase() !== MAIN_BUSINESS_EMAIL.toLowerCase() && userContactEmail.includes('@')) {
-        sendAuthenticatedGmail({
-          to_email: userContactEmail,
-          subject: `MillionTCG Confirmation: ${eventTitle}`,
-          message_body: `Hello,\n\nThank you for choosing MillionTCG!\n\nDetails of your ${eventTitle}:\n\n${detailsText}\nTimestamp: ${timestamp}\n\nIf you have any questions, reply directly to this email.\n\nBest regards,\nMillionTCG Support\ntcgmillion@gmail.com`,
-          sender_name: 'MillionTCG Support (tcgmillion@gmail.com)'
-        });
-      }
+      console.log(`[MillionTCG System Alert] ${eventTitle}:`, detailsData);
     } catch (e) {
-      console.error('Notification dispatch error:', e);
+      console.error('Notification log error:', e);
     }
   };
 
@@ -277,28 +226,6 @@
     });
   }
 
-  /* ── Automated Email Verification Dispatcher ── */
-  async function sendVerificationEmailToUser(userEmail, code, displayName) {
-    try {
-      const payload = {
-        access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
-        subject: `Your MillionTCG Account Verification Code: ${code} 🔐`,
-        from_name: 'MillionTCG Account Center',
-        replyto: MAIN_BUSINESS_EMAIL,
-        email: userEmail,
-        message: `Hello ${displayName || 'Collector'},\n\nThank you for joining MillionTCG!\n\nYour 6-digit Account Verification Code is:\n\n👉  ${code}  👈\n\nPlease enter this code on the website to verify your account.\n\nBest regards,\nMillionTCG Team\n${MAIN_BUSINESS_EMAIL}`
-      };
-
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.log('Verification email note:', err));
-    } catch (e) {
-      console.error('sendVerificationEmailToUser error:', e);
-    }
-  }
-
   /* ── Auth Actions (Strict Password & Email Verification Enabled) ── */
   async function signUp(email, password, displayName) {
     email = email ? email.toLowerCase().trim() : '';
@@ -328,9 +255,6 @@
     await syncUserToCloud(userRecord);
     activeVerificationEmail = email;
 
-    // Send Automated Verification Email to Customer Inbox
-    sendVerificationEmailToUser(email, verificationCode, userRecord.displayName);
-
     window.sendDirectEmailNotification('MillionTCG Account Verification Code 🔐', {
       DisplayName: userRecord.displayName,
       UserEmail: userRecord.email,
@@ -338,7 +262,7 @@
       Instructions: `Your 6-digit MillionTCG Account Verification Code is: ${verificationCode}.`
     });
 
-    return { ok: true, requiresVerification: true, email: email, code: verificationCode, message: 'Verification code sent to your email address!' };
+    return { ok: true, requiresVerification: true, email: email, code: verificationCode, message: 'Verification code generated for your account!' };
   }
 
   async function verifyAccountCode(email, enteredCode) {
@@ -395,9 +319,6 @@
 
     await syncUserToCloud(record);
 
-    // Send Automated Email to Customer Inbox
-    sendVerificationEmailToUser(email, newCode, record.displayName);
-
     window.sendDirectEmailNotification('New Verification Code Requested 🔐', {
       DisplayName: record.displayName || email.split('@')[0],
       UserEmail: record.email,
@@ -405,7 +326,7 @@
       Instructions: `Your new 6-digit MillionTCG Account Verification Code is: ${newCode}.`
     });
 
-    return { ok: true, code: newCode, message: 'A new 6-digit verification code has been sent to your email!' };
+    return { ok: true, code: newCode, message: 'A new 6-digit verification code has been generated!' };
   }
 
   async function signIn(email, password) {
