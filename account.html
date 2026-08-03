@@ -471,8 +471,8 @@ GINDEXHTML NOT GIT HUB RERE
 
         <form id="acc-banking-form">
           <div class="form-grid">
-            <div class="form-group full-width">
-              <label>Payout Email / Handle</label>
+            <div class="form-group">
+              <label>Payout Email / Primary Handle</label>
               <input type="email" id="acc-payout-email" placeholder="payouts@example.com" required>
             </div>
             <div class="form-group">
@@ -486,19 +486,31 @@ GINDEXHTML NOT GIT HUB RERE
               </select>
             </div>
             <div class="form-group">
+              <label>Account Holder Full Name</label>
+              <input type="text" id="acc-payout-name" placeholder="Legal Full Name or Business Entity">
+            </div>
+            <div class="form-group">
               <label>Payout Schedule</label>
               <select id="acc-payout-schedule">
                 <option value="Instant">Instant (Daily Automated Payouts)</option>
                 <option value="Weekly">Weekly (Every Monday)</option>
-                <option value="Monthly">Monthly</option>
+                <option value="Monthly">Monthly (1st of Month)</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>Bank Routing Number (ACH 9-Digit)</label>
+              <input type="text" id="acc-routing-number" placeholder="021000021">
+            </div>
+            <div class="form-group">
+              <label>Bank Account Number / Handle</label>
+              <input type="text" id="acc-account-number" placeholder="Account Number or ID">
+            </div>
             <div class="form-group full-width">
-              <label>Tax Identification / SSN (Required for >$600 Annual Sales)</label>
-              <input type="password" id="acc-tax-id" placeholder="•••-••-•••• (Encrypted)">
+              <label>Tax Identification / SSN (Encrypted 1099-K Compliance)</label>
+              <input type="password" id="acc-tax-id" placeholder="•••-••-•••• (Encrypted & Secure)">
             </div>
           </div>
-          <button type="submit" class="save-btn">Save Banking Preferences</button>
+          <button type="submit" class="save-btn" id="save-banking-btn">Save Banking Preferences</button>
         </form>
       </div>
 
@@ -653,13 +665,24 @@ GINDEXHTML NOT GIT HUB RERE
         document.getElementById('acc-user-email').textContent = u.email;
         document.getElementById('acc-avatar-initial').textContent = (u.displayName || u.email).slice(0, 1).toUpperCase();
 
+        // Profile Fields
         document.getElementById('acc-display-name').value = u.displayName || '';
         document.getElementById('acc-email').value = u.email;
+        if (document.getElementById('acc-phone')) document.getElementById('acc-phone').value = u.phone || '';
+        if (document.getElementById('acc-country') && u.country) document.getElementById('acc-country').value = u.country;
         document.getElementById('acc-address').value = u.address || '';
         document.getElementById('acc-city').value = u.city || '';
+        if (document.getElementById('acc-state')) document.getElementById('acc-state').value = u.state || '';
         document.getElementById('acc-zip').value = u.zip || '';
-        document.getElementById('acc-payout-email').value = u.payoutEmail || u.email || '';
-        if (u.payoutMethod) document.getElementById('acc-payout-method').value = u.payoutMethod;
+
+        // Banking & Payout Fields
+        if (document.getElementById('acc-payout-email')) document.getElementById('acc-payout-email').value = u.payoutEmail || u.email || '';
+        if (document.getElementById('acc-payout-method') && u.payoutMethod) document.getElementById('acc-payout-method').value = u.payoutMethod;
+        if (document.getElementById('acc-payout-name')) document.getElementById('acc-payout-name').value = u.payoutName || u.displayName || '';
+        if (document.getElementById('acc-payout-schedule') && u.payoutSchedule) document.getElementById('acc-payout-schedule').value = u.payoutSchedule;
+        if (document.getElementById('acc-routing-number')) document.getElementById('acc-routing-number').value = u.routingNumber || '';
+        if (document.getElementById('acc-account-number')) document.getElementById('acc-account-number').value = u.accountNumber || '';
+        if (document.getElementById('acc-tax-id')) document.getElementById('acc-tax-id').value = u.taxId || '';
       }
 
       // Profile Form Save
@@ -670,17 +693,75 @@ GINDEXHTML NOT GIT HUB RERE
         btn.textContent = 'Saving Changes...';
 
         const name = document.getElementById('acc-display-name').value.trim();
+        const phone = document.getElementById('acc-phone')?.value.trim() || '';
+        const country = document.getElementById('acc-country')?.value || '';
         const address = document.getElementById('acc-address').value.trim();
         const city = document.getElementById('acc-city').value.trim();
+        const state = document.getElementById('acc-state')?.value.trim() || '';
         const zip = document.getElementById('acc-zip').value.trim();
 
         if (window.MillionAuth) {
-          const res = await window.MillionAuth.updateProfile({ displayName: name, address, city, zip });
+          const res = await window.MillionAuth.updateProfile({ displayName: name, phone, country, address, city, state, zip });
           if (res.ok) alert('✅ Profile and shipping address saved successfully!');
           else alert('Failed to save profile: ' + (res.error || 'Unknown error'));
         }
         btn.disabled = false;
         btn.textContent = 'Save Profile Changes';
+      });
+
+      // Banking & Direct Payouts Form Save
+      document.getElementById('acc-banking-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-banking-btn') || e.target.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.textContent = 'Saving Preferences...'; }
+
+        const payoutEmail = document.getElementById('acc-payout-email').value.trim();
+        const payoutMethod = document.getElementById('acc-payout-method').value;
+        const payoutName = document.getElementById('acc-payout-name')?.value.trim() || '';
+        const payoutSchedule = document.getElementById('acc-payout-schedule').value;
+        const routingNumber = document.getElementById('acc-routing-number')?.value.trim() || '';
+        const accountNumber = document.getElementById('acc-account-number')?.value.trim() || '';
+        const taxId = document.getElementById('acc-tax-id').value.trim();
+
+        if (window.MillionAuth) {
+          const res = await window.MillionAuth.updateProfile({
+            payoutEmail, payoutMethod, payoutName, payoutSchedule, routingNumber, accountNumber, taxId
+          });
+          if (res.ok) alert('✅ Seller banking & payout preferences saved successfully!');
+          else alert('Failed to save banking preferences: ' + (res.error || 'Unknown error'));
+        }
+        if (btn) { btn.disabled = false; btn.textContent = 'Save Banking Preferences'; }
+      });
+
+      // Security & Password Form Save
+      document.getElementById('acc-security-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const newPass = document.getElementById('acc-new-pass').value;
+        const confirmPass = document.getElementById('acc-confirm-pass').value;
+
+        if (!newPass || newPass.length < 6) {
+          alert('Password must be at least 6 characters long.');
+          return;
+        }
+        if (newPass !== confirmPass) {
+          alert('Passwords do not match. Please verify and try again.');
+          return;
+        }
+
+        if (btn) { btn.disabled = true; btn.textContent = 'Updating Password...'; }
+
+        if (window.MillionAuth) {
+          const res = await window.MillionAuth.updateProfile({ newPassword: newPass });
+          if (res.ok) {
+            alert('✅ Password updated successfully across all devices!');
+            document.getElementById('acc-new-pass').value = '';
+            document.getElementById('acc-confirm-pass').value = '';
+          } else {
+            alert('Failed to update password: ' + (res.error || 'Unknown error'));
+          }
+        }
+        if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
       });
 
       // 3D Stage Color Customizer Live Preview

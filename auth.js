@@ -409,12 +409,20 @@
     const users = getUsers();
     const record = users[user.email] || { ...user };
 
-    if (data.displayName) record.displayName = data.displayName;
-    if (data.address) record.address = data.address;
-    if (data.city) record.city = data.city;
-    if (data.zip) record.zip = data.zip;
-    if (data.payoutEmail) record.payoutEmail = data.payoutEmail;
-    if (data.payoutMethod) record.payoutMethod = data.payoutMethod;
+    if (data.displayName !== undefined) record.displayName = data.displayName;
+    if (data.phone !== undefined) record.phone = data.phone;
+    if (data.country !== undefined) record.country = data.country;
+    if (data.address !== undefined) record.address = data.address;
+    if (data.city !== undefined) record.city = data.city;
+    if (data.state !== undefined) record.state = data.state;
+    if (data.zip !== undefined) record.zip = data.zip;
+    if (data.payoutEmail !== undefined) record.payoutEmail = data.payoutEmail;
+    if (data.payoutMethod !== undefined) record.payoutMethod = data.payoutMethod;
+    if (data.payoutName !== undefined) record.payoutName = data.payoutName;
+    if (data.payoutSchedule !== undefined) record.payoutSchedule = data.payoutSchedule;
+    if (data.routingNumber !== undefined) record.routingNumber = data.routingNumber;
+    if (data.accountNumber !== undefined) record.accountNumber = data.accountNumber;
+    if (data.taxId !== undefined) record.taxId = data.taxId;
 
     if (data.newPassword) {
       record.passwordHash = await hashPassword(data.newPassword);
@@ -620,9 +628,19 @@
     const user = getCurrentUser() || {};
     const emailInput = document.getElementById('banking-payout-email');
     const methodSelect = document.getElementById('banking-payout-method');
+    const nameInput = document.getElementById('banking-payout-name');
+    const scheduleSelect = document.getElementById('banking-payout-schedule');
+    const routingInput = document.getElementById('banking-routing-number');
+    const accountInput = document.getElementById('banking-account-number');
+    const taxInput = document.getElementById('banking-tax-id');
 
     if (emailInput) emailInput.value = user.payoutEmail || user.email || '';
     if (methodSelect && user.payoutMethod) methodSelect.value = user.payoutMethod;
+    if (nameInput) nameInput.value = user.payoutName || user.displayName || '';
+    if (scheduleSelect && user.payoutSchedule) scheduleSelect.value = user.payoutSchedule;
+    if (routingInput) routingInput.value = user.routingNumber || '';
+    if (accountInput) accountInput.value = user.accountNumber || '';
+    if (taxInput) taxInput.value = user.taxId || '';
   }
 
   function populateColorsPanel() {
@@ -760,11 +778,11 @@
           
           <div class="auth-grid-responsive">
             <div class="auth-field">
-              <label>Payout Email / Handle</label>
+              <label>Payout Email / Primary Handle</label>
               <input type="email" id="banking-payout-email" placeholder="payouts@example.com" style="box-sizing:border-box;width:100%;">
             </div>
             <div class="auth-field">
-              <label>Payout Method</label>
+              <label>Preferred Payout Method</label>
               <select id="banking-payout-method" style="width:100%;padding:14px;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;font-size:0.95rem;box-sizing:border-box;">
                 <option value="Direct Deposit">Direct Deposit (ACH / Bank Transfer)</option>
                 <option value="Venmo">Venmo</option>
@@ -772,6 +790,30 @@
                 <option value="PayPal">PayPal</option>
                 <option value="Wire Transfer">Wire Transfer (High Value)</option>
               </select>
+            </div>
+            <div class="auth-field">
+              <label>Account Holder Full Name</label>
+              <input type="text" id="banking-payout-name" placeholder="Legal Full Name or Entity" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field">
+              <label>Payout Schedule</label>
+              <select id="banking-payout-schedule" style="width:100%;padding:14px;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;font-size:0.95rem;box-sizing:border-box;">
+                <option value="Instant">Instant (Daily Automated Payouts)</option>
+                <option value="Weekly">Weekly (Every Monday)</option>
+                <option value="Monthly">Monthly (1st of Month)</option>
+              </select>
+            </div>
+            <div class="auth-field">
+              <label>Bank Routing Number (ACH 9-Digit)</label>
+              <input type="text" id="banking-routing-number" placeholder="021000021" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field">
+              <label>Bank Account Number / Handle</label>
+              <input type="text" id="banking-account-number" placeholder="Account Number or ID" style="box-sizing:border-box;width:100%;">
+            </div>
+            <div class="auth-field" style="grid-column:1/-1;">
+              <label>Tax Identification / SSN (Encrypted 1099-K Compliance)</label>
+              <input type="password" id="banking-tax-id" placeholder="•••-••-•••• (Encrypted & Secure)" style="box-sizing:border-box;width:100%;">
             </div>
           </div>
           <button class="auth-submit-btn" id="banking-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Banking Preferences</button>
@@ -970,12 +1012,21 @@
       const btn = modal.querySelector('#banking-save-btn');
       const payoutEmail = document.getElementById('banking-payout-email').value.trim();
       const payoutMethod = document.getElementById('banking-payout-method').value;
+      const payoutName = document.getElementById('banking-payout-name')?.value.trim() || '';
+      const payoutSchedule = document.getElementById('banking-payout-schedule')?.value || 'Instant';
+      const routingNumber = document.getElementById('banking-routing-number')?.value.trim() || '';
+      const accountNumber = document.getElementById('banking-account-number')?.value.trim() || '';
+      const taxId = document.getElementById('banking-tax-id')?.value.trim() || '';
 
       btn.disabled = true;
       btn.textContent = 'Saving...';
-      await updateProfile({ payoutEmail, payoutMethod });
-      closeAuthModal();
-      alert('✅ Banking & Payout preferences updated successfully!');
+      const res = await updateProfile({ payoutEmail, payoutMethod, payoutName, payoutSchedule, routingNumber, accountNumber, taxId });
+      if (res.ok) {
+        closeAuthModal();
+        alert('✅ Seller banking & payout preferences updated successfully!');
+      } else {
+        alert('Failed to save banking preferences: ' + (res.error || 'Unknown error'));
+      }
       btn.disabled = false;
       btn.textContent = 'Save Banking Preferences';
     });
