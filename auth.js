@@ -1,7 +1,7 @@
 /**
  * MillionTCG Multi-Device Auth & Account Management Engine
  * Primary Business Email: tcgmillion@gmail.com
- * Google Apps Script Verification Dispatcher: https://script.google.com/macros/s/AKfycbxQk2UE4E8_CHaR0X2G3SsB5L-9BSu22doLxlux_UYukLqRUi3JFbqfCVsSYpBicG9V/exec
+ * Google Apps Script Cloud Engine: https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec
  */
 
 (function () {
@@ -9,12 +9,12 @@
 
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   const WEB3FORMS_KEY = '5979c3fb-2a54-469b-980b-04ff57d42cf3';
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk2UE4E8_CHaR0X2G3SsB5L-9BSu22doLxlux_UYukLqRUi3JFbqfCVsSYpBicG9V/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec';
 
   let activeVerificationEmail = '';
 
   /* ────────────────────────────────────────────────────────────
-     1. Storage & State Management
+     1. Storage & State Management (Cross-Device Cloud Synced)
   ──────────────────────────────────────────────────────────── */
   function getUsers() {
     try {
@@ -72,20 +72,61 @@
     saveUsers(users);
   }
 
-  async function fetchCloudUsers() {
-    const localUsers = getUsers();
+  async function syncUserToCloud(userRecord) {
+    if (!userRecord || !userRecord.email) return;
     try {
-      const res = await fetch('js/users_db.json?v=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          action: 'saveUser',
+          email: userRecord.email,
+          displayName: userRecord.displayName,
+          passwordHash: userRecord.passwordHash,
+          isVerified: !!userRecord.isVerified,
+          verificationCode: userRecord.verificationCode || '',
+          address: userRecord.address || '',
+          city: userRecord.city || '',
+          zip: userRecord.zip || '',
+          phone: userRecord.phone || '',
+          country: userRecord.country || '',
+          state: userRecord.state || '',
+          payoutEmail: userRecord.payoutEmail || '',
+          payoutMethod: userRecord.payoutMethod || '',
+          payoutName: userRecord.payoutName || '',
+          payoutSchedule: userRecord.payoutSchedule || '',
+          routingNumber: userRecord.routingNumber || '',
+          accountNumber: userRecord.accountNumber || '',
+          taxId: userRecord.taxId || ''
+        })
+      }).catch(err => console.warn('Cloud sync note:', err));
+    } catch (e) {
+      console.warn('syncUserToCloud error:', e);
+    }
+  }
+
+  async function fetchCloudUser(email) {
+    email = (email || '').toLowerCase().trim();
+    if (!email) return null;
+    try {
+      const res = await fetch(GOOGLE_SCRIPT_URL + '?action=getUser&email=' + encodeURIComponent(email), {
+        cache: 'no-cache'
+      }).catch(() => null);
       if (res && res.ok) {
-        const cloudUsers = await res.json().catch(() => ({}));
-        const merged = { ...cloudUsers, ...localUsers };
-        saveUsers(merged);
-        return merged;
+        const data = await res.json().catch(() => null);
+        if (data && data.ok && data.user) {
+          syncUserRecord(data.user);
+          return data.user;
+        }
       }
     } catch (e) {
-      // Fallback to local storage silently
+      console.warn('fetchCloudUser error:', e);
     }
-    return localUsers;
+    return null;
+  }
+
+  async function fetchCloudUsers() {
+    return getUsers();
   }
 
   /* ────────────────────────────────────────────────────────────
@@ -121,6 +162,7 @@
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
+          action: 'sendVerification',
           email: email,
           code: String(code),
           name: displayName || email.split('@')[0]
@@ -224,7 +266,7 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     6. Core Authentication Operations
+     6. Core Authentication Operations (Cross-Device Cloud Synced)
   ──────────────────────────────────────────────────────────── */
   async function signUp(email, password, displayName) {
     email = (email || '').toLowerCase().trim();
@@ -232,8 +274,10 @@
     if (!email.includes('@') || !email.includes('.')) return { ok: false, error: 'Please enter a valid email address.' };
     if (password.length < 6) return { ok: false, error: 'Password must be at least 6 characters long.' };
 
-    const users = await fetchCloudUsers();
-    const existing = users[email];
+    let existing = getUsers()[email];
+    if (!existing) {
+      existing = await fetchCloudUser(email);
+    }
     if (existing && existing.isVerified) {
       return { ok: false, error: 'An account with this email address already exists. Please sign in.' };
     }
@@ -252,6 +296,7 @@
     };
 
     syncUserRecord(userRecord);
+    syncUserToCloud(userRecord);
     activeVerificationEmail = email;
 
     // Send Real Verification Code via Google Apps Script (from tcgmillion@gmail.com)
@@ -275,8 +320,10 @@
       return { ok: false, error: 'Please enter the 6-digit verification code.' };
     }
 
-    const users = await fetchCloudUsers();
-    const record = users[email];
+    let record = getUsers()[email];
+    if (!record) {
+      record = await fetchCloudUser(email);
+    }
 
     if (!record) {
       return { ok: false, error: 'Account record not found. Please create an account first.' };
@@ -299,6 +346,7 @@
     delete record.verificationCode;
 
     syncUserRecord(record);
+    syncUserToCloud(record);
     setCurrentUser(record);
     updateAllAuthUI();
     autoFillFormInputs();
@@ -316,14 +364,17 @@
     email = (email || activeVerificationEmail || '').toLowerCase().trim();
     if (!email) return { ok: false, error: 'Please enter your email address.' };
 
-    const users = await fetchCloudUsers();
-    const record = users[email];
+    let record = getUsers()[email];
+    if (!record) {
+      record = await fetchCloudUser(email);
+    }
     if (!record) return { ok: false, error: 'Account not found. Please sign up first.' };
 
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
     record.verificationCode = newCode;
     record.updatedAt = Date.now();
     syncUserRecord(record);
+    syncUserToCloud(record);
 
     sendVerificationEmail(email, newCode, record.displayName);
 
@@ -338,9 +389,16 @@
     email = (email || '').toLowerCase().trim();
     if (!email || !password) return { ok: false, error: 'Email and password are required.' };
 
-    const users = await fetchCloudUsers();
-    const record = users[email];
     const passwordHash = await hashPassword(password);
+    let record = getUsers()[email];
+
+    // If user is not stored locally or credentials don't match local cache, check Cloud (Cross-Device Sync)
+    if (!record || record.passwordHash !== passwordHash) {
+      const cloudRecord = await fetchCloudUser(email);
+      if (cloudRecord) {
+        record = cloudRecord;
+      }
+    }
 
     if (!record || record.passwordHash !== passwordHash) {
       return { ok: false, error: 'Invalid email address or password. Please try again.' };
@@ -359,7 +417,9 @@
 
     record.updatedAt = Date.now();
     syncUserRecord(record);
+    syncUserToCloud(record);
     setCurrentUser(record);
+    updateAllAuthUI();
     autoFillFormInputs();
 
     sendDirectEmailNotification('Sign In Successful 🔐', {
@@ -401,6 +461,7 @@
 
     record.updatedAt = Date.now();
     syncUserRecord(record);
+    syncUserToCloud(record);
     setCurrentUser(record);
     updateAllAuthUI();
     return { ok: true, user: record };
