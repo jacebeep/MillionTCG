@@ -8,6 +8,7 @@
 
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   let activeVerificationEmail = '';
+  let lastGeneratedVerificationCode = '';
 
   /* ── In-App System Notification Logger (Zero External API Services) ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
@@ -254,6 +255,7 @@
 
     await syncUserToCloud(userRecord);
     activeVerificationEmail = email;
+    lastGeneratedVerificationCode = verificationCode;
 
     window.sendDirectEmailNotification('MillionTCG Account Verification Code 🔐', {
       DisplayName: userRecord.displayName,
@@ -316,6 +318,7 @@
     const newCode = String(Math.floor(100000 + Math.random() * 900000));
     record.verificationCode = newCode;
     record.updatedAt = Date.now();
+    lastGeneratedVerificationCode = newCode;
 
     await syncUserToCloud(record);
 
@@ -563,14 +566,11 @@
       if (tab === 'verify') {
         const emailDisp = document.getElementById('verify-email-display');
         const helperDisp = document.getElementById('helper-code-disp');
+        const codeInput = document.getElementById('verify-code-input');
+        
         if (emailDisp) emailDisp.textContent = activeVerificationEmail || 'your email';
-        if (helperDisp && activeVerificationEmail) {
-          const users = getUsers();
-          const rec = users[activeVerificationEmail];
-          if (rec && rec.verificationCode) {
-            helperDisp.textContent = rec.verificationCode;
-          }
-        }
+        if (helperDisp) helperDisp.textContent = lastGeneratedVerificationCode || '123456';
+        if (codeInput && lastGeneratedVerificationCode) codeInput.value = lastGeneratedVerificationCode;
       }
     }
     if (profilePanel) {
@@ -703,20 +703,21 @@
         <div id="auth-verify-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;text-align:center;">
           <div style="font-size:38px;margin-bottom:8px;">🔐</div>
           <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Verify Your Email Address</h3>
-          <p class="auth-panel-sub" style="margin-bottom:12px;">Automated verification email dispatched to <strong id="verify-email-display" style="color:#eab308;"></strong>.</p>
+          <p class="auth-panel-sub" style="margin-bottom:12px;">Account verification code generated for <strong id="verify-email-display" style="color:#eab308;"></strong>.</p>
           
-          <div id="verify-code-helper" style="background:rgba(234,179,8,0.12);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:12px;margin-bottom:16px;font-size:0.88rem;color:#eab308;font-weight:600;">
-            🔐 Verification Code: <span id="helper-code-disp" style="font-size:1.2rem;font-weight:900;letter-spacing:3px;color:#fff;background:#000;padding:4px 12px;border-radius:6px;margin-left:6px;display:inline-block;">------</span>
+          <div id="verify-code-helper" style="background:rgba(234,179,8,0.15);border:2px solid #eab308;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
+            <div style="color:#a1a1aa;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">YOUR VERIFICATION CODE</div>
+            <div id="helper-code-disp" style="font-size:2.2rem;font-weight:900;letter-spacing:8px;color:#facc15;font-family:monospace;background:#000;padding:6px 16px;border-radius:8px;display:inline-block;border:1px solid rgba(234,179,8,0.4);">123456</div>
           </div>
 
           <div class="auth-error" id="auth-verify-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
           <div class="auth-field" style="text-align:left;">
-            <label>Enter 6-Digit Code</label>
+            <label>Confirm 6-Digit Code</label>
             <input type="text" id="verify-code-input" placeholder="123456" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;">
           </div>
           <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify & Complete Sign Up</button>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:0.85rem;">
-            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Code Email</button>
+            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Generate New Code</button>
             <a href="#" class="auth-switch-link" data-tab="signin" style="color:#a1a1aa;text-decoration:none;">← Back to Sign In</a>
           </div>
         </div>
