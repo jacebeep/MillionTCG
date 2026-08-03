@@ -9,44 +9,20 @@
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   let activeVerificationEmail = '';
 
-  /* ── Direct Admin & Customer Email Notification Helper ── */
+  /* ── Direct Admin & Customer Email Notification Helper (Zero FormSubmit) ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
-      const adminEmail = localStorage.getItem('milliontcg_admin_email') || MAIN_BUSINESS_EMAIL;
-      const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail;
-      
-      const payload = {
-        _subject: `⚡ MillionTCG Alert: ${eventTitle}`,
-        _template: 'table',
-        _captcha: 'false',
-        _replyto: userContactEmail || adminEmail,
-        EventType: eventTitle,
-        Timestamp: new Date().toLocaleString(),
-        ...detailsData
-      };
-
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(adminEmail)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(err => console.log('Admin notification error:', err));
-
-      if (userContactEmail && userContactEmail.toLowerCase() !== adminEmail.toLowerCase() && userContactEmail.includes('@')) {
-        fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userContactEmail.trim())}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify({
-            _subject: `MillionTCG: ${eventTitle}`,
-            _template: 'table',
-            _captcha: 'false',
-            Notice: `Thank you for contacting MillionTCG! Details of your ${eventTitle} are listed below:`,
-            Timestamp: new Date().toLocaleString(),
-            ...detailsData
-          })
-        }).catch(err => console.log('Customer confirmation error:', err));
-      }
+      const timestamp = new Date().toLocaleString();
+      const logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
+      logs.unshift({
+        eventTitle,
+        detailsData,
+        timestamp
+      });
+      localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
+      console.log(`[MillionTCG Notification] ${eventTitle}:`, detailsData);
     } catch (e) {
-      console.error('Email notification error:', e);
+      console.error('Notification log error:', e);
     }
   };
 

@@ -220,7 +220,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       const contactForm = document.getElementById('contact-form');
       if (contactForm) {
-        contactForm.addEventListener('submit', async (e) => {
+        contactForm.addEventListener('submit', (e) => {
           e.preventDefault();
           const btn = contactForm.querySelector('button[type="submit"]');
           const nameEl = document.getElementById('contact-name');
@@ -234,38 +234,11 @@
           const subject = subjectEl ? subjectEl.value.trim() : 'General Inquiry';
           const message = msgEl ? msgEl.value.trim() : '';
 
-          if (btn) { btn.disabled = true; btn.textContent = 'SENDING MESSAGE...'; }
-
-          try {
-            await fetch('https://formsubmit.co/ajax/tcgmillion@gmail.com', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              body: JSON.stringify({
-                _subject: `⚡ MillionTCG Inquiry: ${subject}`,
-                _template: 'table',
-                _captcha: 'false',
-                _replyto: email,
-                CustomerName: name,
-                CustomerEmail: email,
-                Subject: subject,
-                Message: message,
-                SentAt: new Date().toLocaleString()
-              })
-            });
-
-            if (email && email.includes('@')) {
-              fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({
-                  _subject: 'MillionTCG Support Confirmation: Message Received ✉️',
-                  Notice: `Thank you for contacting MillionTCG, ${name}! We received your inquiry regarding "${subject}". Our team will reply to your email within 4 hours.`
-                })
-              }).catch(() => {});
-            }
-          } catch (err) {
-            console.log('Contact form note:', err);
-          }
+          // Open direct email client to tcgmillion@gmail.com
+          const mailtoBody = encodeURIComponent(`From: ${name} (${email})\n\nSubject: ${subject}\n\nMessage:\n${message}`);
+          const mailtoUrl = `mailto:tcgmillion@gmail.com?subject=${encodeURIComponent('MillionTCG Inquiry: ' + subject)}&body=${mailtoBody}`;
+          
+          window.location.href = mailtoUrl;
 
           contactForm.reset();
           if (successMsg) successMsg.style.display = 'block';

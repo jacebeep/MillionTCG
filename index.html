@@ -421,11 +421,11 @@
       deferredPrompt = null;
     });
 
-    // In-Page Direct Email Dispatch for VIP Drops (No redirect)
+    // In-Page Direct VIP Drops (Zero FormSubmit)
     document.addEventListener('DOMContentLoaded', () => {
       const vipForm = document.getElementById('vip-newsletter-form');
       if (vipForm) {
-        vipForm.addEventListener('submit', async (e) => {
+        vipForm.addEventListener('submit', (e) => {
           e.preventDefault();
           const btn = vipForm.querySelector('button[type="submit"]');
           const emailInput = document.getElementById('vip-email');
@@ -433,34 +433,12 @@
           const userEmail = emailInput ? emailInput.value.trim() : '';
 
           if (!userEmail) return;
-          if (btn) { btn.disabled = true; btn.textContent = 'SUBSCRIBING...'; }
 
           try {
-            await fetch('https://formsubmit.co/ajax/tcgmillion@gmail.com', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-              body: JSON.stringify({
-                _subject: '⚡ New MillionTCG VIP Drop Subscriber!',
-                _template: 'table',
-                _captcha: 'false',
-                SubscriberEmail: userEmail,
-                SubscribedAt: new Date().toLocaleString()
-              })
-            });
-
-            if (userEmail && userEmail.includes('@')) {
-              fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userEmail)}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify({
-                  _subject: 'Welcome to the MillionTCG VIP Drop List! 🔥',
-                  Notice: 'You have successfully subscribed to early rare grail card drop alerts on MillionTCG.'
-                })
-              }).catch(() => {});
-            }
-          } catch (err) {
-            console.log('VIP submission note:', err);
-          }
+            const list = JSON.parse(localStorage.getItem('mtcg_vip_subscribers') || '[]');
+            list.push({ email: userEmail, date: new Date().toLocaleString() });
+            localStorage.setItem('mtcg_vip_subscribers', JSON.stringify(list));
+          } catch (err) {}
 
           vipForm.reset();
           if (successMsg) successMsg.style.display = 'block';
