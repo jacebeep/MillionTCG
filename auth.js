@@ -227,7 +227,27 @@
     });
   }
 
-  /* ── Auth Actions (Strict Password & Email Verification Enabled) ── */
+  /* ── Real Email Inbox Verification Code Dispatcher ── */
+  async function sendVerificationEmailToUser(userEmail, code, displayName) {
+    try {
+      const payload = {
+        access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
+        subject: `Your MillionTCG Email Verification Code: ${code} 🔐`,
+        from_name: 'MillionTCG Account Verification',
+        replyto: MAIN_BUSINESS_EMAIL,
+        email: userEmail, // DISPATCH DIRECTLY TO THE REGISTERING USER'S INBOX!
+        message: `Hello ${displayName || 'Collector'},\n\nThank you for creating an account on MillionTCG!\n\nYour 6-digit Email Verification Code is:\n\n👉  ${code}  👈\n\nPlease enter this code on the website to verify that you own ${userEmail}.\n\nIf you did not request this, please ignore this email.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`
+      };
+
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.log('Verification email dispatch note:', err));
+    } catch (e) {
+      console.error('sendVerificationEmailToUser error:', e);
+    }
+  }
   async function signUp(email, password, displayName) {
     email = email ? email.toLowerCase().trim() : '';
     if (!email || !password) return { ok: false, error: 'Email address and password are required.' };
@@ -257,14 +277,10 @@
     activeVerificationEmail = email;
     lastGeneratedVerificationCode = verificationCode;
 
-    window.sendDirectEmailNotification('MillionTCG Account Verification Code 🔐', {
-      DisplayName: userRecord.displayName,
-      UserEmail: userRecord.email,
-      VerificationCode: verificationCode,
-      Instructions: `Your 6-digit MillionTCG Account Verification Code is: ${verificationCode}.`
-    });
+    // Send Real Verification Code to Registering User's Inbox
+    sendVerificationEmailToUser(email, verificationCode, userRecord.displayName);
 
-    return { ok: true, requiresVerification: true, email: email, code: verificationCode, message: 'Verification code generated for your account!' };
+    return { ok: true, requiresVerification: true, email: email, code: verificationCode, message: 'Verification code sent to your email address!' };
   }
 
   async function verifyAccountCode(email, enteredCode) {
@@ -322,14 +338,10 @@
 
     await syncUserToCloud(record);
 
-    window.sendDirectEmailNotification('New Verification Code Requested 🔐', {
-      DisplayName: record.displayName || email.split('@')[0],
-      UserEmail: record.email,
-      VerificationCode: newCode,
-      Instructions: `Your new 6-digit MillionTCG Account Verification Code is: ${newCode}.`
-    });
+    // Send Real Verification Code to Registering User's Inbox
+    sendVerificationEmailToUser(email, newCode, record.displayName);
 
-    return { ok: true, code: newCode, message: 'A new 6-digit verification code has been generated!' };
+    return { ok: true, code: newCode, message: 'A new 6-digit verification code has been sent to your email!' };
   }
 
   async function signIn(email, password) {
@@ -565,12 +577,9 @@
       verifyPanel.style.display = tab === 'verify' ? 'flex' : 'none';
       if (tab === 'verify') {
         const emailDisp = document.getElementById('verify-email-display');
-        const helperDisp = document.getElementById('helper-code-disp');
         const codeInput = document.getElementById('verify-code-input');
-        
-        if (emailDisp) emailDisp.textContent = activeVerificationEmail || 'your email';
-        if (helperDisp) helperDisp.textContent = lastGeneratedVerificationCode || '123456';
-        if (codeInput && lastGeneratedVerificationCode) codeInput.value = lastGeneratedVerificationCode;
+        if (emailDisp) emailDisp.textContent = activeVerificationEmail || 'your email address';
+        if (codeInput) codeInput.value = '';
       }
     }
     if (profilePanel) {
@@ -701,23 +710,18 @@
 
         <!-- Email Verification Panel -->
         <div id="auth-verify-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;text-align:center;">
-          <div style="font-size:38px;margin-bottom:8px;">🔐</div>
-          <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Verify Your Email Address</h3>
-          <p class="auth-panel-sub" style="margin-bottom:12px;">Account verification code generated for <strong id="verify-email-display" style="color:#eab308;"></strong>.</p>
-          
-          <div id="verify-code-helper" style="background:rgba(234,179,8,0.15);border:2px solid #eab308;border-radius:12px;padding:16px;margin-bottom:20px;text-align:center;">
-            <div style="color:#a1a1aa;font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">YOUR VERIFICATION CODE</div>
-            <div id="helper-code-disp" style="font-size:2.2rem;font-weight:900;letter-spacing:8px;color:#facc15;font-family:monospace;background:#000;padding:6px 16px;border-radius:8px;display:inline-block;border:1px solid rgba(234,179,8,0.4);">123456</div>
-          </div>
+          <div style="font-size:38px;margin-bottom:8px;">📩</div>
+          <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Check Your Email Inbox</h3>
+          <p class="auth-panel-sub" style="margin-bottom:16px;line-height:1.5;">We sent a 6-digit verification code to <strong id="verify-email-display" style="color:#eab308;"></strong>.<br>Please check your email inbox (and Spam folder) to enter your code below.</p>
 
           <div class="auth-error" id="auth-verify-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
           <div class="auth-field" style="text-align:left;">
-            <label>Confirm 6-Digit Code</label>
+            <label>Enter 6-Digit Code From Email</label>
             <input type="text" id="verify-code-input" placeholder="123456" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;">
           </div>
-          <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify & Complete Sign Up</button>
+          <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify Email & Complete Sign Up</button>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:0.85rem;">
-            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Generate New Code</button>
+            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Code to Email</button>
             <a href="#" class="auth-switch-link" data-tab="signin" style="color:#a1a1aa;text-decoration:none;">← Back to Sign In</a>
           </div>
         </div>
