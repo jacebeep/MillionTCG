@@ -264,26 +264,28 @@
     }
 
     const pHash = await hashPassword(password);
-    const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
 
     const userRecord = {
       email,
       displayName: displayName || email.split('@')[0],
       passwordHash: pHash,
-      isVerified: false,
-      verificationCode: verificationCode,
+      isVerified: true,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
 
     await syncUserToCloud(userRecord);
-    activeVerificationEmail = email;
-    lastGeneratedVerificationCode = verificationCode;
+    setCurrentUser(userRecord);
+    autoFillFormInputs();
 
-    // Send Real Verification Code to Registering User's Inbox
-    sendVerificationEmailToUser(email, verificationCode, userRecord.displayName);
+    window.sendDirectEmailNotification('New Seller Account Registered 🏪', {
+      DisplayName: userRecord.displayName,
+      UserEmail: userRecord.email,
+      Status: 'Active Collector & Seller',
+      RegisteredAt: new Date().toLocaleString()
+    });
 
-    return { ok: true, requiresVerification: true, email: email, code: verificationCode, message: 'Verification code sent to your email address!' };
+    return { ok: true, user: userRecord, message: 'Account created successfully! Welcome to MillionTCG.' };
   }
 
   async function verifyAccountCode(email, enteredCode) {
@@ -909,7 +911,7 @@
       if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
 
       btn.disabled = true;
-      btn.textContent = 'Sending Verification Code...';
+      btn.textContent = 'Creating Account...';
       errEl.textContent = '';
 
       try {
@@ -920,7 +922,8 @@
           btn.textContent = 'Create Account';
           return;
         }
-        switchTab('verify');
+        closeAuthModal();
+        updateAllAuthUI();
       } catch (e) {
         errEl.textContent = 'An error occurred during account creation.';
       } finally {
