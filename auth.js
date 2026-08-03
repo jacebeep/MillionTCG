@@ -1060,82 +1060,10 @@
     return modal;
   }
 
-  /* ── Desktop Auth Dropdown Menu ── */
+  /* ── Desktop & Mobile Profile Icon Click Handler ── */
   function handleDesktopAuthClick(e) {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    const user = getCurrentUser();
-    if (user) {
-      let dd = document.getElementById('auth-desktop-dropdown');
-      if (!dd) {
-        dd = document.createElement('div');
-        dd.id = 'auth-desktop-dropdown';
-        dd.className = 'auth-desktop-dropdown';
-        dd.innerHTML = `
-          <div class="auth-dd-header" style="padding:14px;border-bottom:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:10px;">
-            <div class="auth-dd-avatar" style="background:#eab308;color:#000;font-weight:700;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:16px;">${getInitials(user)}</div>
-            <div class="auth-dd-user-info" style="overflow:hidden;">
-              <div class="auth-dd-name" style="font-weight:600;color:#fff;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${user.displayName}</div>
-              <div class="auth-dd-email" style="font-size:12px;color:#a1a1aa;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${user.email}</div>
-            </div>
-          </div>
-
-          <div class="auth-dd-menu" style="padding:8px 0;">
-            <button class="auth-dd-item" id="dd-profile-btn" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#e4e4e7;cursor:pointer;display:flex;align-items:center;gap:10px;">
-              <span class="auth-dd-icon">👤</span>
-              <span>Account & Profile Settings</span>
-            </button>
-            <button class="auth-dd-item" id="dd-banking-btn" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#e4e4e7;cursor:pointer;display:flex;align-items:center;gap:10px;">
-              <span class="auth-dd-icon">🏦</span>
-              <span>Banking & Direct Payouts</span>
-            </button>
-            <button class="auth-dd-item" id="dd-settings-btn" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#e4e4e7;cursor:pointer;display:flex;align-items:center;gap:10px;">
-              <span class="auth-dd-icon">⚙️</span>
-              <span>Store Settings</span>
-            </button>
-            <button class="auth-dd-item" id="dd-colors-btn" style="width:100%;text-align:left;padding:10px 16px;background:none;border:none;color:#e4e4e7;cursor:pointer;display:flex;align-items:center;gap:10px;">
-              <span class="auth-dd-icon">🎨</span>
-              <span>3D Stage Background Color</span>
-            </button>
-          </div>
-
-          <div class="auth-dd-footer" style="padding:10px 14px;border-top:1px solid rgba(255,255,255,0.1);">
-            <button class="auth-dd-signout-btn" id="auth-dd-signout" style="width:100%;padding:10px 12px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-              <span class="auth-dd-icon">🚪</span>
-              <span>Sign Out</span>
-            </button>
-          </div>
-        `;
-
-        const btnContainer = document.getElementById('auth-desktop-btn').parentElement;
-        if (btnContainer) {
-          btnContainer.style.position = 'relative';
-          btnContainer.appendChild(dd);
-        }
-
-        document.getElementById('dd-profile-btn')?.addEventListener('click', () => { dd.remove(); openAuthModal('profile'); });
-        document.getElementById('dd-banking-btn')?.addEventListener('click', () => { dd.remove(); openAuthModal('banking'); });
-        document.getElementById('dd-settings-btn')?.addEventListener('click', () => { dd.remove(); openAuthModal('settings'); });
-        document.getElementById('dd-colors-btn')?.addEventListener('click', () => { dd.remove(); openAuthModal('colors'); });
-        document.getElementById('auth-dd-signout')?.addEventListener('click', () => { signOut(); dd.remove(); });
-
-        setTimeout(() => {
-          document.addEventListener('click', function onOutside(e) {
-            const btn = document.getElementById('auth-desktop-btn');
-            if (!dd.contains(e.target) && (!btn || !btn.contains(e.target))) {
-              dd.remove();
-              document.removeEventListener('click', onOutside);
-            }
-          });
-        }, 0);
-      } else {
-        dd.remove();
-      }
-    } else {
-      openAuthModal('signin');
-    }
+    if (e) { e.preventDefault(); e.stopPropagation(); }
+    openAuthModal();
   }
 
   /* ── Initialization ── */
