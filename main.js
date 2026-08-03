@@ -1235,30 +1235,30 @@ function initSellerSystem() {
 
   let uploadedImages = []; // Array of up to 5 image Data URLs
 
-  // Auth Modal Toggles
+  // Auth Modal Delegation
   function openAuthModal(mode = 'signup') {
-    if (!authModal) return;
-    authModal.classList.add('open');
-    if (mode === 'signup') {
-      tabSignup.classList.add('active');
-      tabLogin.classList.remove('active');
-      signupForm.classList.remove('hidden');
-      loginForm.classList.add('hidden');
-    } else {
-      tabLogin.classList.add('active');
-      tabSignup.classList.remove('active');
-      loginForm.classList.remove('hidden');
-      signupForm.classList.add('hidden');
+    if (window.MillionAuth && window.MillionAuth.openAuthModal) {
+      window.MillionAuth.openAuthModal(mode === 'login' ? 'signin' : mode);
+      return;
     }
+    if (!authModal) return;
+    authModal.classList.add('active');
   }
 
   function closeAuthModal() {
-    if (authModal) authModal.classList.remove('open');
+    if (window.MillionAuth && window.MillionAuth.closeAuthModal) {
+      window.MillionAuth.closeAuthModal();
+      return;
+    }
+    if (authModal) authModal.classList.remove('active');
   }
 
-  if (navAuthBtn) navAuthBtn.addEventListener('click', () => openAuthModal(currentUser ? 'signup' : 'signup'));
+  if (navAuthBtn) navAuthBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    openAuthModal();
+  });
   if (gateSignupBtn) gateSignupBtn.addEventListener('click', () => openAuthModal('signup'));
-  if (gateLoginBtn) gateLoginBtn.addEventListener('click', () => openAuthModal('login'));
+  if (gateLoginBtn) gateLoginBtn.addEventListener('click', () => openAuthModal('signin'));
   if (authModalClose) authModalClose.addEventListener('click', closeAuthModal);
 
   if (tabSignup && tabLogin) {
