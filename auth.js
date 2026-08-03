@@ -227,24 +227,15 @@
     });
   }
 
-  /* ── Direct Email Verification Dispatcher (Zero FormSubmit) ── */
-  async function sendVerificationEmailToUser(userEmail, code, displayName) {
+  /* ── Direct Native Mail Client Verification Dispatcher (Option 2) ── */
+  function sendVerificationEmailToUser(userEmail, code, displayName) {
     try {
-      const subject = `Your MillionTCG Verification Code: ${code} 🔐`;
-      const message = `Hello ${displayName || 'Collector'},\n\nThank you for registering at MillionTCG!\n\nYour 6-digit Account Verification Code is:\n\n👉  ${code}  👈\n\nPlease enter this code on the website to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`;
-
-      fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          access_key: '5979c3fb-2a54-469b-980b-04ff57d42cf3',
-          subject: subject,
-          from_name: 'MillionTCG Official (tcgmillion@gmail.com)',
-          replyto: MAIN_BUSINESS_EMAIL,
-          email: userEmail,
-          message: message
-        })
-      }).catch(err => console.log('Web3Forms dispatch note:', err));
+      const subject = encodeURIComponent(`MillionTCG Account Verification Code: ${code} 🔐`);
+      const body = encodeURIComponent(`Hello ${displayName || 'Collector'},\n\nYour 6-Digit Verification Code is: ${code}\n\nAccount Email: ${userEmail}\nTimestamp: ${new Date().toLocaleString()}`);
+      const mailtoUrl = `mailto:${MAIN_BUSINESS_EMAIL}?subject=${subject}&body=${body}`;
+      
+      // Launch direct email draft to tcgmillion@gmail.com via native Gmail app
+      window.location.href = mailtoUrl;
     } catch (e) {
       console.error('sendVerificationEmailToUser error:', e);
     }
