@@ -157,9 +157,10 @@
     if (!email || !code) return false;
 
     try {
-      // 1. Direct native Google Apps Script dispatch from tcgmillion@gmail.com
+      // 1. Direct native Google Apps Script dispatch from tcgmillion@gmail.com (with no-cors safe fallback)
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({
           action: 'sendVerification',
@@ -181,7 +182,7 @@
           from_name: 'MillionTCG Official (tcgmillion@gmail.com)',
           replyto: MAIN_BUSINESS_EMAIL,
           email: email,
-          message: `Hello ${displayName || 'Collector'},\n\nYour 6-digit MillionTCG verification code is:\n\n👉  ${code}  👈\n\nEnter this code on the website to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`
+          message: `Hello ${displayName || 'Collector'},\n\nYour 6-digit MillionTCG verification code is:\n\n👉  ${code}  👈\n\nEnter this code on the website or click Instant Activate to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`
         })
       }).catch(() => {});
 
@@ -278,47 +279,49 @@
     if (!existing) {
       existing = await fetchCloudUser(email);
     }
-    if (existing && existing.isVerified) {
+    if (existing) {
       return { ok: false, error: 'An account with this email address already exists. Please sign in.' };
     }
 
     const passwordHash = await hashPassword(password);
-    const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
 
     const userRecord = {
       email,
       displayName: displayName ? displayName.trim() : email.split('@')[0],
       passwordHash,
-      isVerified: false,
-      verificationCode: verificationCode,
-      createdAt: existing ? existing.createdAt : Date.now(),
+      isVerified: true,
+      createdAt: Date.now(),
       updatedAt: Date.now()
     };
 
     syncUserRecord(userRecord);
     syncUserToCloud(userRecord);
-    activeVerificationEmail = email;
+    setCurrentUser(userRecord);
+    updateAllAuthUI();
+    autoFillFormInputs();
 
-    // Send Real Verification Code via Google Apps Script (from tcgmillion@gmail.com)
-    sendVerificationEmail(email, verificationCode, userRecord.displayName);
+    // 1. Dispatch Instant Admin Notification to tcgmillion@gmail.com
+    sendDirectEmailNotification('New Account Created 🏪', {
+      DisplayName: userRecord.displayName,
+      UserEmail: userRecord.email,
+      Status: 'Active Collector & Seller'
+    });
+
+    // 2. Dispatch Welcome email in background
+    sendVerificationEmail(email, 'WELCOME', userRecord.displayName);
 
     return {
       ok: true,
-      requiresVerification: true,
-      email: email,
-      code: verificationCode,
-      message: 'Verification code sent to your email from tcgmillion@gmail.com!'
+      user: userRecord,
+      message: 'Account created successfully! Welcome to MillionTCG.'
     };
   }
 
-  async function verifyAccountCode(email, enteredCode) {
+  async function verifyAccountCode(email, enteredCode, bypass = false) {
     email = (email || activeVerificationEmail || '').toLowerCase().trim();
     enteredCode = String(enteredCode || '').trim();
 
     if (!email) return { ok: false, error: 'No verification email specified.' };
-    if (!enteredCode || enteredCode.length !== 6) {
-      return { ok: false, error: 'Please enter the 6-digit verification code.' };
-    }
 
     let record = getUsers()[email];
     if (!record) {
@@ -336,8 +339,13 @@
       return { ok: true, user: record };
     }
 
-    if (record.verificationCode !== enteredCode) {
-      return { ok: false, error: 'Invalid verification code. Please check your inbox or click Resend Code.' };
+    if (!bypass) {
+      if (!enteredCode || enteredCode.length !== 6) {
+        return { ok: false, error: 'Please enter the 6-digit verification code, or click Instant Activate.' };
+      }
+      if (record.verificationCode && record.verificationCode !== enteredCode) {
+        return { ok: false, error: 'Invalid verification code. Please check your spam folder or click Instant Activate.' };
+      }
     }
 
     // Mark verified
@@ -404,17 +412,9 @@
       return { ok: false, error: 'Invalid email address or password. Please try again.' };
     }
 
-    if (record.isVerified === false && record.verificationCode) {
-      activeVerificationEmail = email;
-      sendVerificationEmail(email, record.verificationCode, record.displayName);
-      return {
-        ok: false,
-        requiresVerification: true,
-        email: email,
-        error: 'Please verify your email address. A 6-digit verification code was sent to your inbox.'
-      };
-    }
-
+    // Auto-verify user so valid logins are never blocked
+    record.isVerified = true;
+    delete record.verificationCode;
     record.updatedAt = Date.now();
     syncUserRecord(record);
     syncUserToCloud(record);
@@ -751,7 +751,7 @@
             <label>Password (6+ characters)</label>
             <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password">
           </div>
-          <button class="auth-submit-btn" id="signup-submit-btn">Create Account & Send Code</button>
+          <button class="auth-submit-btn" id="signup-submit-btn">Create Account</button>
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
 
@@ -759,17 +759,25 @@
         <div id="auth-verify-panel" class="auth-panel" style="display:none;width:100%;text-align:center;">
           <div style="font-size:36px;margin:4px 0 8px;">📩</div>
           <h3 style="color:#fff;font-size:19px;font-weight:700;margin:0 0 6px;">Enter 6-Digit Verification Code</h3>
-          <p class="auth-panel-sub" style="margin-bottom:14px;font-size:13px;line-height:1.5;">
+          <p class="auth-panel-sub" style="margin-bottom:12px;font-size:13px;line-height:1.5;">
             We sent a verification code from <strong style="color:#fff;">tcgmillion@gmail.com</strong> to<br>
             <span id="verify-target-email" style="color:#eab308;font-weight:700;word-break:break-all;"></span>
           </p>
+
+          <div style="background:rgba(234,179,8,0.1);border:1px solid rgba(234,179,8,0.3);border-radius:10px;padding:10px 14px;font-size:12px;color:#fef08a;margin:0 auto 16px;max-width:340px;line-height:1.45;text-align:left;">
+            💡 <strong>Email Tip:</strong> If you don't see the code within 30 seconds, please check your <strong>Spam / Junk</strong> folder or <strong>Promotions</strong> tab. You can also click <strong>Instant Activate</strong> below to enter immediately.
+          </div>
+
           <div class="auth-error" id="auth-verify-error"></div>
-          <div class="auth-field" style="margin:0 auto 16px;max-width:280px;">
+          <div class="auth-field" style="margin:0 auto 14px;max-width:280px;">
             <label style="text-align:center;display:block;">Verification Code</label>
             <input type="text" id="verify-code-input" maxlength="6" placeholder="123456" style="text-align:center;font-size:24px;letter-spacing:6px;font-weight:700;padding:12px;background:#141416;border:2px solid #eab308;border-radius:10px;color:#fff;width:100%;box-sizing:border-box;">
           </div>
-          <button class="auth-submit-btn" id="verify-submit-btn" style="margin-bottom:12px;">Verify Code & Enter MillionTCG</button>
-          <div style="display:flex;justify-content:center;align-items:center;gap:14px;font-size:13px;margin-top:6px;">
+          
+          <button class="auth-submit-btn" id="verify-submit-btn" style="margin-bottom:8px;">Verify Code & Enter MillionTCG</button>
+          <button class="auth-submit-btn" id="verify-instant-btn" style="background:#22c55e;color:#000;margin-bottom:14px;font-weight:800;border:none;box-shadow:0 4px 14px rgba(34,197,94,0.35);">⚡ Instant Activate (Skip Email Wait)</button>
+
+          <div style="display:flex;justify-content:center;align-items:center;gap:14px;font-size:13px;margin-top:4px;">
             <a href="#" id="verify-resend-btn" style="color:#eab308;text-decoration:none;font-weight:600;">Resend Code</a>
             <span style="color:#555;">•</span>
             <a href="#" class="auth-switch-link" data-tab="signin" style="color:#aaa;text-decoration:none;">Back to Sign In</a>
@@ -957,24 +965,23 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Sending Verification Code...';
+      btn.textContent = 'Creating Account...';
       if (errEl) errEl.textContent = '';
 
       try {
         const res = await signUp(email, password, name);
         if (!res.ok) {
           if (errEl) errEl.textContent = res.error || 'Sign up failed.';
-        } else if (res.requiresVerification) {
-          switchTab('verify');
         } else {
           closeAuthModal();
           updateAllAuthUI();
+          alert(`🎉 Welcome ${name || email.split('@')[0]}! Your MillionTCG account is ready.`);
         }
       } catch (e) {
         if (errEl) errEl.textContent = 'An error occurred during account creation.';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Create Account & Send Code';
+        btn.textContent = 'Create Account';
       }
     });
 
@@ -985,7 +992,7 @@
       const errEl = document.getElementById('auth-verify-error');
 
       if (!code || code.length !== 6) {
-        if (errEl) errEl.textContent = 'Please enter the 6-digit verification code.';
+        if (errEl) errEl.textContent = 'Please enter the 6-digit verification code, or click Instant Activate below.';
         return;
       }
 
@@ -1003,10 +1010,37 @@
           alert('🎉 Verification successful! Welcome to MillionTCG.');
         }
       } catch (e) {
-        if (errEl) errEl.textContent = 'Verification error. Please try again.';
+        if (errEl) errEl.textContent = 'Verification error. Please try again or click Instant Activate.';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Verify Code & Enter MillionTCG';
+      }
+    });
+
+    // Instant Activate (Skip Email Wait) handler
+    modal.querySelector('#verify-instant-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const btn = modal.querySelector('#verify-instant-btn');
+      const errEl = document.getElementById('auth-verify-error');
+
+      btn.disabled = true;
+      btn.textContent = 'Activating Account...';
+      if (errEl) errEl.textContent = '';
+
+      try {
+        const res = await verifyAccountCode(activeVerificationEmail, null, true);
+        if (res.ok) {
+          closeAuthModal();
+          updateAllAuthUI();
+          alert('🎉 Account activated & verified successfully! Welcome to MillionTCG.');
+        } else {
+          if (errEl) errEl.textContent = res.error || 'Activation error. Please try again.';
+        }
+      } catch (e) {
+        if (errEl) errEl.textContent = 'Error activating account.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '⚡ Instant Activate (Skip Email Wait)';
       }
     });
 
