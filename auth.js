@@ -1,15 +1,18 @@
 /**
- * MillionTCG Multi-Device Auth & Account Management Engine
- * Expanded 900px Wide Dashboard Center
+ * MillionTCG Multi-Device Auth, Email Verification & Live Cloud DB Engine
+ * Primary Business Email: tcgmillion@gmail.com
  */
 
 (function () {
   'use strict';
 
+  const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
+  let activeVerificationEmail = '';
+
   /* ── Direct Admin & Customer Email Notification Helper ── */
   window.sendDirectEmailNotification = function (eventTitle, detailsData) {
     try {
-      const adminEmail = localStorage.getItem('milliontcg_admin_email') || 'Jacep0230@gmail.com';
+      const adminEmail = localStorage.getItem('milliontcg_admin_email') || MAIN_BUSINESS_EMAIL;
       const userContactEmail = detailsData.UserEmail || detailsData.CustomerEmail || detailsData.Email || detailsData.ContactEmail;
       
       const payload = {
@@ -33,7 +36,7 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
           body: JSON.stringify({
-            _subject: `MillionTCG Confirmation: ${eventTitle}`,
+            _subject: `MillionTCG: ${eventTitle}`,
             _template: 'table',
             _captcha: 'false',
             Notice: `Thank you for contacting MillionTCG! Details of your ${eventTitle} are listed below:`,
@@ -93,7 +96,7 @@
     return 'h_' + Math.abs(hash).toString(36);
   }
 
-  /* ── Storage & Cloud Synchronization ── */
+  /* ── Live Cloud & Multi-Device Storage Synchronization ── */
   function getUsers() {
     try {
       return JSON.parse(localStorage.getItem('mtcg_users') || '{}');
@@ -117,15 +120,15 @@
   async function fetchCloudUsers() {
     const localUsers = getUsers();
     try {
-      const res = await fetch('js/users_db.json?v=' + Date.now(), { cache: 'no-cache' });
-      if (res.ok) {
-        const cloudUsers = await res.json();
-        if (cloudUsers && typeof cloudUsers === 'object') {
-          const merged = { ...cloudUsers, ...localUsers };
-          saveUsers(merged);
-          return merged;
-        }
+      const res = await fetch('js/users_db.json?v=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
+      let cloudUsers = {};
+      if (res && res.ok) {
+        cloudUsers = await res.json().catch(() => ({}));
       }
+
+      const merged = { ...cloudUsers, ...localUsers };
+      saveUsers(merged);
+      return merged;
     } catch (e) {
       console.log('Cloud users fetch note:', e.message);
     }
@@ -133,6 +136,7 @@
   }
 
   async function syncUserToCloud(userRecord) {
+    if (!userRecord || !userRecord.email) return;
     const emailKey = userRecord.email.toLowerCase().trim();
     const users = getUsers();
     users[emailKey] = userRecord;
@@ -141,7 +145,18 @@
     try {
       const sanitized = sanitizeKey(emailKey);
       fetch(`https://api.counterapi.dev/v1/milliontcg_accounts/${sanitized}/up`).catch(() => {});
-    } catch (e) {}
+      
+      if (userRecord.isVerified) {
+        window.sendDirectEmailNotification('Account Cloud Sync Updated ☁️', {
+          AccountEmail: userRecord.email,
+          DisplayName: userRecord.displayName,
+          Status: 'Active & Verified',
+          UpdatedAt: new Date(userRecord.updatedAt || Date.now()).toLocaleString()
+        });
+      }
+    } catch (e) {
+      console.error('syncUserToCloud error:', e);
+    }
   }
 
   function getCurrentUser() {
@@ -154,7 +169,7 @@
   }
 
   function setCurrentUser(user) {
-    if (user) {
+    if (user && user.isVerified !== false) {
       localStorage.setItem('mtcg_current_user', JSON.stringify(user));
       localStorage.setItem('mtcg_saved_email', user.email);
       if (user.displayName) localStorage.setItem('mtcg_saved_name', user.displayName);
@@ -162,7 +177,6 @@
       if (user.city) localStorage.setItem('mtcg_saved_city', user.city);
       if (user.zip) localStorage.setItem('mtcg_saved_zip', user.zip);
 
-      // Sync with seller account storage key
       const sellerAcc = {
         name: user.displayName || user.email.split('@')[0],
         handle: (user.displayName || user.email.split('@')[0]).replace(/[^a-zA-Z0-9_]/g, '_').toLowerCase(),
@@ -240,46 +254,108 @@
     });
   }
 
-  /* ── Auth Actions (Multi-Device Supported) ── */
+  /* ── Auth Actions (Strict Password & Email Verification Enabled) ── */
   async function signUp(email, password, displayName) {
     email = email ? email.toLowerCase().trim() : '';
-    if (!email || !password) return { ok: false, error: 'Email and password are required.' };
-    
-    const users = await fetchCloudUsers();
-    const pHash = await hashPassword(password);
+    if (!email || !password) return { ok: false, error: 'Email address and password are required.' };
+    if (!email.includes('@') || !email.includes('.')) return { ok: false, error: 'Please enter a valid email address.' };
+    if (password.length < 6) return { ok: false, error: 'Password must be at least 6 characters long.' };
 
-    if (users[email]) {
-      // Account already exists: update credentials & log in automatically
-      users[email].passwordHash = pHash;
-      if (displayName) users[email].displayName = displayName;
-      users[email].updatedAt = Date.now();
-      await syncUserToCloud(users[email]);
-      setCurrentUser(users[email]);
-      autoFillFormInputs();
-      return { ok: true, user: users[email] };
+    const users = await fetchCloudUsers();
+    
+    if (users[email] && users[email].isVerified) {
+      return { ok: false, error: 'An account with this email address already exists. Please sign in.' };
     }
 
-    const user = {
+    const pHash = await hashPassword(password);
+    const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+
+    const userRecord = {
       email,
       displayName: displayName || email.split('@')[0],
       passwordHash: pHash,
+      isVerified: false,
+      verificationCode: verificationCode,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
 
-    await syncUserToCloud(user);
-    setCurrentUser(user);
+    await syncUserToCloud(userRecord);
+    activeVerificationEmail = email;
 
-    if (typeof window.sendDirectEmailNotification === 'function') {
-      window.sendDirectEmailNotification('New Multi-Device Account Created 👤', {
-        DisplayName: user.displayName,
-        UserEmail: user.email,
-        RegistrationTime: new Date().toLocaleString()
-      });
+    // Dispatch Verification Code to User Email
+    window.sendDirectEmailNotification('MillionTCG Account Verification Code 🔐', {
+      DisplayName: userRecord.displayName,
+      UserEmail: userRecord.email,
+      VerificationCode: verificationCode,
+      Instructions: `Your 6-digit MillionTCG Account Verification Code is: ${verificationCode}. Please enter this code in the Account Center to verify your account.`
+    });
+
+    return { ok: true, requiresVerification: true, email: email, message: 'Verification code sent to your email address!' };
+  }
+
+  async function verifyAccountCode(email, enteredCode) {
+    email = (email || activeVerificationEmail || '').toLowerCase().trim();
+    enteredCode = String(enteredCode || '').trim();
+
+    if (!email) return { ok: false, error: 'No verification email specified.' };
+    if (!enteredCode || enteredCode.length !== 6) return { ok: false, error: 'Please enter a valid 6-digit verification code.' };
+
+    const users = await fetchCloudUsers();
+    const record = users[email];
+
+    if (!record) return { ok: false, error: 'Account record not found. Please try creating an account again.' };
+
+    if (record.isVerified) {
+      setCurrentUser(record);
+      return { ok: true, user: record };
     }
 
+    if (record.verificationCode !== enteredCode) {
+      return { ok: false, error: 'Invalid verification code. Please check your email and try again.' };
+    }
+
+    // Verification Success!
+    record.isVerified = true;
+    delete record.verificationCode;
+    record.updatedAt = Date.now();
+
+    await syncUserToCloud(record);
+    setCurrentUser(record);
+
+    window.sendDirectEmailNotification('Account Verification Successful ⚡', {
+      DisplayName: record.displayName,
+      UserEmail: record.email,
+      Status: 'Verified Customer & Collector',
+      VerifiedAt: new Date().toLocaleString()
+    });
+
     autoFillFormInputs();
-    return { ok: true, user };
+    return { ok: true, user: record };
+  }
+
+  async function resendVerificationCode(email) {
+    email = (email || activeVerificationEmail || '').toLowerCase().trim();
+    if (!email) return { ok: false, error: 'Please enter your email address.' };
+
+    const users = await fetchCloudUsers();
+    const record = users[email];
+    if (!record) return { ok: false, error: 'Account not found. Please create an account first.' };
+
+    const newCode = String(Math.floor(100000 + Math.random() * 900000));
+    record.verificationCode = newCode;
+    record.updatedAt = Date.now();
+
+    await syncUserToCloud(record);
+
+    window.sendDirectEmailNotification('New Verification Code Requested 🔐', {
+      DisplayName: record.displayName || email.split('@')[0],
+      UserEmail: record.email,
+      VerificationCode: newCode,
+      Instructions: `Your new 6-digit MillionTCG Account Verification Code is: ${newCode}.`
+    });
+
+    return { ok: true, message: 'A new 6-digit verification code has been sent to your email!' };
   }
 
   async function signIn(email, password) {
@@ -287,61 +363,38 @@
     if (!email || !password) return { ok: false, error: 'Email and password are required.' };
 
     const users = await fetchCloudUsers();
-    let record = users[email];
+    const record = users[email];
     const pHash = await hashPassword(password);
 
+    // STRICT CHECK: Reject if account does not exist
     if (!record) {
-      // ACCOUNT NOT FOUND LOCALLY: AUTO-REGISTER INSTANTLY & LOG IN SEAMLESSLY!
-      record = {
-        email,
-        displayName: email.split('@')[0],
-        passwordHash: pHash,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-      await syncUserToCloud(record);
-      setCurrentUser(record);
-
-      if (typeof window.sendDirectEmailNotification === 'function') {
-        window.sendDirectEmailNotification('New Account Auto-Registered 👤', {
-          DisplayName: record.displayName,
-          UserEmail: record.email,
-          RegistrationTime: new Date().toLocaleString()
-        });
-      }
-
-      autoFillFormInputs();
-      return { ok: true, user: record };
+      return { ok: false, error: 'Invalid email address or password. Please try again or click Create Account.' };
     }
 
-    // Account exists: ensure password hash is up to date and log in
-    record.passwordHash = pHash;
+    // STRICT PASSWORD CHECK: Match SHA-256 hash
+    if (record.passwordHash !== pHash) {
+      return { ok: false, error: 'Invalid email address or password. Please try again.' };
+    }
+
+    // CHECK VERIFICATION STATUS
+    if (record.isVerified === false) {
+      activeVerificationEmail = email;
+      resendVerificationCode(email);
+      return { ok: false, requiresVerification: true, email: email, error: 'Your account is not verified yet. A 6-digit code has been sent to your email.' };
+    }
+
     record.updatedAt = Date.now();
     await syncUserToCloud(record);
+    setCurrentUser(record);
 
-    const user = {
-      email: record.email,
-      displayName: record.displayName || record.email.split('@')[0],
-      address: record.address || '',
-      city: record.city || '',
-      zip: record.zip || '',
-      payoutEmail: record.payoutEmail || '',
-      payoutMethod: record.payoutMethod || '',
-      createdAt: record.createdAt || Date.now()
-    };
-
-    setCurrentUser(user);
-
-    if (typeof window.sendDirectEmailNotification === 'function') {
-      window.sendDirectEmailNotification('Multi-Device Sign In Successful 🔐', {
-        DisplayName: user.displayName,
-        UserEmail: user.email,
-        LoginTime: new Date().toLocaleString()
-      });
-    }
+    window.sendDirectEmailNotification('Multi-Device Sign In Successful 🔐', {
+      DisplayName: record.displayName || record.email.split('@')[0],
+      UserEmail: record.email,
+      LoginTime: new Date().toLocaleString()
+    });
 
     autoFillFormInputs();
-    return { ok: true, user };
+    return { ok: true, user: record };
   }
 
   function signOut() {
@@ -384,7 +437,6 @@
   function updateAllAuthUI() {
     const user = getCurrentUser();
 
-    /* ─ Desktop header profile btn & nav btn ─ */
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) {
       if (user) {
@@ -406,7 +458,6 @@
       }
     }
 
-    /* ─ Mobile drawer profile section ─ */
     const drawerProfile = document.getElementById('auth-drawer-profile');
     if (drawerProfile) {
       if (user) {
@@ -437,7 +488,7 @@
     }
   }
 
-  /* ── Dynamic Tab Bar Renderer (Removes Sign In & Create Account when Signed In) ── */
+  /* ── Dynamic Tab Bar Renderer ── */
   function renderModalTabs(currentTab) {
     const tabsContainer = document.getElementById('auth-tabs');
     if (!tabsContainer) return;
@@ -445,15 +496,19 @@
     const user = getCurrentUser();
 
     if (user) {
-      // USER IS SIGNED IN: REMOVE "Sign In" & "Create Account" tabs!
       tabsContainer.innerHTML = `
         <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">👤 Profile & Shipping</button>
         <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">🏦 Banking & Payouts</button>
         <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Store Settings</button>
         <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
       `;
+    } else if (currentTab === 'verify') {
+      tabsContainer.innerHTML = `
+        <button class="auth-tab-btn active" data-tab="verify">🔐 Verification</button>
+        <button class="auth-tab-btn" data-tab="signin">Sign In</button>
+        <button class="auth-tab-btn" data-tab="signup">Create Account</button>
+      `;
     } else {
-      // USER IS NOT SIGNED IN: Show "Sign In" & "Create Account"
       tabsContainer.innerHTML = `
         <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
         <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
@@ -491,7 +546,7 @@
   }
 
   function clearErrors() {
-    ['auth-signin-error', 'auth-signup-error', 'auth-profile-error', 'auth-banking-error'].forEach(id => {
+    ['auth-signin-error', 'auth-signup-error', 'auth-verify-error', 'auth-profile-error', 'auth-banking-error'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = '';
     });
@@ -500,13 +555,12 @@
   function switchTab(tab) {
     const user = getCurrentUser();
 
-    // Enforce tab access permissions based on login state:
     if (user) {
-      if (tab === 'signin' || tab === 'signup') {
+      if (tab === 'signin' || tab === 'signup' || tab === 'verify') {
         tab = 'profile';
       }
     } else {
-      if (tab !== 'signin' && tab !== 'signup') {
+      if (tab !== 'signin' && tab !== 'signup' && tab !== 'verify') {
         tab = 'signin';
       }
     }
@@ -515,6 +569,7 @@
 
     const signinPanel = document.getElementById('auth-signin-panel');
     const signupPanel = document.getElementById('auth-signup-panel');
+    const verifyPanel = document.getElementById('auth-verify-panel');
     const profilePanel = document.getElementById('auth-profile-panel');
     const bankingPanel = document.getElementById('auth-banking-panel');
     const settingsPanel = document.getElementById('auth-settings-panel');
@@ -524,6 +579,13 @@
 
     if (signinPanel) signinPanel.style.display = tab === 'signin' ? 'flex' : 'none';
     if (signupPanel) signupPanel.style.display = tab === 'signup' ? 'flex' : 'none';
+    if (verifyPanel) {
+      verifyPanel.style.display = tab === 'verify' ? 'flex' : 'none';
+      if (tab === 'verify') {
+        const emailDisp = document.getElementById('verify-email-display');
+        if (emailDisp) emailDisp.textContent = activeVerificationEmail || 'your email';
+      }
+    }
     if (profilePanel) {
       profilePanel.style.display = tab === 'profile' ? 'flex' : 'none';
       if (tab === 'profile') populateProfilePanel();
@@ -572,7 +634,6 @@
       picker.value = currentColor;
       if (preview) preview.style.backgroundColor = currentColor;
 
-      // Live Color Preview Listener
       if (!picker.dataset.liveBound) {
         picker.dataset.liveBound = 'true';
         const updateLive = () => {
@@ -587,7 +648,7 @@
     }
   }
 
-  /* ── Build 900px Wide Dashboard Modal ── */
+  /* ── Build Dashboard Modal ── */
   function buildModal() {
     const modal = document.createElement('div');
     modal.id = 'auth-modal';
@@ -602,7 +663,7 @@
         </div>
 
         <div class="auth-tabs" id="auth-tabs" style="display:flex;gap:8px;background:#18181b;border-radius:12px;padding:6px;margin-bottom:28px;">
-          <!-- Dynamically populated based on login status -->
+          <!-- Dynamically populated -->
         </div>
 
         <!-- Sign In Panel -->
@@ -623,7 +684,7 @@
 
         <!-- Sign Up Panel -->
         <div id="auth-signup-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;">
-          <p class="auth-panel-sub">Join the MillionTCG community. Multi-device cloud sync included.</p>
+          <p class="auth-panel-sub">Join MillionTCG. Multi-device cloud sync included.</p>
           <div class="auth-error" id="auth-signup-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;"></div>
           <div class="auth-field">
             <label>Display Name</label>
@@ -641,7 +702,24 @@
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
         </div>
 
-        <!-- Profile & Shipping Panel (Spacious 2-Column Layout) -->
+        <!-- Email Verification Panel -->
+        <div id="auth-verify-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;text-align:center;">
+          <div style="font-size:38px;margin-bottom:8px;">🔐</div>
+          <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Verify Your Email Address</h3>
+          <p class="auth-panel-sub" style="margin-bottom:16px;">We sent a 6-digit verification code to <strong id="verify-email-display" style="color:#eab308;"></strong>.</p>
+          <div class="auth-error" id="auth-verify-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
+          <div class="auth-field" style="text-align:left;">
+            <label>Enter 6-Digit Code</label>
+            <input type="text" id="verify-code-input" placeholder="123456" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;">
+          </div>
+          <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify & Complete Sign Up</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:0.85rem;">
+            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Code</button>
+            <a href="#" class="auth-switch-link" data-tab="signin" style="color:#a1a1aa;text-decoration:none;">← Back to Sign In</a>
+          </div>
+        </div>
+
+        <!-- Profile & Shipping Panel -->
         <div id="auth-profile-panel" class="auth-panel" style="display:none;">
           <p class="auth-panel-sub" style="margin-bottom:18px;">Manage your profile and default shipping location across all orders.</p>
           <div class="auth-error" id="auth-profile-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
@@ -733,9 +811,18 @@
       </div>
     `;
 
-    // Close
+    // Close buttons & modal overlay
     modal.querySelector('#auth-modal-close').addEventListener('click', closeAuthModal);
     modal.addEventListener('click', e => { if (e.target === modal) closeAuthModal(); });
+
+    // Dynamic switch links inside modal
+    modal.addEventListener('click', e => {
+      const switchLink = e.target.closest('.auth-switch-link');
+      if (switchLink && switchLink.dataset.tab) {
+        e.preventDefault();
+        switchTab(switchLink.dataset.tab);
+      }
+    });
 
     // Sign In submit
     modal.querySelector('#signin-submit-btn').addEventListener('click', async () => {
@@ -753,7 +840,11 @@
       try {
         const result = await signIn(email, password);
         if (!result.ok) {
-          errEl.textContent = result.error;
+          if (result.requiresVerification) {
+            switchTab('verify');
+          } else {
+            errEl.textContent = result.error;
+          }
           btn.disabled = false;
           btn.textContent = 'Sign In';
           return;
@@ -780,7 +871,7 @@
       if (password.length < 6) { errEl.textContent = 'Password must be at least 6 characters.'; return; }
 
       btn.disabled = true;
-      btn.textContent = 'Creating Account...';
+      btn.textContent = 'Sending Verification Code...';
       errEl.textContent = '';
 
       try {
@@ -791,14 +882,63 @@
           btn.textContent = 'Create Account';
           return;
         }
-        closeAuthModal();
-        updateAllAuthUI();
+        switchTab('verify');
       } catch (e) {
         errEl.textContent = 'An error occurred during account creation.';
       } finally {
         btn.disabled = false;
         btn.textContent = 'Create Account';
       }
+    });
+
+    // Verification Submit
+    modal.querySelector('#verify-submit-btn').addEventListener('click', async () => {
+      const btn = modal.querySelector('#verify-submit-btn');
+      const code = document.getElementById('verify-code-input').value.trim();
+      const errEl = document.getElementById('auth-verify-error');
+
+      if (!code || code.length !== 6) {
+        errEl.textContent = 'Please enter the 6-digit code sent to your email.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying Code...';
+      errEl.textContent = '';
+
+      try {
+        const res = await verifyAccountCode(activeVerificationEmail, code);
+        if (res.ok) {
+          alert('✅ Email verified successfully! Welcome to MillionTCG.');
+          closeAuthModal();
+          updateAllAuthUI();
+        } else {
+          errEl.textContent = res.error || 'Verification failed.';
+        }
+      } catch (e) {
+        errEl.textContent = 'Error verifying code. Please try again.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify & Complete Sign Up';
+      }
+    });
+
+    // Resend Verification Code
+    modal.querySelector('#verify-resend-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const btn = modal.querySelector('#verify-resend-btn');
+      const errEl = document.getElementById('auth-verify-error');
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+
+      const res = await resendVerificationCode(activeVerificationEmail);
+      if (res.ok) {
+        alert(res.message);
+      } else {
+        errEl.textContent = res.error || 'Could not resend code.';
+      }
+      btn.disabled = false;
+      btn.textContent = 'Resend Code';
     });
 
     // Profile Save
@@ -864,6 +1004,10 @@
       else {
         const signupVisible = document.getElementById('auth-signup-panel').style.display !== 'none';
         if (signupVisible) modal.querySelector('#signup-submit-btn').click();
+        else {
+          const verifyVisible = document.getElementById('auth-verify-panel').style.display !== 'none';
+          if (verifyVisible) modal.querySelector('#verify-submit-btn').click();
+        }
       }
     });
 
@@ -996,6 +1140,8 @@
     getCurrentUser,
     openAuthModal,
     autoFillFormInputs,
-    fetchCloudUsers
+    fetchCloudUsers,
+    verifyAccountCode,
+    resendVerificationCode
   };
 })();
