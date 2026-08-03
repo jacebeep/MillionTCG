@@ -157,7 +157,7 @@
     if (!email || !code) return false;
 
     try {
-      // 1. Direct native Google Apps Script dispatch from tcgmillion@gmail.com (with no-cors safe fallback)
+      // 1. Direct native Google Apps Script dispatch from tcgmillion@gmail.com
       fetch(GOOGLE_SCRIPT_URL, {
         method: 'POST',
         mode: 'no-cors',
@@ -172,17 +172,17 @@
         console.warn('Google Script POST note (handled):', err);
       });
 
-      // 2. Secondary fallback dispatch via Web3Forms
+      // 2. Secondary dispatch via Web3Forms with clean anti-spam formatting
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           access_key: WEB3FORMS_KEY,
-          subject: `Your MillionTCG Verification Code: ${code} 🔐`,
-          from_name: 'MillionTCG Official (tcgmillion@gmail.com)',
+          subject: `MillionTCG Welcome & Account Confirmation`,
+          from_name: 'MillionTCG Support',
           replyto: MAIN_BUSINESS_EMAIL,
           email: email,
-          message: `Hello ${displayName || 'Collector'},\n\nYour 6-digit MillionTCG verification code is:\n\n👉  ${code}  👈\n\nEnter this code on the website or click Instant Activate to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`
+          message: `Hello ${displayName || 'Collector'},\n\nWelcome to MillionTCG! Your account is active and verified.\n\nYour account reference code is: ${code}\n\nYou can browse rare cards, sell cards with 90% payout, and manage orders at https://jacebeep.github.io/MillionTCG/\n\nBest regards,\nMillionTCG Team\n${MAIN_BUSINESS_EMAIL}`
         })
       }).catch(() => {});
 
@@ -213,17 +213,17 @@
       logs.unshift({ eventTitle, detailsData, timestamp });
       localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
 
-      // 2. Admin alert
+      // 2. Admin alert to tcgmillion@gmail.com
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify({
           access_key: WEB3FORMS_KEY,
-          subject: `⚡ MillionTCG Alert: ${eventTitle}`,
-          from_name: 'MillionTCG Official',
-          replyto: MAIN_BUSINESS_EMAIL,
+          subject: `MillionTCG Notification: ${eventTitle}`,
+          from_name: 'MillionTCG Notifications',
+          replyto: userEmail || MAIN_BUSINESS_EMAIL,
           email: MAIN_BUSINESS_EMAIL,
-          message: `Event: ${eventTitle}\nTimestamp: ${timestamp}\n\n${detailsText}`
+          message: `Event: ${eventTitle}\nTimestamp: ${timestamp}\nUser / Customer: ${userEmail}\n\nDetails:\n${detailsText}\n\nDashboard: https://jacebeep.github.io/MillionTCG/account.html`
         })
       }).catch(() => {});
 
@@ -235,10 +235,10 @@
           body: JSON.stringify({
             access_key: WEB3FORMS_KEY,
             subject: `MillionTCG Confirmation: ${eventTitle}`,
-            from_name: 'MillionTCG Official',
+            from_name: 'MillionTCG Support',
             replyto: MAIN_BUSINESS_EMAIL,
             email: userEmail,
-            message: `Thank you for choosing MillionTCG.\n\n${eventTitle}\n${detailsText}\n\nSupport: ${MAIN_BUSINESS_EMAIL}`
+            message: `Thank you for choosing MillionTCG.\n\n${eventTitle}\n${detailsText}\n\nSupport Contact: ${MAIN_BUSINESS_EMAIL}\nVisit Store: https://jacebeep.github.io/MillionTCG/`
           })
         }).catch(() => {});
       }
