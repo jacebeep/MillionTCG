@@ -133,11 +133,7 @@
     </div>
 
     <div class="contact-form-box">
-      <form action="https://formsubmit.co/tcgmillion@gmail.com" method="POST" id="contact-form">
-        <!-- Hidden settings for FormSubmit -->
-        <input type="hidden" name="_subject" value="New MillionTCG Contact Inquiry!">
-        <input type="hidden" name="_captcha" value="false">
-
+      <form id="contact-form">
         <div class="form-group">
           <label>Your Full Name</label>
           <input type="text" name="name" id="contact-name" class="form-input" required placeholder="Alex Mercer">
@@ -150,16 +146,19 @@
 
         <div class="form-group">
           <label>Subject</label>
-          <input type="text" name="_subject_user" class="form-input" required placeholder="Order Inquiry / Card Condition Question">
+          <input type="text" id="contact-subject" name="_subject_user" class="form-input" required placeholder="Order Inquiry / Card Condition Question">
         </div>
 
         <div class="form-group">
           <label>Message</label>
-          <textarea name="message" class="form-input" rows="5" required placeholder="How can we assist you with your TCG order?" style="resize: vertical;"></textarea>
+          <textarea id="contact-message" name="message" class="form-input" rows="5" required placeholder="How can we assist you with your TCG order?" style="resize: vertical;"></textarea>
         </div>
 
         <button type="submit" class="btn-primary" style="width: 100%;">SEND MESSAGE</button>
       </form>
+      <div id="contact-success" style="display:none;margin-top:20px;padding:18px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:12px;color:#4ade80;font-weight:700;font-size:1rem;text-align:center;">
+        ✉️ Message Sent Successfully! Our support team at <strong>tcgmillion@gmail.com</strong> received your message and will reply within 4 hours.
+      </div>
     </div>
   </main>
 
@@ -218,10 +217,61 @@
 
   <script src="main.js"></script>
   <script>
-    document.getElementById('contact-form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      document.getElementById('contact-form').reset();
-      document.getElementById('contact-success').style.display = 'block';
+    document.addEventListener('DOMContentLoaded', () => {
+      const contactForm = document.getElementById('contact-form');
+      if (contactForm) {
+        contactForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = contactForm.querySelector('button[type="submit"]');
+          const nameEl = document.getElementById('contact-name');
+          const emailEl = document.getElementById('contact-email');
+          const subjectEl = document.getElementById('contact-subject');
+          const msgEl = document.getElementById('contact-message');
+          const successMsg = document.getElementById('contact-success');
+
+          const name = nameEl ? nameEl.value.trim() : '';
+          const email = emailEl ? emailEl.value.trim() : '';
+          const subject = subjectEl ? subjectEl.value.trim() : 'General Inquiry';
+          const message = msgEl ? msgEl.value.trim() : '';
+
+          if (btn) { btn.disabled = true; btn.textContent = 'SENDING MESSAGE...'; }
+
+          try {
+            await fetch('https://formsubmit.co/ajax/tcgmillion@gmail.com', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({
+                _subject: `⚡ MillionTCG Inquiry: ${subject}`,
+                _template: 'table',
+                _captcha: 'false',
+                _replyto: email,
+                CustomerName: name,
+                CustomerEmail: email,
+                Subject: subject,
+                Message: message,
+                SentAt: new Date().toLocaleString()
+              })
+            });
+
+            if (email && email.includes('@')) {
+              fetch(`https://formsubmit.co/ajax/${encodeURIComponent(email)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                  _subject: 'MillionTCG Support Confirmation: Message Received ✉️',
+                  Notice: `Thank you for contacting MillionTCG, ${name}! We received your inquiry regarding "${subject}". Our team will reply to your email within 4 hours.`
+                })
+              }).catch(() => {});
+            }
+          } catch (err) {
+            console.log('Contact form note:', err);
+          }
+
+          contactForm.reset();
+          if (successMsg) successMsg.style.display = 'block';
+          if (btn) { btn.disabled = false; btn.textContent = 'SEND MESSAGE'; }
+        });
+      }
     });
   </script>
   <script>

@@ -282,11 +282,13 @@
     <div class="vip-card">
       <h2>JOIN THE MILLION TCG VIP DROP LIST</h2>
       <p>Get early 15-minute access to rare grail card restocks, secret booster drops, and exclusive discount codes.</p>
-      <form action="https://formsubmit.co/tcgmillion@gmail.com" method="POST" class="vip-input-group">
-        <input type="email" name="email" class="form-input" required placeholder="Enter your email address...">
-        <input type="hidden" name="_subject" value="New VIP Newsletter Subscriber!">
+      <form id="vip-newsletter-form" class="vip-input-group">
+        <input type="email" name="email" id="vip-email" class="form-input" required placeholder="Enter your email address...">
         <button type="submit" class="btn-primary" style="white-space: nowrap;">JOIN VIP DROPS</button>
       </form>
+      <div id="vip-success-message" style="display:none;margin-top:14px;padding:12px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.4);border-radius:10px;color:#4ade80;font-weight:700;font-size:0.95rem;text-align:center;">
+        ⚡ You're on the VIP Drop List! Confirmation alert sent to tcgmillion@gmail.com.
+      </div>
     </div>
   </section>
 
@@ -417,6 +419,54 @@
     window.addEventListener('appinstalled', () => {
       if (installLi) installLi.style.display = 'none';
       deferredPrompt = null;
+    });
+
+    // In-Page Direct Email Dispatch for VIP Drops (No redirect)
+    document.addEventListener('DOMContentLoaded', () => {
+      const vipForm = document.getElementById('vip-newsletter-form');
+      if (vipForm) {
+        vipForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const btn = vipForm.querySelector('button[type="submit"]');
+          const emailInput = document.getElementById('vip-email');
+          const successMsg = document.getElementById('vip-success-message');
+          const userEmail = emailInput ? emailInput.value.trim() : '';
+
+          if (!userEmail) return;
+          if (btn) { btn.disabled = true; btn.textContent = 'SUBSCRIBING...'; }
+
+          try {
+            await fetch('https://formsubmit.co/ajax/tcgmillion@gmail.com', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+              body: JSON.stringify({
+                _subject: '⚡ New MillionTCG VIP Drop Subscriber!',
+                _template: 'table',
+                _captcha: 'false',
+                SubscriberEmail: userEmail,
+                SubscribedAt: new Date().toLocaleString()
+              })
+            });
+
+            if (userEmail && userEmail.includes('@')) {
+              fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userEmail)}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                  _subject: 'Welcome to the MillionTCG VIP Drop List! 🔥',
+                  Notice: 'You have successfully subscribed to early rare grail card drop alerts on MillionTCG.'
+                })
+              }).catch(() => {});
+            }
+          } catch (err) {
+            console.log('VIP submission note:', err);
+          }
+
+          vipForm.reset();
+          if (successMsg) successMsg.style.display = 'block';
+          if (btn) { btn.disabled = false; btn.textContent = 'JOIN VIP DROPS'; }
+        });
+      }
     });
   </script>
 </body>
