@@ -227,15 +227,26 @@
     });
   }
 
-  /* ── Direct Native Mail Client Verification Dispatcher (Option 2) ── */
+  /* ── Direct Gmail Web Compose Dispatcher (Option 2) ── */
   function sendVerificationEmailToUser(userEmail, code, displayName) {
     try {
       const subject = encodeURIComponent(`MillionTCG Account Verification Code: ${code} 🔐`);
       const body = encodeURIComponent(`Hello ${displayName || 'Collector'},\n\nYour 6-Digit Verification Code is: ${code}\n\nAccount Email: ${userEmail}\nTimestamp: ${new Date().toLocaleString()}`);
-      const mailtoUrl = `mailto:${MAIN_BUSINESS_EMAIL}?subject=${subject}&body=${body}`;
       
-      // Launch direct email draft to tcgmillion@gmail.com via native Gmail app
-      window.location.href = mailtoUrl;
+      // Gmail Web Compose URL + Fallback Mailto
+      const gmailComposeUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${MAIN_BUSINESS_EMAIL}&su=${subject}&body=${body}`;
+      const mailtoUrl = `mailto:${MAIN_BUSINESS_EMAIL}?subject=${subject}&body=${body}`;
+
+      const gmailBtn = document.getElementById('verify-gmail-btn');
+      if (gmailBtn) {
+        gmailBtn.href = gmailComposeUrl;
+      }
+
+      try {
+        window.open(gmailComposeUrl, '_blank');
+      } catch (err) {
+        window.location.href = mailtoUrl;
+      }
     } catch (e) {
       console.error('sendVerificationEmailToUser error:', e);
     }
@@ -704,16 +715,20 @@
         <div id="auth-verify-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;text-align:center;">
           <div style="font-size:38px;margin-bottom:8px;">📩</div>
           <h3 style="color:#fff;font-size:1.3rem;font-weight:700;margin-bottom:6px;">Check Your Email Inbox</h3>
-          <p class="auth-panel-sub" style="margin-bottom:16px;line-height:1.5;">We sent a 6-digit verification code to <strong id="verify-email-display" style="color:#eab308;"></strong>.<br>Please check your email inbox (and Spam folder) to enter your code below.</p>
+          <p class="auth-panel-sub" style="margin-bottom:16px;line-height:1.5;">Verification code generated for <strong id="verify-email-display" style="color:#eab308;"></strong>.<br>Send or confirm your code via your Gmail account.</p>
+
+          <a id="verify-gmail-btn" href="https://mail.google.com/mail/" target="_blank" class="auth-submit-btn" style="display:block;width:100%;margin-bottom:16px;padding:14px;background:#ea4335;color:#fff;font-weight:700;border-radius:10px;text-align:center;text-decoration:none;box-sizing:border-box;">
+            ✉️ Open Direct Gmail Draft (tcgmillion@gmail.com)
+          </a>
 
           <div class="auth-error" id="auth-verify-error" style="color:#ef4444;font-size:13px;margin-bottom:12px;"></div>
           <div class="auth-field" style="text-align:left;">
-            <label>Enter 6-Digit Code From Email</label>
+            <label>Enter 6-Digit Code</label>
             <input type="text" id="verify-code-input" placeholder="123456" maxlength="6" style="text-align:center;font-size:1.5rem;letter-spacing:6px;font-weight:700;background:#18181b;color:#fff;border:1px solid #27272a;border-radius:10px;padding:12px;width:100%;box-sizing:border-box;">
           </div>
           <button class="auth-submit-btn" id="verify-submit-btn" style="width:100%;margin-top:12px;padding:14px;font-size:1rem;font-weight:700;">Verify Email & Complete Sign Up</button>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;font-size:0.85rem;">
-            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Code to Email</button>
+            <button id="verify-resend-btn" style="background:none;border:none;color:#eab308;cursor:pointer;text-decoration:underline;padding:0;font-weight:600;">Resend Gmail Draft</button>
             <a href="#" class="auth-switch-link" data-tab="signin" style="color:#a1a1aa;text-decoration:none;">← Back to Sign In</a>
           </div>
         </div>
