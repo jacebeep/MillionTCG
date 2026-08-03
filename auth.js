@@ -1,6 +1,7 @@
 /**
  * MillionTCG Multi-Device Auth & Account Management Engine
  * Primary Business Email: tcgmillion@gmail.com
+ * Google Apps Script Verification Dispatcher: https://script.google.com/macros/s/AKfycbxQk2UE4E8_CHaR0X2G3SsB5L-9BSu22doLxlux_UYukLqRUi3JFbqfCVsSYpBicG9V/exec
  */
 
 (function () {
@@ -8,6 +9,9 @@
 
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   const WEB3FORMS_KEY = '5979c3fb-2a54-469b-980b-04ff57d42cf3';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk2UE4E8_CHaR0X2G3SsB5L-9BSu22doLxlux_UYukLqRUi3JFbqfCVsSYpBicG9V/exec';
+
+  let activeVerificationEmail = '';
 
   /* ────────────────────────────────────────────────────────────
      1. Storage & State Management
@@ -105,7 +109,49 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     3. Notification & Email Dispatcher
+     3. Email Verification Dispatcher (Native Google Apps Script)
+  ──────────────────────────────────────────────────────────── */
+  async function sendVerificationEmail(email, code, displayName) {
+    email = (email || '').toLowerCase().trim();
+    if (!email || !code) return false;
+
+    try {
+      // 1. Direct native Google Apps Script dispatch from tcgmillion@gmail.com
+      fetch(GOOGLE_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          email: email,
+          code: String(code),
+          name: displayName || email.split('@')[0]
+        })
+      }).catch(err => {
+        console.warn('Google Script POST note (handled):', err);
+      });
+
+      // 2. Secondary fallback dispatch via Web3Forms
+      fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: `Your MillionTCG Verification Code: ${code} 🔐`,
+          from_name: 'MillionTCG Official (tcgmillion@gmail.com)',
+          replyto: MAIN_BUSINESS_EMAIL,
+          email: email,
+          message: `Hello ${displayName || 'Collector'},\n\nYour 6-digit MillionTCG verification code is:\n\n👉  ${code}  👈\n\nEnter this code on the website to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`
+        })
+      }).catch(() => {});
+
+      return true;
+    } catch (err) {
+      console.error('sendVerificationEmail error:', err);
+      return false;
+    }
+  }
+
+  /* ────────────────────────────────────────────────────────────
+     4. General Notification & Transaction Log Dispatcher
   ──────────────────────────────────────────────────────────── */
   function sendDirectEmailNotification(eventTitle, detailsData = {}) {
     try {
@@ -149,34 +195,26 @@
             from_name: 'MillionTCG Official',
             replyto: MAIN_BUSINESS_EMAIL,
             email: userEmail,
-            message: `Hello,\n\nThank you for choosing MillionTCG!\n\nDetails of your ${eventTitle}:\n\n${detailsText}\nTimestamp: ${timestamp}\n\nBest regards,\nMillionTCG Team`
+            message: `Thank you for choosing MillionTCG.\n\n${eventTitle}\n${detailsText}\n\nSupport: ${MAIN_BUSINESS_EMAIL}`
           })
         }).catch(() => {});
       }
     } catch (e) {
-      console.error('Notification dispatch error:', e);
+      console.error('sendDirectEmailNotification error:', e);
     }
   }
 
   /* ────────────────────────────────────────────────────────────
-     4. 3D Stage Background Customizer
+     5. 3D Stage Background Customizer
   ──────────────────────────────────────────────────────────── */
   function set3DStageBackgroundColor(colorHex) {
     if (!colorHex) return;
     try {
       localStorage.setItem('mtcg_stage_bg_color', colorHex);
-      const canvas = document.getElementById('hero-3d-canvas');
-      const container = document.getElementById('hero-3d-container') || document.querySelector('.hero-3d-stage') || document.querySelector('.hero-section');
-      if (canvas && canvas.userData) {
-        if (canvas.userData.scene) {
-          canvas.userData.scene.background = new THREE.Color(colorHex);
-          if (canvas.userData.scene.fog) canvas.userData.scene.fog.color = new THREE.Color(colorHex);
-        }
-        if (canvas.userData.renderer) {
-          canvas.userData.renderer.setClearColor(colorHex, 1);
-        }
-        canvas.style.backgroundColor = colorHex;
+      if (window.heroScene && window.THREE) {
+        window.heroScene.background = new window.THREE.Color(colorHex);
       }
+      const container = document.getElementById('hero-3d-canvas');
       if (container) container.style.backgroundColor = colorHex;
       const heroSec = document.querySelector('.hero-section');
       if (heroSec) heroSec.style.backgroundColor = colorHex;
@@ -186,7 +224,7 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     5. Core Authentication Operations
+     6. Core Authentication Operations
   ──────────────────────────────────────────────────────────── */
   async function signUp(email, password, displayName) {
     email = (email || '').toLowerCase().trim();
@@ -195,31 +233,105 @@
     if (password.length < 6) return { ok: false, error: 'Password must be at least 6 characters long.' };
 
     const users = await fetchCloudUsers();
-    if (users[email]) {
+    const existing = users[email];
+    if (existing && existing.isVerified) {
       return { ok: false, error: 'An account with this email address already exists. Please sign in.' };
     }
 
     const passwordHash = await hashPassword(password);
+    const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+
     const userRecord = {
       email,
       displayName: displayName ? displayName.trim() : email.split('@')[0],
       passwordHash,
-      isVerified: true,
-      createdAt: Date.now(),
+      isVerified: false,
+      verificationCode: verificationCode,
+      createdAt: existing ? existing.createdAt : Date.now(),
       updatedAt: Date.now()
     };
 
     syncUserRecord(userRecord);
-    setCurrentUser(userRecord);
+    activeVerificationEmail = email;
+
+    // Send Real Verification Code via Google Apps Script (from tcgmillion@gmail.com)
+    sendVerificationEmail(email, verificationCode, userRecord.displayName);
+
+    return {
+      ok: true,
+      requiresVerification: true,
+      email: email,
+      code: verificationCode,
+      message: 'Verification code sent to your email from tcgmillion@gmail.com!'
+    };
+  }
+
+  async function verifyAccountCode(email, enteredCode) {
+    email = (email || activeVerificationEmail || '').toLowerCase().trim();
+    enteredCode = String(enteredCode || '').trim();
+
+    if (!email) return { ok: false, error: 'No verification email specified.' };
+    if (!enteredCode || enteredCode.length !== 6) {
+      return { ok: false, error: 'Please enter the 6-digit verification code.' };
+    }
+
+    const users = await fetchCloudUsers();
+    const record = users[email];
+
+    if (!record) {
+      return { ok: false, error: 'Account record not found. Please create an account first.' };
+    }
+
+    if (record.isVerified) {
+      setCurrentUser(record);
+      updateAllAuthUI();
+      autoFillFormInputs();
+      return { ok: true, user: record };
+    }
+
+    if (record.verificationCode !== enteredCode) {
+      return { ok: false, error: 'Invalid verification code. Please check your inbox or click Resend Code.' };
+    }
+
+    // Mark verified
+    record.isVerified = true;
+    record.updatedAt = Date.now();
+    delete record.verificationCode;
+
+    syncUserRecord(record);
+    setCurrentUser(record);
+    updateAllAuthUI();
     autoFillFormInputs();
 
-    sendDirectEmailNotification('New Account Registered 🏪', {
-      DisplayName: userRecord.displayName,
-      UserEmail: userRecord.email,
-      Status: 'Active Collector & Seller'
+    sendDirectEmailNotification('New Account Verified 🏪', {
+      DisplayName: record.displayName || record.email.split('@')[0],
+      UserEmail: record.email,
+      Status: 'Verified Collector & Marketplace Seller'
     });
 
-    return { ok: true, user: userRecord, message: 'Account created successfully! Welcome to MillionTCG.' };
+    return { ok: true, user: record, message: 'Account verified successfully! Welcome to MillionTCG.' };
+  }
+
+  async function resendVerificationCode(email) {
+    email = (email || activeVerificationEmail || '').toLowerCase().trim();
+    if (!email) return { ok: false, error: 'Please enter your email address.' };
+
+    const users = await fetchCloudUsers();
+    const record = users[email];
+    if (!record) return { ok: false, error: 'Account not found. Please sign up first.' };
+
+    const newCode = String(Math.floor(100000 + Math.random() * 900000));
+    record.verificationCode = newCode;
+    record.updatedAt = Date.now();
+    syncUserRecord(record);
+
+    sendVerificationEmail(email, newCode, record.displayName);
+
+    return {
+      ok: true,
+      code: newCode,
+      message: 'A new 6-digit code has been sent to your email from tcgmillion@gmail.com!'
+    };
   }
 
   async function signIn(email, password) {
@@ -232,6 +344,17 @@
 
     if (!record || record.passwordHash !== passwordHash) {
       return { ok: false, error: 'Invalid email address or password. Please try again.' };
+    }
+
+    if (record.isVerified === false && record.verificationCode) {
+      activeVerificationEmail = email;
+      sendVerificationEmail(email, record.verificationCode, record.displayName);
+      return {
+        ok: false,
+        requiresVerification: true,
+        email: email,
+        error: 'Please verify your email address. A 6-digit verification code was sent to your inbox.'
+      };
     }
 
     record.updatedAt = Date.now();
@@ -284,128 +407,110 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     6. Persistent Form Autofill
+     7. Form Autofill & Input Synchronization
   ──────────────────────────────────────────────────────────── */
   function autoFillFormInputs() {
-    try {
-      const user = getCurrentUser();
-      const savedEmail = user?.email || localStorage.getItem('mtcg_saved_email') || '';
-      const savedName = user?.displayName || localStorage.getItem('mtcg_saved_name') || '';
-      const savedFirst = localStorage.getItem('mtcg_saved_first_name') || (savedName ? savedName.split(' ')[0] : '');
-      const savedLast = localStorage.getItem('mtcg_saved_last_name') || (savedName ? savedName.split(' ').slice(1).join(' ') : '');
-      const savedAddr = user?.address || localStorage.getItem('mtcg_saved_address') || '';
-      const savedCity = user?.city || localStorage.getItem('mtcg_saved_city') || '';
-      const savedZip = user?.zip || localStorage.getItem('mtcg_saved_zip') || '';
+    const u = getCurrentUser();
+    const email = u ? u.email : (localStorage.getItem('mtcg_saved_email') || '');
+    const name = u ? u.displayName : (localStorage.getItem('mtcg_saved_name') || '');
+    const address = u ? u.address : (localStorage.getItem('mtcg_saved_address') || '');
+    const city = u ? u.city : (localStorage.getItem('mtcg_saved_city') || '');
+    const zip = u ? u.zip : (localStorage.getItem('mtcg_saved_zip') || '');
 
-      const fill = (ids, val) => {
-        if (!val) return;
-        ids.forEach(id => {
-          const el = document.getElementById(id);
-          if (el && !el.value) el.value = val;
-        });
-      };
+    const fill = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && !el.value && val) el.value = val;
+    };
 
-      fill(['checkout-email', 'signin-email', 'signup-email', 'contact-email', 'seller-payout-email', 'seller-email'], savedEmail);
-      fill(['signin-name', 'signup-name', 'cardholder-name', 'seller-payout-name', 'contact-name'], savedName);
-      fill(['checkout-first-name'], savedFirst);
-      fill(['checkout-last-name'], savedLast);
-      fill(['checkout-address'], savedAddr);
-      fill(['checkout-city'], savedCity);
-      fill(['checkout-zip'], savedZip);
-    } catch (e) {
-      console.error('Autofill error:', e);
-    }
+    fill('checkout-email', email);
+    fill('checkout-first-name', name.split(' ')[0]);
+    fill('checkout-last-name', name.split(' ').slice(1).join(' '));
+    fill('checkout-address', address);
+    fill('checkout-city', city);
+    fill('checkout-zip', zip);
+
+    fill('seller-email', email);
+    fill('seller-name', name);
+    fill('contact-email', email);
+    fill('contact-name', name);
   }
 
   function setupAutoSaveListeners() {
-    document.addEventListener('change', (e) => {
+    document.addEventListener('input', (e) => {
       const t = e.target;
-      if (!t || !t.id || !t.value) return;
-      const v = t.value.trim();
-      const map = {
-        'checkout-email': 'mtcg_saved_email',
-        'signin-email': 'mtcg_saved_email',
-        'checkout-first-name': 'mtcg_saved_first_name',
-        'checkout-last-name': 'mtcg_saved_last_name',
-        'checkout-address': 'mtcg_saved_address',
-        'checkout-city': 'mtcg_saved_city',
-        'checkout-zip': 'mtcg_saved_zip'
-      };
-      if (map[t.id]) localStorage.setItem(map[t.id], v);
+      if (!t || !t.id) return;
+      if (t.id === 'checkout-email' && t.value) localStorage.setItem('mtcg_saved_email', t.value.trim());
+      if (t.id === 'checkout-first-name' && t.value) localStorage.setItem('mtcg_saved_name', t.value.trim());
+      if (t.id === 'checkout-address' && t.value) localStorage.setItem('mtcg_saved_address', t.value.trim());
+      if (t.id === 'checkout-city' && t.value) localStorage.setItem('mtcg_saved_city', t.value.trim());
+      if (t.id === 'checkout-zip' && t.value) localStorage.setItem('mtcg_saved_zip', t.value.trim());
     });
   }
 
   /* ────────────────────────────────────────────────────────────
-     7. UI Helpers & Navigation Badge Updating
+     8. UI Helpers & Header Avatar Updater
   ──────────────────────────────────────────────────────────── */
-  function getInitials(user) {
-    if (!user) return 'U';
-    const name = user.displayName || user.email || 'User';
-    return name.slice(0, 1).toUpperCase();
-  }
-
   function updateAllAuthUI() {
     const user = getCurrentUser();
+    const isAuth = !!user;
 
-    // 1. Desktop Nav Button
+    // Desktop nav button
     const desktopBtn = document.getElementById('auth-desktop-btn');
     if (desktopBtn) {
-      if (user) {
-        desktopBtn.innerHTML = `<span class="auth-avatar" style="background:#eab308;color:#000;font-weight:700;border-radius:50%;width:32px;height:32px;display:inline-flex;align-items:center;justify-content:center;">${getInitials(user)}</span>`;
-        desktopBtn.title = user.displayName || user.email;
-      } else {
-        desktopBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
-        desktopBtn.title = 'Sign In';
-      }
-    }
-
-    // 2. Account Nav Link
-    const navAuthBtn = document.getElementById('nav-auth-btn');
-    if (navAuthBtn) {
-      if (user) {
-        navAuthBtn.textContent = `@${(user.displayName || user.email.split('@')[0]).toUpperCase()}`;
-        navAuthBtn.title = user.email;
-      } else {
-        navAuthBtn.textContent = 'ACCOUNT';
-      }
-    }
-
-    // 3. Mobile Navigation Drawer
-    const drawerProfile = document.getElementById('auth-drawer-profile');
-    if (drawerProfile) {
-      if (user) {
-        drawerProfile.innerHTML = `
-          <div class="drawer-user-info" onclick="window.MillionAuth.openAuthModal('profile')" style="display:flex;align-items:center;gap:12px;padding:12px;background:rgba(255,255,255,0.05);border-radius:8px;margin-bottom:8px;cursor:pointer;">
-            <div class="drawer-user-avatar" style="background:#eab308;color:#000;font-weight:700;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:18px;">${getInitials(user)}</div>
-            <div class="drawer-user-details" style="overflow:hidden;">
-              <div class="drawer-user-name" style="font-weight:600;color:#fff;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${user.displayName || user.email.split('@')[0]}</div>
-              <div class="drawer-user-email" style="font-size:12px;color:#a1a1aa;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${user.email}</div>
-            </div>
+      if (isAuth) {
+        const initial = (user.displayName || user.email || 'U')[0].toUpperCase();
+        desktopBtn.innerHTML = `
+          <div style="width:32px;height:32px;border-radius:50%;background:#eab308;color:#000;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;box-shadow:0 0 10px rgba(234,179,8,0.4);">
+            ${initial}
           </div>
-          <button id="drawer-signout-btn" style="width:100%;padding:10px;background:#ef4444;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;">Sign Out</button>
+          <span style="font-weight:600;color:#fff;max-width:110px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${user.displayName || user.email.split('@')[0]}
+          </span>
         `;
-        document.getElementById('drawer-signout-btn')?.addEventListener('click', signOut);
       } else {
-        drawerProfile.innerHTML = `
-          <button id="drawer-signin-trigger" style="width:100%;padding:12px;background:#eab308;color:#000;border:none;border-radius:6px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Sign In / Create Account
-          </button>
+        desktopBtn.innerHTML = `
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>Sign In</span>
         `;
-        document.getElementById('drawer-signin-trigger')?.addEventListener('click', () => {
-          document.getElementById('mobile-nav-drawer')?.classList.remove('open');
-          document.getElementById('mobile-nav-overlay')?.classList.remove('active');
-          openAuthModal('signin');
-        });
+      }
+    }
+
+    // Account Page Specific UI
+    const accWelcome = document.getElementById('acc-user-name');
+    if (accWelcome) accWelcome.textContent = isAuth ? (user.displayName || user.email) : 'Guest Collector';
+
+    const accEmail = document.getElementById('acc-user-email');
+    if (accEmail) accEmail.textContent = isAuth ? user.email : 'Sign in to access seller dashboard';
+
+    const accAvatar = document.getElementById('acc-avatar-letter');
+    if (accAvatar) accAvatar.textContent = isAuth ? (user.displayName || user.email || 'U')[0].toUpperCase() : '?';
+
+    // Mobile Drawer Profile
+    const drawerName = document.getElementById('drawer-user-name');
+    if (drawerName) drawerName.textContent = isAuth ? (user.displayName || user.email.split('@')[0]) : 'Guest Collector';
+
+    const drawerSignout = document.getElementById('drawer-signout-btn');
+    if (drawerSignout) drawerSignout.style.display = isAuth ? 'flex' : 'none';
+
+    // Seller Page gated access banner
+    const sellerStatus = document.getElementById('seller-auth-status');
+    if (sellerStatus) {
+      if (isAuth) {
+        sellerStatus.innerHTML = `<span style="color:#22c55e;">✅ Logged in as <strong>${user.displayName || user.email}</strong> (Verified Seller)</span>`;
+      } else {
+        sellerStatus.innerHTML = `<span style="color:#eab308;">ℹ️ <a href="#" class="btn-account-trigger" style="color:#eab308;text-decoration:underline;">Sign in or Register</a> to instantly list cards for sale.</span>`;
       }
     }
   }
 
   /* ────────────────────────────────────────────────────────────
-     8. Modal System & Dynamic Panels
+     9. Modal System & Dynamic Panels
   ──────────────────────────────────────────────────────────── */
   function clearErrors() {
-    ['auth-signin-error', 'auth-signup-error', 'auth-profile-error', 'auth-banking-error'].forEach(id => {
+    ['auth-signin-error', 'auth-signup-error', 'auth-verify-error', 'auth-profile-error', 'auth-banking-error'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.textContent = '';
     });
@@ -424,10 +529,16 @@
         <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
       `;
     } else {
-      tabsContainer.innerHTML = `
-        <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
-        <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
-      `;
+      if (currentTab === 'verify') {
+        tabsContainer.innerHTML = `
+          <button class="auth-tab-btn active" data-tab="verify">🔐 Verification Code</button>
+        `;
+      } else {
+        tabsContainer.innerHTML = `
+          <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
+          <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
+        `;
+      }
     }
 
     tabsContainer.querySelectorAll('.auth-tab-btn').forEach(btn => {
@@ -486,19 +597,29 @@
   function switchTab(tab) {
     const user = getCurrentUser();
     if (user) {
-      if (['signin', 'signup'].includes(tab)) tab = 'profile';
+      if (['signin', 'signup', 'verify'].includes(tab)) tab = 'profile';
     } else {
-      if (!['signin', 'signup'].includes(tab)) tab = 'signin';
+      if (!['signin', 'signup', 'verify'].includes(tab)) tab = 'signin';
     }
 
     renderModalTabs(tab);
     clearErrors();
 
-    const panels = ['signin', 'signup', 'profile', 'banking', 'settings', 'colors'];
+    const panels = ['signin', 'signup', 'verify', 'profile', 'banking', 'settings', 'colors'];
     panels.forEach(p => {
       const el = document.getElementById(`auth-${p}-panel`);
       if (el) el.style.display = tab === p ? 'flex' : 'none';
     });
+
+    if (tab === 'verify') {
+      const targetEl = document.getElementById('verify-target-email');
+      if (targetEl) targetEl.textContent = activeVerificationEmail || 'your email inbox';
+      const codeInput = document.getElementById('verify-code-input');
+      if (codeInput) {
+        codeInput.value = '';
+        setTimeout(() => codeInput.focus(), 150);
+      }
+    }
 
     if (tab === 'profile') populateProfilePanel();
     if (tab === 'banking') populateBankingPanel();
@@ -511,65 +632,87 @@
       modal = buildModal();
       document.body.appendChild(modal);
     }
+    const defaultTab = getCurrentUser() ? 'profile' : 'signin';
+    switchTab(tab || defaultTab);
     modal.classList.add('active');
-    switchTab(tab || (getCurrentUser() ? 'profile' : 'signin'));
   }
 
   function closeAuthModal() {
     const modal = document.getElementById('auth-modal');
     if (modal) modal.classList.remove('active');
-    clearErrors();
   }
 
   function buildModal() {
     const modal = document.createElement('div');
     modal.id = 'auth-modal';
     modal.className = 'auth-modal-overlay';
-    modal.innerHTML = `
-      <div class="auth-modal-box" role="dialog" aria-modal="true" aria-label="Account Center">
-        <button class="auth-modal-close" id="auth-modal-close" aria-label="Close">✕</button>
 
-        <div class="auth-modal-logo">
-          <img src="images/logo.png" alt="MillionTCG" style="height:50px;width:auto;">
-          <div class="auth-modal-brand">MILLION TCG ACCOUNT CENTER</div>
+    modal.innerHTML = `
+      <div class="auth-modal-card">
+        <button class="auth-modal-close" id="auth-modal-close" aria-label="Close modal">✕</button>
+        
+        <div class="auth-modal-header">
+          <div class="auth-modal-logo">
+            <span style="color:#eab308;font-size:24px;">⚡</span>
+            <span style="font-weight:800;font-size:18px;color:#fff;letter-spacing:0.5px;">MILLION<span style="color:#eab308;">TCG</span></span>
+          </div>
         </div>
 
         <div class="auth-tabs" id="auth-tabs"></div>
 
         <!-- Sign In Panel -->
-        <div id="auth-signin-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;width:100%;">
-          <p class="auth-panel-sub">Welcome back, collector. Sign in across any device.</p>
+        <div id="auth-signin-panel" class="auth-panel" style="display:flex;width:100%;">
           <div class="auth-error" id="auth-signin-error"></div>
           <div class="auth-field">
             <label>Email Address</label>
-            <input type="email" id="signin-email" placeholder="you@example.com" autocomplete="email">
+            <input type="email" id="signin-email" placeholder="collector@milliontcg.com" autocomplete="email">
           </div>
           <div class="auth-field">
             <label>Password</label>
             <input type="password" id="signin-password" placeholder="••••••••" autocomplete="current-password">
           </div>
           <button class="auth-submit-btn" id="signin-submit-btn">Sign In</button>
-          <p class="auth-switch">Don't have an account? <a href="#" class="auth-switch-link" data-tab="signup">Create one →</a></p>
+          <p class="auth-switch">Don't have an account? <a href="#" class="auth-switch-link" data-tab="signup">Create an account →</a></p>
         </div>
 
         <!-- Sign Up Panel -->
-        <div id="auth-signup-panel" class="auth-panel" style="display:none;max-width:440px;margin:0 auto;width:100%;">
-          <p class="auth-panel-sub">Join MillionTCG. Multi-device cloud sync included.</p>
+        <div id="auth-signup-panel" class="auth-panel" style="display:none;width:100%;">
           <div class="auth-error" id="auth-signup-error"></div>
           <div class="auth-field">
-            <label>Display Name</label>
-            <input type="text" id="signup-name" placeholder="Your collector name" autocomplete="name">
+            <label>Collector Display Name</label>
+            <input type="text" id="signup-name" placeholder="e.g. MasterCollector" autocomplete="name">
           </div>
           <div class="auth-field">
             <label>Email Address</label>
-            <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email">
+            <input type="email" id="signup-email" placeholder="collector@milliontcg.com" autocomplete="email">
           </div>
           <div class="auth-field">
-            <label>Password</label>
-            <input type="password" id="signup-password" placeholder="Min. 6 characters" autocomplete="new-password">
+            <label>Password (6+ characters)</label>
+            <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password">
           </div>
-          <button class="auth-submit-btn" id="signup-submit-btn">Create Account</button>
+          <button class="auth-submit-btn" id="signup-submit-btn">Create Account & Send Code</button>
           <p class="auth-switch">Already have an account? <a href="#" class="auth-switch-link" data-tab="signin">Sign in →</a></p>
+        </div>
+
+        <!-- Email Verification Panel -->
+        <div id="auth-verify-panel" class="auth-panel" style="display:none;width:100%;text-align:center;">
+          <div style="font-size:36px;margin:4px 0 8px;">📩</div>
+          <h3 style="color:#fff;font-size:19px;font-weight:700;margin:0 0 6px;">Enter 6-Digit Verification Code</h3>
+          <p class="auth-panel-sub" style="margin-bottom:14px;font-size:13px;line-height:1.5;">
+            We sent a verification code from <strong style="color:#fff;">tcgmillion@gmail.com</strong> to<br>
+            <span id="verify-target-email" style="color:#eab308;font-weight:700;word-break:break-all;"></span>
+          </p>
+          <div class="auth-error" id="auth-verify-error"></div>
+          <div class="auth-field" style="margin:0 auto 16px;max-width:280px;">
+            <label style="text-align:center;display:block;">Verification Code</label>
+            <input type="text" id="verify-code-input" maxlength="6" placeholder="123456" style="text-align:center;font-size:24px;letter-spacing:6px;font-weight:700;padding:12px;background:#141416;border:2px solid #eab308;border-radius:10px;color:#fff;width:100%;box-sizing:border-box;">
+          </div>
+          <button class="auth-submit-btn" id="verify-submit-btn" style="margin-bottom:12px;">Verify Code & Enter MillionTCG</button>
+          <div style="display:flex;justify-content:center;align-items:center;gap:14px;font-size:13px;margin-top:6px;">
+            <a href="#" id="verify-resend-btn" style="color:#eab308;text-decoration:none;font-weight:600;">Resend Code</a>
+            <span style="color:#555;">•</span>
+            <a href="#" class="auth-switch-link" data-tab="signin" style="color:#aaa;text-decoration:none;">Back to Sign In</a>
+          </div>
         </div>
 
         <!-- Profile & Shipping Panel -->
@@ -603,6 +746,12 @@
             </div>
           </div>
           <button class="auth-submit-btn" id="profile-save-btn">Save Profile Changes</button>
+          
+          <!-- White on Black Sign Out Button -->
+          <button class="auth-signout-btn" id="modal-signout-btn" style="width:100%;margin-top:12px;padding:12px 18px;background:#000000;color:#ffffff;border:1px solid rgba(255,255,255,0.3);border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.2s;box-shadow:0 4px 12px rgba(0,0,0,0.6);">
+            <span style="font-size:16px;">🚪</span>
+            <span>Sign Out</span>
+          </button>
         </div>
 
         <!-- Banking & Payouts Panel -->
@@ -717,7 +866,11 @@
       try {
         const res = await signIn(email, password);
         if (!res.ok) {
-          if (errEl) errEl.textContent = res.error || 'Sign in failed.';
+          if (res.requiresVerification) {
+            switchTab('verify');
+          } else {
+            if (errEl) errEl.textContent = res.error || 'Sign in failed.';
+          }
         } else {
           closeAuthModal();
           updateAllAuthUI();
@@ -748,13 +901,15 @@
       }
 
       btn.disabled = true;
-      btn.textContent = 'Creating Account...';
+      btn.textContent = 'Sending Verification Code...';
       if (errEl) errEl.textContent = '';
 
       try {
         const res = await signUp(email, password, name);
         if (!res.ok) {
           if (errEl) errEl.textContent = res.error || 'Sign up failed.';
+        } else if (res.requiresVerification) {
+          switchTab('verify');
         } else {
           closeAuthModal();
           updateAllAuthUI();
@@ -763,7 +918,66 @@
         if (errEl) errEl.textContent = 'An error occurred during account creation.';
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Create Account';
+        btn.textContent = 'Create Account & Send Code';
+      }
+    });
+
+    // Verification Code Submit handler
+    modal.querySelector('#verify-submit-btn')?.addEventListener('click', async () => {
+      const btn = modal.querySelector('#verify-submit-btn');
+      const code = document.getElementById('verify-code-input')?.value.trim() || '';
+      const errEl = document.getElementById('auth-verify-error');
+
+      if (!code || code.length !== 6) {
+        if (errEl) errEl.textContent = 'Please enter the 6-digit verification code.';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verifying Code...';
+      if (errEl) errEl.textContent = '';
+
+      try {
+        const res = await verifyAccountCode(activeVerificationEmail, code);
+        if (!res.ok) {
+          if (errEl) errEl.textContent = res.error || 'Invalid code.';
+        } else {
+          closeAuthModal();
+          updateAllAuthUI();
+          alert('🎉 Verification successful! Welcome to MillionTCG.');
+        }
+      } catch (e) {
+        if (errEl) errEl.textContent = 'Verification error. Please try again.';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Verify Code & Enter MillionTCG';
+      }
+    });
+
+    // Verification Code Resend handler
+    modal.querySelector('#verify-resend-btn')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const resendBtn = modal.querySelector('#verify-resend-btn');
+      const errEl = document.getElementById('auth-verify-error');
+
+      resendBtn.textContent = 'Sending new code...';
+      try {
+        const res = await resendVerificationCode(activeVerificationEmail);
+        if (res.ok) {
+          if (errEl) {
+            errEl.style.color = '#22c55e';
+            errEl.textContent = '✅ A fresh 6-digit code has been sent from tcgmillion@gmail.com!';
+          }
+        } else {
+          if (errEl) {
+            errEl.style.color = '#ef4444';
+            errEl.textContent = res.error || 'Failed to resend code.';
+          }
+        }
+      } finally {
+        setTimeout(() => {
+          if (resendBtn) resendBtn.textContent = 'Resend Code';
+        }, 3000);
       }
     });
 
@@ -794,6 +1008,12 @@
         btn.disabled = false;
         btn.textContent = 'Save Profile Changes';
       }
+    });
+
+    // Modal White on Black Sign Out handler
+    modal.querySelector('#modal-signout-btn')?.addEventListener('click', () => {
+      signOut();
+      closeAuthModal();
     });
 
     // Banking Save handler
@@ -845,6 +1065,8 @@
         modal.querySelector('#signin-submit-btn')?.click();
       } else if (document.getElementById('auth-signup-panel')?.style.display !== 'none') {
         modal.querySelector('#signup-submit-btn')?.click();
+      } else if (document.getElementById('auth-verify-panel')?.style.display !== 'none') {
+        modal.querySelector('#verify-submit-btn')?.click();
       }
     });
 
@@ -852,7 +1074,7 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     9. Initialization & Event Binding
+     10. Initialization & Event Binding
   ──────────────────────────────────────────────────────────── */
   function init() {
     // 1. Bind Desktop Auth Button
@@ -896,7 +1118,7 @@
   }
 
   /* ────────────────────────────────────────────────────────────
-     10. Public API Exports
+     11. Public API Exports
   ──────────────────────────────────────────────────────────── */
   window.sendDirectEmailNotification = sendDirectEmailNotification;
   window.set3DStageBackgroundColor = set3DStageBackgroundColor;
@@ -905,6 +1127,8 @@
     signIn,
     signUp,
     signOut,
+    verifyAccountCode,
+    resendVerificationCode,
     updateProfile,
     getCurrentUser,
     openAuthModal,
