@@ -227,13 +227,12 @@
     });
   }
 
-  /* ── Guaranteed Direct Email Inbox Verification Dispatcher ── */
+  /* ── Direct Email Verification Dispatcher (Zero FormSubmit) ── */
   async function sendVerificationEmailToUser(userEmail, code, displayName) {
     try {
       const subject = `Your MillionTCG Verification Code: ${code} 🔐`;
       const message = `Hello ${displayName || 'Collector'},\n\nThank you for registering at MillionTCG!\n\nYour 6-digit Account Verification Code is:\n\n👉  ${code}  👈\n\nPlease enter this code on the website to verify your account.\n\nBest regards,\nMillionTCG Security Team\n${MAIN_BUSINESS_EMAIL}`;
 
-      // 1. Web3Forms Dispatch directly to userEmail
       fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
@@ -246,22 +245,6 @@
           message: message
         })
       }).catch(err => console.log('Web3Forms dispatch note:', err));
-
-      // 2. Dual Dispatch via FormSubmit AJAX API directly to userEmail
-      fetch(`https://formsubmit.co/ajax/${encodeURIComponent(userEmail)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          _subject: subject,
-          _template: 'table',
-          _captcha: 'false',
-          _replyto: MAIN_BUSINESS_EMAIL,
-          Sender: 'MillionTCG Official (tcgmillion@gmail.com)',
-          RecipientEmail: userEmail,
-          VerificationCode: code,
-          Instructions: `Please enter 6-digit code ${code} on MillionTCG to verify email ownership.`
-        })
-      }).catch(err => console.log('FormSubmit AJAX dispatch note:', err));
     } catch (e) {
       console.error('sendVerificationEmailToUser error:', e);
     }
