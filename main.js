@@ -1712,23 +1712,8 @@ try {
   soldOrders = [];
 }
 
-// Seed Initial Sample Sold Order for Testing Escrow
-if (soldOrders.length === 0) {
-  soldOrders = [
-    {
-      id: 'MTCG-88219',
-      itemTitle: 'Charizard VMAX Shiny Vault #SV107 (PSA 10)',
-      price: 189.99,
-      sellerHandle: 'PokeVault',
-      image: 'images/pokemon-30th-vol2-singlebox.png',
-      status: 'HELD_IN_ESCROW', // HELD_IN_ESCROW, IN_TRANSIT, DELIVERED_RELEASED
-      carrier: '',
-      trackingNum: '',
-      date: Date.now() - 86400000
-    }
-  ];
-  localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
-}
+// Sold Orders Array
+if (!soldOrders) soldOrders = [];
 
 function renderSoldOrders() {
   const soldContainer = document.getElementById('sold-orders-list');
