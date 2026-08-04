@@ -490,14 +490,13 @@ a {
   position: relative;
 }
 
-.product-card::after {
-  content: "";
-  position: absolute;
-  top: -15px; right: -15px; bottom: -20px; left: -15px;
-  z-index: -1;
+.product-card-container {
+  display: block;
+  position: relative;
+  border-radius: 8px;
 }
 
-.product-card:hover {
+.product-card-container:hover .product-card {
   transform: translateY(-6px);
   border-color: var(--text-main);
   box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08);
