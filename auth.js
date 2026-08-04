@@ -1,7 +1,7 @@
 /**
  * MillionTCG Multi-Device Auth & Account Management Engine
  * Primary Business Email: tcgmillion@gmail.com
- * Google Apps Script Cloud Engine: https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec
+ * Google Apps Script Cloud Engine: https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec
  */
 
 (function () {
@@ -9,7 +9,7 @@
 
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   const WEB3FORMS_KEY = '5979c3fb-2a54-469b-980b-04ff57d42cf3';
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec';
+  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec';
 
   let activeVerificationEmail = '';
 

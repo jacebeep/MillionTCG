@@ -50,7 +50,7 @@ const DEFAULT_COMMUNITY_LISTINGS = [];
 const DB_NAME = 'milliontcg_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'listings';
-const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec';
+const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec';
 
 let _db = null;
 
