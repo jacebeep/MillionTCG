@@ -185,7 +185,7 @@
               <div class="photo-slots-grid" id="photo-slots-grid"></div>
             </div>
 
-            <!-- Card Name & Franchise -->
+            <!-- Card Name & Product Category -->
             <div class="form-row-2">
               <div class="form-group">
                 <label for="card-title">Card Name / Item Title <span class="required">*</span></label>
@@ -193,21 +193,33 @@
               </div>
 
               <div class="form-group">
-                <label for="card-category">TCG Franchise <span class="required">*</span></label>
+                <label for="card-category">Product Category <span class="required">*</span></label>
                 <select id="card-category" required>
+                  <option value="Single Card">Single Cards (Singles, Holos & Graded Slabs)</option>
+                  <option value="Sealed Product">Sealed Boosters (Boxes, Packs & ETBs)</option>
+                  <option value="Accessories">Card Accessories (Sleeves, Binders & Gear)</option>
+                  <option value="Collector Bundle">Collector Bundles (Mystery Boxes & Sets)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- TCG Franchise & Condition / Grade -->
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="card-franchise">TCG Franchise / Game <span class="required">*</span></label>
+                <select id="card-franchise" required>
                   <option value="Pokemon">Pokémon TCG</option>
                   <option value="Yu-Gi-Oh!">Yu-Gi-Oh!</option>
                   <option value="Magic The Gathering">Magic: The Gathering</option>
                   <option value="One Piece">One Piece TCG</option>
                   <option value="Lorcana">Disney Lorcana</option>
-                  <option value="Sealed Product">Sealed Booster Box / Pack</option>
+                  <option value="Digimon">Digimon Card Game</option>
+                  <option value="Dragon Ball">Dragon Ball Super</option>
+                  <option value="Weiss Schwarz">Weiß Schwarz</option>
                   <option value="Other">Other Collectible</option>
                 </select>
               </div>
-            </div>
 
-            <!-- Condition & Grading -->
-            <div class="form-row-2">
               <div class="form-group">
                 <label for="card-condition">Card Condition / Grade <span class="required">*</span></label>
                 <select id="card-condition" required>
@@ -218,15 +230,18 @@
                   <option value="Lightly Played (LP)">Lightly Played (LP)</option>
                   <option value="Moderately Played (MP)">Moderately Played (MP)</option>
                   <option value="Heavily Played (HP)">Heavily Played (HP)</option>
+                  <option value="Factory Sealed (Brand New)">Factory Sealed (Brand New)</option>
+                  <option value="Brand New (Sealed Pack)">Brand New (Sealed Pack)</option>
                 </select>
               </div>
+            </div>
 
-              <div class="form-group">
-                <label for="card-price">Listing Price ($ USD) <span class="required">*</span></label>
-                <input type="number" id="card-price" placeholder="89.99" step="0.01" min="0.50" required>
-                <div class="fee-breakdown-tag" id="fee-breakdown-tag">
-                  <span>Fee (10%): <strong>-$0.00</strong></span> • <span>Your Payout: <strong id="net-payout-val">$0.00</strong></span>
-                </div>
+            <!-- Pricing & Fee Breakdown -->
+            <div class="form-group">
+              <label for="card-price">Listing Price ($ USD) <span class="required">*</span></label>
+              <input type="number" id="card-price" placeholder="89.99" step="0.01" min="0.50" required>
+              <div class="fee-breakdown-tag" id="fee-breakdown-tag">
+                <span>Fee (10%): <strong>-$0.00</strong></span> • <span>Your Payout: <strong id="net-payout-val">$0.00</strong></span>
               </div>
             </div>
 

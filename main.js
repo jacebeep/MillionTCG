@@ -435,10 +435,12 @@ function renderHomeProducts() {
         name: c.title,
         price: parseFloat(c.price) || 0,
         category: c.category || 'Single Card',
+        franchise: c.franchise || '',
+        condition: c.condition || 'Raw',
         image: cardImg || 'images/logo.png',
         gallery: c.gallery || [cardImg || 'images/logo.png'],
         tag: 'SELLER LISTING',
-        desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+        desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
       };
     });
 
@@ -580,6 +582,7 @@ function addToCart(productId, selectedBundle) {
         name: comm.title || comm.name,
         price: parseFloat(comm.price) || 0,
         category: comm.category || 'Single Card',
+        franchise: comm.franchise || '',
         image: comm.image || (comm.gallery && comm.gallery[0]) || 'images/logo.png',
         desc: comm.desc || `${comm.condition || 'Card'} • @${comm.sellerName || 'Seller'}`
       };
@@ -1801,11 +1804,13 @@ function initSellerSystem() {
 
         const row = document.createElement('div');
         row.className = 'my-listing-row';
+        const franchiseMeta = item.franchise ? ` • ${item.franchise}` : '';
+        const categoryMeta = item.category || 'Single Card';
         row.innerHTML = `
           <img class="my-listing-img" src="${cardImg}" alt="${item.title}">
           <div class="my-listing-info">
             <div class="my-listing-title">${item.title}</div>
-            <div class="my-listing-meta">${item.condition || 'Raw'} • ${item.category || 'Single'}</div>
+            <div class="my-listing-meta">${item.condition || 'Raw'} • ${categoryMeta}${franchiseMeta}</div>
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
           <div style="display: flex; gap: 8px; align-items: center;">
@@ -2120,7 +2125,10 @@ function renderSoldOrders() {
       }
 
       const title = document.getElementById('card-title').value.trim();
-      const category = document.getElementById('card-category').value;
+      const categoryEl = document.getElementById('card-category');
+      const franchiseEl = document.getElementById('card-franchise');
+      const category = (categoryEl ? categoryEl.value : '') || 'Single Card';
+      const franchise = (franchiseEl ? franchiseEl.value : '') || 'Pokemon';
       const condition = document.getElementById('card-condition').value;
       const priceRaw = document.getElementById('card-price').value;
       const price = parseFloat(priceRaw);
@@ -2137,6 +2145,7 @@ function renderSoldOrders() {
         id: 'user_' + Date.now(),
         title,
         category,
+        franchise,
         condition,
         price,
         sellerName: currentUser.handle,
@@ -2158,6 +2167,7 @@ function renderSoldOrders() {
           window.sendDirectEmailNotification('New Product Card Listed 🃏', {
             CardTitle: title,
             Category: category,
+            Franchise: franchise,
             Condition: condition,
             ListingPrice: `$${price.toFixed(2)}`,
             SellerHandle: `@${currentUser.handle}`,

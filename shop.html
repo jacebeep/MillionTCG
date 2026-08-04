@@ -205,10 +205,12 @@
               name: c.title,
               price: parseFloat(c.price) || 0,
               category: c.category || 'Single Card',
+              franchise: c.franchise || '',
+              condition: c.condition || 'Raw',
               image: cardImg || 'images/logo.png',
               gallery: c.gallery || [cardImg || 'images/logo.png'],
               tag: 'SELLER LISTING',
-              desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+              desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
             };
           });
           return [...mappedCommunity, ...PRODUCTS];
@@ -267,8 +269,18 @@
     function filterCatalog(category, all) {
       if (!all) { getAllShopProductsAsync().then(a => filterCatalog(category, a)); return; }
       const buttons = document.querySelectorAll('.filter-btn');
+      const catNorm = (category || 'All').trim().toLowerCase();
+
       buttons.forEach(b => {
-        if (b.textContent.includes(category) || (category === 'All' && b.textContent.includes('All'))) {
+        const btnText = b.textContent.trim().toLowerCase();
+        if (
+          (catNorm === 'all' && btnText.includes('all')) ||
+          (catNorm === 'single card' && btnText.includes('single')) ||
+          (catNorm === 'sealed product' && (btnText.includes('sealed') || btnText.includes('box'))) ||
+          (catNorm === 'accessories' && btnText.includes('accessor')) ||
+          (catNorm === 'collector bundle' && btnText.includes('bundle')) ||
+          btnText === catNorm
+        ) {
           b.classList.add('active');
         } else {
           b.classList.remove('active');
@@ -280,21 +292,32 @@
       } else if (category === 'Sealed Product') {
         const filtered = all.filter(p => 
           p.category === 'Sealed Product' || 
-          (p.name && /pack|booster|box|sealed/i.test(p.name)) ||
-          (p.desc && /pack|booster|box|sealed/i.test(p.desc))
+          (p.name && /pack|booster|box|sealed|etb|tin/i.test(p.name))
+        );
+        renderCatalog(filtered);
+      } else if (category === 'Accessories') {
+        const filtered = all.filter(p => 
+          p.category === 'Accessories' || 
+          (p.name && /sleeve|binder|deck box|toploader|playmat|page|case|stand/i.test(p.name))
+        );
+        renderCatalog(filtered);
+      } else if (category === 'Collector Bundle') {
+        const filtered = all.filter(p => 
+          p.category === 'Collector Bundle' || 
+          (p.name && /bundle|mystery|lot|starter pack/i.test(p.name))
         );
         renderCatalog(filtered);
       } else if (category === 'Single Card') {
         const filtered = all.filter(p => 
           p.category === 'Single Card' || 
-          ['Pokemon', 'Yu-Gi-Oh!', 'Magic The Gathering', 'One Piece', 'Lorcana', 'Other'].includes(p.category)
+          (['Pokemon', 'Yu-Gi-Oh!', 'Magic The Gathering', 'One Piece', 'Lorcana', 'Digimon', 'Dragon Ball', 'Other'].includes(p.category) && !/pack|booster|box|sealed|sleeve|binder|deck box|bundle/i.test(p.name || ''))
         );
         renderCatalog(filtered);
       } else {
-        const catLower = category.toLowerCase();
         const filtered = all.filter(p => 
-          (p.category && p.category.toLowerCase().includes(catLower)) ||
-          (p.name && p.name.toLowerCase().includes(catLower))
+          (p.category && p.category.toLowerCase().includes(catNorm)) ||
+          (p.franchise && p.franchise.toLowerCase().includes(catNorm)) ||
+          (p.name && p.name.toLowerCase().includes(catNorm))
         );
         renderCatalog(filtered);
       }

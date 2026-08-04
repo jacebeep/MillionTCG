@@ -425,6 +425,16 @@
 
             <div class="detail-specs">
               <div class="spec-item">
+                <span style="color: var(--text-muted);">Category</span>
+                <span>${product.category || 'Single Card'}</span>
+              </div>
+              ${product.franchise ? `
+              <div class="spec-item">
+                <span style="color: var(--text-muted);">Franchise</span>
+                <span>${product.franchise}</span>
+              </div>
+              ` : ''}
+              <div class="spec-item">
                 <span style="color: var(--text-muted);">Condition</span>
                 <span>${product.condition || 'Original Sealed'}</span>
               </div>
