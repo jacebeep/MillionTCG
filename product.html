@@ -258,33 +258,62 @@
       const urlParams = new URLSearchParams(window.location.search);
       const prodIdStr = urlParams.get('id');
 
+      function findProductSync(id) {
+        if (!id) return null;
+        const pId = String(id);
+        const staticP = PRODUCTS.find(p => String(p.id) === pId);
+        if (staticP) return staticP;
+
+        const comm = (typeof getCommunityListings === 'function') ? getCommunityListings() : [];
+        const foundComm = (comm || []).find(p => String(p.id) === pId);
+        if (foundComm) return foundComm;
+
+        try {
+          const raw = localStorage.getItem('milliontcg_community_listings');
+          if (raw) {
+            const arr = JSON.parse(raw);
+            if (Array.isArray(arr)) {
+              const localFound = arr.find(p => String(p.id) === pId);
+              if (localFound) return localFound;
+            }
+          }
+        } catch (e) {}
+        return null;
+      }
+
       // Load product from IndexedDB (community listings) or static PRODUCTS array
       function loadAndRenderProduct() {
-        const staticProduct = PRODUCTS.find(p => String(p.id) === String(prodIdStr));
-        if (staticProduct) {
-          renderProduct(staticProduct);
-          return;
+        // Immediate sync render
+        const syncMatch = findProductSync(prodIdStr);
+        if (syncMatch) {
+          renderProduct(syncMatch);
         }
 
-        // Look in IndexedDB / Cloud for community listing
+        // Async IndexedDB / Cloud check
         if (typeof getCommunityListingsAsync === 'function') {
           getCommunityListingsAsync().then(listings => {
             const found = listings.find(p => String(p.id) === String(prodIdStr));
             if (found) {
               renderProduct(found);
-            } else if (PRODUCTS.length > 0) {
-              renderProduct(PRODUCTS[0]);
-            } else {
-              renderProduct(null);
+            } else if (!syncMatch) {
+              const staticProd = PRODUCTS.find(p => String(p.id) === String(prodIdStr));
+              if (staticProd) {
+                renderProduct(staticProd);
+              } else if (PRODUCTS.length > 0) {
+                renderProduct(PRODUCTS[0]);
+              } else {
+                renderProduct(null);
+              }
             }
           }).catch(() => {
-            if (PRODUCTS.length > 0) renderProduct(PRODUCTS[0]);
-            else renderProduct(null);
+            if (!syncMatch) {
+              if (PRODUCTS.length > 0) renderProduct(PRODUCTS[0]);
+              else renderProduct(null);
+            }
           });
-        } else if (PRODUCTS.length > 0) {
-          renderProduct(PRODUCTS[0]);
-        } else {
-          renderProduct(null);
+        } else if (!syncMatch) {
+          if (PRODUCTS.length > 0) renderProduct(PRODUCTS[0]);
+          else renderProduct(null);
         }
       }
 
@@ -315,9 +344,6 @@
 
         const frontPhoto = galleryImages[0];
         const backPhoto = galleryImages.length > 1 ? galleryImages[1] : frontPhoto;
-
-        const view = document.getElementById('product-detail-view');
-        if (!view) return;
 
         view.innerHTML = `
           <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">

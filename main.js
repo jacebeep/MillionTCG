@@ -31,7 +31,50 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const PRODUCTS = [];
+const PRODUCTS = [
+  {
+    id: "charizard-ex-flashfire",
+    name: "M Charizard EX (X) - XY - Flashfire (FLF)",
+    price: 230.00,
+    category: "Single Card",
+    image: "images/charizard-ex-flashfire.png",
+    tag: "SELLER LISTING",
+    desc: "PSA 10 (Gem Mint) • Verified Seller @PokeSeller_102",
+    gallery: [
+      "images/charizard-ex-flashfire.png"
+    ],
+    dispatchTime: "1-2 Business Days",
+    shippingMethods: "USPS First Class Bubble Mailer with Tracking & Top Loader Protection",
+    condition: "PSA 10 (Gem Mint)",
+    sellerName: "PokeSeller_102",
+    date: 1775000000000
+  },
+  { 
+    id: 17, 
+    name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
+    price: 250.00, 
+    category: "Sealed Product", 
+    image: "images/pokemon-30th-vol2-boxes.jpg", 
+    tag: "PRE-ORDER", 
+    desc: "Original Factory Sealed Boxes & Case. Features Chikorita, Cyndaquil, Totodile & 9 special art foil promo cards.",
+    gallery: [
+      "images/pokemon-30th-vol2-boxes.jpg",
+      "images/pokemon-30th-vol2-cases.jpg",
+      "images/pokemon-30th-vol2-singlebox.png",
+      "images/pokemon-30th-vol2-cards.jpg",
+      "images/pokemon-30th-vol2-pack.jpg"
+    ],
+    bundleOptions: [
+      { count: 2, label: "2 Boxes Bundle", price: 250.00 },
+      { count: 4, label: "4 Boxes Bundle", price: 400.00 },
+      { count: 8, label: "8 Boxes (Sealed Case)", price: 600.00 }
+    ],
+    dispatchTime: "2 Days after order date",
+    shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
+    condition: "Original Sealed Boxes & Case",
+    bulkNegotiable: true
+  }
+];
 
 // Initialize Cart from localStorage
 let cart = [];
@@ -170,10 +213,22 @@ async function fetchCloudListings() {
       const data = await res.json().catch(() => null);
       if (data && data.ok && Array.isArray(data.listings) && data.listings.length > 0) {
         const local = getLocalListingsCache();
-        const mergedMap = new Map();
-        local.forEach(item => { if (item && item.id) mergedMap.set(String(item.id), item); });
-        data.listings.forEach(item => { if (item && item.id) mergedMap.set(String(item.id), item); });
-        const merged = Array.from(mergedMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
+        const localMap = new Map();
+        local.forEach(item => { if (item && item.id) localMap.set(String(item.id), item); });
+
+        data.listings.forEach(cloudItem => {
+          if (!cloudItem || !cloudItem.id) return;
+          const existingLocal = localMap.get(String(cloudItem.id));
+          if (existingLocal) {
+            // Keep local high-res image if cloud only has fallback or thumbnail
+            const merged = { ...cloudItem, ...existingLocal };
+            localMap.set(String(cloudItem.id), merged);
+          } else {
+            localMap.set(String(cloudItem.id), cloudItem);
+          }
+        });
+
+        const merged = Array.from(localMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
         setLocalListingsCache(merged);
         communityListings = merged;
         try { Promise.all(merged.map(item => dbPut(item))); } catch (e) {}
@@ -191,12 +246,27 @@ async function fetchCloudListings() {
 async function syncListingToCloud(listing) {
   if (!listing || !listing.id) return;
   try {
+    // Create cloud-safe payload
+    let cloudSafeItem = { ...listing };
+    // If images are very large base64 strings, trim them for Google Apps Script 9KB limit
+    if (cloudSafeItem.gallery && Array.isArray(cloudSafeItem.gallery)) {
+      cloudSafeItem.gallery = cloudSafeItem.gallery.map(img => {
+        if (typeof img === 'string' && img.length > 3000 && img.startsWith('data:')) {
+          return 'images/logo.png';
+        }
+        return img;
+      });
+    }
+    if (typeof cloudSafeItem.image === 'string' && cloudSafeItem.image.length > 3000 && cloudSafeItem.image.startsWith('data:')) {
+      cloudSafeItem.image = 'images/logo.png';
+    }
+
     fetch(CLOUD_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'saveListing',
-        listing: listing
+        listing: cloudSafeItem
       })
     }).then(res => res.json()).then(data => {
       console.log('[MillionTCG] Cloud listing saved:', data);
@@ -454,7 +524,11 @@ function addToCart(productId, selectedBundle) {
   let product = PRODUCTS.find(p => String(p.id) === String(productId));
   if (!product) {
     const commList = getCommunityListings();
-    const comm = (commList || []).find(p => String(p.id) === String(productId));
+    let comm = (commList || []).find(p => String(p.id) === String(productId));
+    if (!comm) {
+      const localCache = getLocalListingsCache();
+      comm = (localCache || []).find(p => String(p.id) === String(productId));
+    }
     if (comm) {
       product = {
         id: comm.id,
