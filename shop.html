@@ -234,6 +234,7 @@
     document.addEventListener('DOMContentLoaded', refreshCatalogView);
     window.addEventListener('milliontcg_listings_updated', refreshCatalogView);
     window.addEventListener('milliontcg_listing_saved', refreshCatalogView);
+    window.addEventListener('milliontcg_listing_deleted', refreshCatalogView);
     window.addEventListener('storage', refreshCatalogView);
 
     function renderCatalog(items) {

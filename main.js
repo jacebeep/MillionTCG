@@ -72,12 +72,46 @@ const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5
 
 let _db = null;
 
+function getDeletedIds() {
+  try {
+    const raw = localStorage.getItem('milliontcg_deleted_ids');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function markIdAsDeleted(id) {
+  try {
+    const strId = String(id);
+    const ids = getDeletedIds();
+    if (!ids.includes(strId)) {
+      ids.push(strId);
+      localStorage.setItem('milliontcg_deleted_ids', JSON.stringify(ids));
+    }
+  } catch (e) {}
+}
+
+function unmarkIdAsDeleted(id) {
+  try {
+    const strId = String(id);
+    const ids = getDeletedIds().filter(i => i !== strId);
+    localStorage.setItem('milliontcg_deleted_ids', JSON.stringify(ids));
+  } catch (e) {}
+}
+
+function filterDeleted(items) {
+  if (!Array.isArray(items)) return [];
+  const deleted = new Set(getDeletedIds());
+  return items.filter(i => i && i.id && !deleted.has(String(i.id)));
+}
+
 function getLocalListingsCache() {
   try {
     const raw = localStorage.getItem('milliontcg_community_listings');
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? filterDeleted(parsed) : [];
   } catch (e) {
     return [];
   }
@@ -85,7 +119,8 @@ function getLocalListingsCache() {
 
 function setLocalListingsCache(arr) {
   try {
-    localStorage.setItem('milliontcg_community_listings', JSON.stringify(arr));
+    const valid = filterDeleted(arr);
+    localStorage.setItem('milliontcg_community_listings', JSON.stringify(valid));
   } catch (e) {
     console.warn('[MillionTCG] localStorage cache warning:', e);
   }
@@ -125,7 +160,8 @@ function dbGetAll() {
         const req = store.getAll();
         req.onsuccess = () => {
           let items = req.result || [];
-          if (!Array.isArray(items) || items.length === 0) {
+          items = filterDeleted(items);
+          if (items.length === 0) {
             items = getLocalListingsCache();
           } else {
             setLocalListingsCache(items);
@@ -142,6 +178,8 @@ function dbGetAll() {
 }
 
 function dbPut(listing) {
+  if (!listing || !listing.id) return Promise.resolve(null);
+  unmarkIdAsDeleted(listing.id);
   const cache = getLocalListingsCache().filter(i => String(i.id) !== String(listing.id));
   cache.unshift(listing);
   setLocalListingsCache(cache);
@@ -162,6 +200,8 @@ function dbPut(listing) {
 }
 
 function dbDelete(id) {
+  if (!id) return Promise.resolve(true);
+  markIdAsDeleted(id);
   const cache = getLocalListingsCache().filter(i => String(i.id) !== String(id));
   setLocalListingsCache(cache);
 
@@ -183,10 +223,18 @@ function dbDelete(id) {
 // ── Image Sanitization & Self-Healing ──
 function sanitizeLocalListings() {
   try {
-    const local = getLocalListingsCache();
+    const raw = localStorage.getItem('milliontcg_community_listings');
+    if (!raw) return;
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return;
+    const deleted = new Set(getDeletedIds());
     let changed = false;
-    local.forEach(item => {
-      if (!item) return;
+    const sanitized = [];
+    arr.forEach(item => {
+      if (!item || !item.id || deleted.has(String(item.id))) {
+        changed = true;
+        return;
+      }
       if (item.gallery && Array.isArray(item.gallery) && item.gallery.length > 0) {
         const realImg = item.gallery.find(g => g && typeof g === 'string' && g !== 'images/logo.png');
         if (realImg && (item.image === 'images/logo.png' || !item.image)) {
@@ -194,11 +242,12 @@ function sanitizeLocalListings() {
           changed = true;
         }
       }
+      sanitized.push(item);
     });
     if (changed) {
-      setLocalListingsCache(local);
-      communityListings = local;
-      Promise.all(local.map(item => dbPut(item)));
+      setLocalListingsCache(sanitized);
+      communityListings = sanitized;
+      Promise.all(sanitized.map(item => dbPut(item)));
     }
   } catch (e) {}
 }
@@ -209,12 +258,13 @@ async function fetchCloudListings() {
     const res = await fetch(CLOUD_SCRIPT_URL + '?action=getListings&t=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
     if (res && res.ok) {
       const data = await res.json().catch(() => null);
-      if (data && data.ok && Array.isArray(data.listings) && data.listings.length > 0) {
+      if (data && data.ok && Array.isArray(data.listings)) {
+        const cloudItems = filterDeleted(data.listings);
         const local = getLocalListingsCache();
         const localMap = new Map();
         local.forEach(item => { if (item && item.id) localMap.set(String(item.id), item); });
 
-        data.listings.forEach(cloudItem => {
+        cloudItems.forEach(cloudItem => {
           if (!cloudItem || !cloudItem.id) return;
           const existingLocal = localMap.get(String(cloudItem.id));
           if (existingLocal) {
@@ -297,7 +347,8 @@ function migrateFromLocalStorage() {
     if (!raw) return;
     const arr = JSON.parse(raw);
     if (!Array.isArray(arr) || arr.length === 0) return;
-    const real = arr.filter(i => i && i.id && !String(i.id).includes('seed'));
+    const deleted = new Set(getDeletedIds());
+    const real = arr.filter(i => i && i.id && !deleted.has(String(i.id)) && !String(i.id).includes('seed'));
     if (real.length === 0) return;
     Promise.all(real.map(item => dbPut(item))).then(() => {
       console.log('[MillionTCG] Synced', real.length, 'listings');
@@ -327,26 +378,34 @@ function getCommunityListingsAsync() {
 function saveCommunityListing(newListing) {
   if (!newListing.date) newListing.date = Date.now();
   if (!newListing.createdAt) newListing.createdAt = Date.now();
+  unmarkIdAsDeleted(newListing.id);
 
   return dbPut(newListing).then(() => {
     if (!communityListings.some(i => String(i.id) === String(newListing.id))) {
       communityListings.unshift(newListing);
     }
+    setLocalListingsCache(communityListings);
     syncListingToCloud(newListing);
     try { renderHomeProducts(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent('milliontcg_listing_saved', { detail: newListing })); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: communityListings })); } catch (e) {}
     try { window.dispatchEvent(new Event('storage')); } catch (e) {}
     return newListing;
   });
 }
 
 function deleteCommunityListing(id) {
+  if (!id) return Promise.resolve(false);
+  markIdAsDeleted(id);
   communityListings = communityListings.filter(i => String(i.id) !== String(id));
+  setLocalListingsCache(communityListings);
   deleteListingFromCloud(id);
   return dbDelete(id).then(() => {
     try { renderHomeProducts(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent('milliontcg_listing_deleted', { detail: { id } })); } catch (e) {}
+    try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: communityListings })); } catch (e) {}
     try { window.dispatchEvent(new Event('storage')); } catch (e) {}
+    return true;
   });
 }
 
@@ -1754,10 +1813,18 @@ function initSellerSystem() {
       }
 
       userItems.forEach(item => {
+        let cardImg = item.image;
+        if (!cardImg || cardImg === 'images/logo.png') {
+          if (item.gallery && Array.isArray(item.gallery) && item.gallery.length > 0 && item.gallery[0] !== 'images/logo.png') {
+            cardImg = item.gallery[0];
+          }
+        }
+        if (!cardImg) cardImg = 'images/logo.png';
+
         const row = document.createElement('div');
         row.className = 'my-listing-row';
         row.innerHTML = `
-          <img class="my-listing-img" src="${item.image || 'images/logo.png'}" alt="${item.title}">
+          <img class="my-listing-img" src="${cardImg}" alt="${item.title}">
           <div class="my-listing-info">
             <div class="my-listing-title">${item.title}</div>
             <div class="my-listing-meta">${item.condition || 'Raw'} • ${item.category || 'Single'}</div>

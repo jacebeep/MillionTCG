@@ -1,5 +1,5 @@
 // Service Worker - Network Only / Auto-Purge Cache for Instant Live Updates
-const CACHE_NAME = 'milliontcg-v2026v8';
+const CACHE_NAME = 'milliontcg-v2026v9';
 
 self.addEventListener('install', event => {
   self.skipWaiting();

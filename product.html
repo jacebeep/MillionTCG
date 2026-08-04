@@ -385,7 +385,7 @@
                 ${galleryImages.map((imgSrc, idx) => `
                   <img src="${imgSrc}" class="zoom-thumb ${idx === 0 ? 'active' : ''}"
                        data-idx="${idx}"
-                       onclick="switchMainProductImage(this, '${imgSrc}')"
+                       onclick="switchMainProductImage(this)"
                        style="width: 66px; height: 66px; object-fit: cover; border-radius: 6px; cursor: pointer; background: #050508; flex-shrink: 0;">
                 `).join('')}
               </div>
@@ -585,12 +585,14 @@
     });
 
     window.switchMainProductImage = function(thumbEl, imgSrc) {
+      if (!thumbEl) return;
+      const src = imgSrc || thumbEl.src;
       const mainImg = document.getElementById('main-product-img');
-      if (mainImg) mainImg.src = imgSrc;
+      if (mainImg && src) mainImg.src = src;
       document.querySelectorAll('#product-thumb-bar .zoom-thumb').forEach(t => t.classList.remove('active'));
-      if (thumbEl) thumbEl.classList.add('active');
+      thumbEl.classList.add('active');
       const lens = document.getElementById('magnifier-lens');
-      if (lens) lens.style.backgroundImage = `url('${imgSrc}')`;
+      if (lens && src) lens.style.backgroundImage = `url('${src}')`;
     };
 
     let currentSelectedBundle = null;
