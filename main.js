@@ -52,6 +52,18 @@ const DB_VERSION = 1;
 const STORE_NAME = 'listings';
 const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec';
 
+// Clean Slate Migration: wipe all old mock products & corrupted local records
+try {
+  if (!localStorage.getItem('milliontcg_clean_slate_2026_v4')) {
+    localStorage.removeItem('milliontcg_community_listings');
+    localStorage.setItem('milliontcg_community_listings', '[]');
+    localStorage.setItem('milliontcg_clean_slate_2026_v4', 'true');
+    if (window.indexedDB) {
+      indexedDB.deleteDatabase(DB_NAME);
+    }
+  }
+} catch (e) {}
+
 let _db = null;
 
 function getDeletedIds() {
@@ -143,11 +155,7 @@ function dbGetAll() {
         req.onsuccess = () => {
           let items = req.result || [];
           items = filterDeleted(items);
-          if (items.length === 0) {
-            items = getLocalListingsCache();
-          } else {
-            setLocalListingsCache(items);
-          }
+          setLocalListingsCache(items);
           items.sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
           resolve(items);
         };
@@ -243,33 +251,20 @@ async function fetchCloudListings() {
       const data = await res.json().catch(() => null);
       if (data && data.ok && Array.isArray(data.listings)) {
         const cloudItems = filterDeleted(data.listings);
-        const local = getLocalListingsCache();
-        const localMap = new Map();
-        local.forEach(item => { if (item && item.id) localMap.set(String(item.id), item); });
-
-        cloudItems.forEach(cloudItem => {
-          if (!cloudItem || !cloudItem.id) return;
-          const existingLocal = localMap.get(String(cloudItem.id));
-          if (existingLocal) {
-            let bestImage = (cloudItem.image && cloudItem.image !== 'images/logo.png') ? cloudItem.image : existingLocal.image;
-            if (!bestImage || bestImage === 'images/logo.png') {
-              bestImage = (existingLocal.gallery && existingLocal.gallery[0] !== 'images/logo.png') ? existingLocal.gallery[0] : (cloudItem.gallery && cloudItem.gallery[0]) || 'images/logo.png';
-            }
-            let bestGallery = (cloudItem.gallery && cloudItem.gallery.length > 0 && cloudItem.gallery[0] !== 'images/logo.png') ? cloudItem.gallery : existingLocal.gallery;
-            const merged = { ...cloudItem, ...existingLocal, image: bestImage, gallery: bestGallery };
-            localMap.set(String(cloudItem.id), merged);
-          } else {
-            localMap.set(String(cloudItem.id), cloudItem);
-          }
+        setLocalListingsCache(cloudItems);
+        communityListings = cloudItems;
+        openDB().then(db => {
+          if (!db) return;
+          try {
+            const tx = db.transaction(STORE_NAME, 'readwrite');
+            const store = tx.objectStore(STORE_NAME);
+            store.clear();
+            cloudItems.forEach(item => store.put(item));
+          } catch (e) {}
         });
-
-        const merged = Array.from(localMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
-        setLocalListingsCache(merged);
-        communityListings = merged;
-        try { Promise.all(merged.map(item => dbPut(item))); } catch (e) {}
         try { renderHomeProducts(); } catch (e) {}
-        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: merged })); } catch (e) {}
-        return merged;
+        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: cloudItems })); } catch (e) {}
+        return cloudItems;
       }
     }
   } catch (e) {
