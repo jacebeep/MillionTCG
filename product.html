@@ -266,19 +266,42 @@
           return;
         }
 
-        // Look in IndexedDB for community listing
+        // Look in IndexedDB / Cloud for community listing
         if (typeof getCommunityListingsAsync === 'function') {
           getCommunityListingsAsync().then(listings => {
             const found = listings.find(p => String(p.id) === String(prodIdStr));
-            renderProduct(found || PRODUCTS[0]);
-          }).catch(() => renderProduct(PRODUCTS[0]));
-        } else {
+            if (found) {
+              renderProduct(found);
+            } else if (PRODUCTS.length > 0) {
+              renderProduct(PRODUCTS[0]);
+            } else {
+              renderProduct(null);
+            }
+          }).catch(() => {
+            if (PRODUCTS.length > 0) renderProduct(PRODUCTS[0]);
+            else renderProduct(null);
+          });
+        } else if (PRODUCTS.length > 0) {
           renderProduct(PRODUCTS[0]);
+        } else {
+          renderProduct(null);
         }
       }
 
       function renderProduct(product) {
-        if (!product) { renderProduct(PRODUCTS[0]); return; }
+        const view = document.getElementById('product-detail-view');
+        if (!view) return;
+
+        if (!product) {
+          view.innerHTML = `
+            <div style="text-align: center; padding: 80px 20px; color: var(--text-muted); width: 100%;">
+              <h2 style="color: #fff; font-size: 1.8rem; margin-bottom: 12px; font-weight: 800;">Listing Not Found</h2>
+              <p style="font-size: 1rem; margin-bottom: 24px;">This product does not exist or may have been removed.</p>
+              <a href="shop.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">Browse Marketplace</a>
+            </div>
+          `;
+          return;
+        }
 
         // Build gallery array
         let galleryImages = [];

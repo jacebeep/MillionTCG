@@ -31,50 +31,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const PRODUCTS = [
-  {
-    id: "charizard-ex-flashfire",
-    name: "M Charizard EX (X) - XY - Flashfire (FLF)",
-    price: 230.00,
-    category: "Pokemon",
-    image: "images/charizard-ex-flashfire.png",
-    tag: "SELLER LISTING",
-    desc: "Near Mint (Raw) • Verified Seller @PokeSeller_102",
-    gallery: [
-      "images/charizard-ex-flashfire.png"
-    ],
-    dispatchTime: "1-2 Business Days",
-    shippingMethods: "USPS First Class Bubble Mailer with Tracking & Top Loader Protection",
-    condition: "Near Mint (Raw / Graded Candidate)",
-    sellerName: "PokeSeller_102",
-    date: Date.now()
-  },
-  { 
-    id: 17, 
-    name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
-    price: 250.00, 
-    category: "Sealed Product", 
-    image: "images/pokemon-30th-vol2-boxes.jpg", 
-    tag: "PRE-ORDER", 
-    desc: "Original Factory Sealed Boxes & Case. Official release June 19, 2026. Features Chikorita, Cyndaquil, Totodile & 9 special art foil promo cards.",
-    gallery: [
-      "images/pokemon-30th-vol2-boxes.jpg",
-      "images/pokemon-30th-vol2-cases.jpg",
-      "images/pokemon-30th-vol2-singlebox.png",
-      "images/pokemon-30th-vol2-cards.jpg",
-      "images/pokemon-30th-vol2-pack.jpg"
-    ],
-    bundleOptions: [
-      { count: 2, label: "2 Boxes Bundle", price: 250.00 },
-      { count: 4, label: "4 Boxes Bundle", price: 400.00 },
-      { count: 8, label: "8 Boxes (Sealed Case)", price: 600.00 }
-    ],
-    dispatchTime: "2 Days after order date",
-    shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
-    condition: "Original Sealed Boxes & Case",
-    bulkNegotiable: true
-  }
-];
+const PRODUCTS = [];
 
 // Initialize Cart from localStorage
 let cart = [];
@@ -371,6 +328,16 @@ function renderHomeProducts() {
     }));
 
     const allItems = [...mappedCommunity, ...PRODUCTS];
+
+    if (allItems.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px;">
+          <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 16px;">No cards currently listed on the marketplace.</p>
+          <a href="sell.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">+ List Your First Card</a>
+        </div>
+      `;
+      return;
+    }
 
     grid.innerHTML = allItems.map(p => `
       <div class="product-card">
