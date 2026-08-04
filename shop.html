@@ -193,16 +193,24 @@
     function getAllShopProductsAsync() {
       return (typeof getCommunityListingsAsync === 'function' ? getCommunityListingsAsync() : Promise.resolve([]))
         .then(community => {
-          const mappedCommunity = community.map(c => ({
-            id: c.id,
-            name: c.title,
-            price: parseFloat(c.price) || 0,
-            category: c.category || 'Single Card',
-            image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
-            gallery: c.gallery || [c.image || 'images/logo.png'],
-            tag: 'SELLER LISTING',
-            desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
-          }));
+          const mappedCommunity = community.map(c => {
+            let cardImg = c.image;
+            if (!cardImg || cardImg === 'images/logo.png') {
+              if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
+                cardImg = c.gallery[0];
+              }
+            }
+            return {
+              id: c.id,
+              name: c.title,
+              price: parseFloat(c.price) || 0,
+              category: c.category || 'Single Card',
+              image: cardImg || 'images/logo.png',
+              gallery: c.gallery || [cardImg || 'images/logo.png'],
+              tag: 'SELLER LISTING',
+              desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+            };
+          });
           return [...mappedCommunity, ...PRODUCTS];
         });
     }

@@ -20,8 +20,26 @@ function doGet(e) {
   if (action === 'getListings') {
     try {
       var raw = scriptProps.getProperty('mtcg_cloud_listings');
-      var listings = raw ? JSON.parse(raw) : [];
-      return jsonResponse({ ok: true, listings: listings });
+      if (raw) {
+        var listings = JSON.parse(raw);
+        return jsonResponse({ ok: true, listings: listings });
+      }
+
+      // Check fallback individual properties
+      var rawIds = scriptProps.getProperty('mtcg_listing_ids');
+      if (rawIds) {
+        var ids = JSON.parse(rawIds);
+        var allProps = scriptProps.getProperties();
+        var listings = [];
+        ids.forEach(function(id) {
+          if (allProps['listing_' + id]) {
+            try { listings.push(JSON.parse(allProps['listing_' + id])); } catch (e) {}
+          }
+        });
+        return jsonResponse({ ok: true, listings: listings });
+      }
+
+      return jsonResponse({ ok: true, listings: [] });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString(), listings: [] });
     }
@@ -43,6 +61,26 @@ function doGet(e) {
   }
 
   return jsonResponse({ ok: true, status: 'MillionTCG Cloud Marketplace & Auth Engine Active 🚀' });
+}
+
+function saveImageToDrive(base64Str, filename) {
+  try {
+    if (!base64Str || typeof base64Str !== 'string' || base64Str.indexOf('data:image') !== 0) {
+      return base64Str;
+    }
+    var parts = base64Str.split(',');
+    var mime = parts[0].split(':')[1].split(';')[0];
+    var bytes = Utilities.base64Decode(parts[1]);
+    var blob = Utilities.newBlob(bytes, mime, filename || ('card_' + Date.now() + '.jpg'));
+    var file = DriveApp.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    var fileId = file.getId();
+    // Return high-speed direct Google CDN thumbnail URL
+    return 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1000';
+  } catch (err) {
+    Logger.log('Drive save note: ' + err.toString());
+    return base64Str;
+  }
 }
 
 function doPost(e) {
@@ -67,6 +105,19 @@ function doPost(e) {
     }
 
     try {
+      // If image is a base64 string, upload to Google Drive for permanent, fast CDN hosting
+      if (newListing.image && typeof newListing.image === 'string' && newListing.image.indexOf('data:image') === 0) {
+        newListing.image = saveImageToDrive(newListing.image, 'card_' + newListing.id + '_front.jpg');
+      }
+      if (newListing.gallery && Array.isArray(newListing.gallery)) {
+        newListing.gallery = newListing.gallery.map(function(img, idx) {
+          if (img && typeof img === 'string' && img.indexOf('data:image') === 0) {
+            return saveImageToDrive(img, 'card_' + newListing.id + '_' + idx + '.jpg');
+          }
+          return img;
+        });
+      }
+
       var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
       var listings = rawListings ? JSON.parse(rawListings) : [];
       
@@ -88,7 +139,15 @@ function doPost(e) {
       // Limit cloud store to most recent 200 items to avoid quota caps
       if (listings.length > 200) listings = listings.slice(0, 200);
 
-      scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
+      try {
+        scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
+      } catch (propErr) {
+        // If master list is too large, store each listing in individual property
+        scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
+        var ids = listings.map(function(item) { return String(item.id); });
+        scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+      }
+
       return jsonResponse({ ok: true, message: 'Listing saved to Cloud Marketplace!', listing: newListing });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString() });
@@ -107,6 +166,10 @@ function doPost(e) {
         return String(item.id) !== String(idToDelete);
       });
       scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(filtered));
+
+      // Also remove individual key if exists
+      scriptProps.deleteProperty('listing_' + idToDelete);
+
       return jsonResponse({ ok: true, message: 'Listing deleted from Cloud' });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString() });

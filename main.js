@@ -48,31 +48,6 @@ const PRODUCTS = [
     condition: "PSA 10 (Gem Mint)",
     sellerName: "PokeSeller_102",
     date: 1775000000000
-  },
-  { 
-    id: 17, 
-    name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
-    price: 250.00, 
-    category: "Sealed Product", 
-    image: "images/pokemon-30th-vol2-boxes.jpg", 
-    tag: "PRE-ORDER", 
-    desc: "Original Factory Sealed Boxes & Case. Features Chikorita, Cyndaquil, Totodile & 9 special art foil promo cards.",
-    gallery: [
-      "images/pokemon-30th-vol2-boxes.jpg",
-      "images/pokemon-30th-vol2-cases.jpg",
-      "images/pokemon-30th-vol2-singlebox.png",
-      "images/pokemon-30th-vol2-cards.jpg",
-      "images/pokemon-30th-vol2-pack.jpg"
-    ],
-    bundleOptions: [
-      { count: 2, label: "2 Boxes Bundle", price: 250.00 },
-      { count: 4, label: "4 Boxes Bundle", price: 400.00 },
-      { count: 8, label: "8 Boxes (Sealed Case)", price: 600.00 }
-    ],
-    dispatchTime: "2 Days after order date",
-    shippingMethods: "DDP for Euro Countries (10-15 working days) | DAP for Other Countries (3-9 working days)",
-    condition: "Original Sealed Boxes & Case",
-    bulkNegotiable: true
   }
 ];
 
@@ -205,6 +180,29 @@ function dbDelete(id) {
   }).catch(() => true);
 }
 
+// ── Image Sanitization & Self-Healing ──
+function sanitizeLocalListings() {
+  try {
+    const local = getLocalListingsCache();
+    let changed = false;
+    local.forEach(item => {
+      if (!item) return;
+      if (item.gallery && Array.isArray(item.gallery) && item.gallery.length > 0) {
+        const realImg = item.gallery.find(g => g && typeof g === 'string' && g !== 'images/logo.png');
+        if (realImg && (item.image === 'images/logo.png' || !item.image)) {
+          item.image = realImg;
+          changed = true;
+        }
+      }
+    });
+    if (changed) {
+      setLocalListingsCache(local);
+      communityListings = local;
+      Promise.all(local.map(item => dbPut(item)));
+    }
+  } catch (e) {}
+}
+
 // ── Cloud Synchronization Functions ──
 async function fetchCloudListings() {
   try {
@@ -220,8 +218,12 @@ async function fetchCloudListings() {
           if (!cloudItem || !cloudItem.id) return;
           const existingLocal = localMap.get(String(cloudItem.id));
           if (existingLocal) {
-            // Keep local high-res image if cloud only has fallback or thumbnail
-            const merged = { ...cloudItem, ...existingLocal };
+            let bestImage = (cloudItem.image && cloudItem.image !== 'images/logo.png') ? cloudItem.image : existingLocal.image;
+            if (!bestImage || bestImage === 'images/logo.png') {
+              bestImage = (existingLocal.gallery && existingLocal.gallery[0] !== 'images/logo.png') ? existingLocal.gallery[0] : (cloudItem.gallery && cloudItem.gallery[0]) || 'images/logo.png';
+            }
+            let bestGallery = (cloudItem.gallery && cloudItem.gallery.length > 0 && cloudItem.gallery[0] !== 'images/logo.png') ? cloudItem.gallery : existingLocal.gallery;
+            const merged = { ...cloudItem, ...existingLocal, image: bestImage, gallery: bestGallery };
             localMap.set(String(cloudItem.id), merged);
           } else {
             localMap.set(String(cloudItem.id), cloudItem);
@@ -246,33 +248,31 @@ async function fetchCloudListings() {
 async function syncListingToCloud(listing) {
   if (!listing || !listing.id) return;
   try {
-    // Create cloud-safe payload
-    let cloudSafeItem = { ...listing };
-    // If images are very large base64 strings, trim them for Google Apps Script 9KB limit
-    if (cloudSafeItem.gallery && Array.isArray(cloudSafeItem.gallery)) {
-      cloudSafeItem.gallery = cloudSafeItem.gallery.map(img => {
-        if (typeof img === 'string' && img.length > 3000 && img.startsWith('data:')) {
-          return 'images/logo.png';
-        }
-        return img;
-      });
-    }
-    if (typeof cloudSafeItem.image === 'string' && cloudSafeItem.image.length > 3000 && cloudSafeItem.image.startsWith('data:')) {
-      cloudSafeItem.image = 'images/logo.png';
-    }
-
-    fetch(CLOUD_SCRIPT_URL, {
+    const res = await fetch(CLOUD_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({
         action: 'saveListing',
-        listing: cloudSafeItem
+        listing: listing
       })
-    }).then(res => res.json()).then(data => {
-      console.log('[MillionTCG] Cloud listing saved:', data);
-    }).catch(err => console.warn('[MillionTCG] Cloud sync note:', err));
+    });
+    const data = await res.json().catch(() => null);
+    if (data && data.ok && data.listing) {
+      if (data.listing.image && data.listing.image !== listing.image) {
+        listing.image = data.listing.image;
+        if (data.listing.gallery) listing.gallery = data.listing.gallery;
+        dbPut(listing);
+        const local = getLocalListingsCache();
+        const idx = local.findIndex(i => String(i.id) === String(listing.id));
+        if (idx >= 0) {
+          local[idx] = listing;
+          setLocalListingsCache(local);
+        }
+      }
+    }
+    console.log('[MillionTCG] Cloud listing saved:', data);
   } catch (e) {
-    console.warn('[MillionTCG] syncListingToCloud error:', e);
+    console.warn('[MillionTCG] syncListingToCloud note:', e);
   }
 }
 
@@ -351,9 +351,11 @@ function deleteCommunityListing(id) {
 }
 
 let communityListings = getLocalListingsCache();
-// Async load on startup + Cloud Sync
+// Async load on startup + Cloud Sync + Self Healing
+sanitizeLocalListings();
 openDB().then(() => {
   migrateFromLocalStorage();
+  sanitizeLocalListings();
   return dbGetAll();
 }).then(listings => {
   communityListings = listings;
@@ -379,23 +381,29 @@ window.addEventListener('milliontcg_listings_updated', () => {
   try { renderHomeProducts(); } catch (e) {}
 });
 
-
-
 function renderHomeProducts() {
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 
   getCommunityListingsAsync().then(community => {
-    const mappedCommunity = community.map(c => ({
-      id: c.id,
-      name: c.title,
-      price: parseFloat(c.price) || 0,
-      category: c.category || 'Single Card',
-      image: c.image || (c.gallery && c.gallery[0]) || 'images/logo.png',
-      gallery: c.gallery || [c.image || 'images/logo.png'],
-      tag: 'SELLER LISTING',
-      desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
-    }));
+    const mappedCommunity = community.map(c => {
+      let cardImg = c.image;
+      if (!cardImg || cardImg === 'images/logo.png') {
+        if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
+          cardImg = c.gallery[0];
+        }
+      }
+      return {
+        id: c.id,
+        name: c.title,
+        price: parseFloat(c.price) || 0,
+        category: c.category || 'Single Card',
+        image: cardImg || 'images/logo.png',
+        gallery: c.gallery || [cardImg || 'images/logo.png'],
+        tag: 'SELLER LISTING',
+        desc: `${c.condition || 'Raw'} • Verified Seller @${c.sellerName || 'Seller'}`
+      };
+    });
 
     const allItems = [...mappedCommunity, ...PRODUCTS];
 
