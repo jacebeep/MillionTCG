@@ -31,25 +31,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const PRODUCTS = [
-  {
-    id: "charizard-ex-flashfire",
-    name: "M Charizard EX (X) - XY - Flashfire (FLF)",
-    price: 230.00,
-    category: "Single Card",
-    image: "images/charizard-ex-flashfire.png",
-    tag: "SELLER LISTING",
-    desc: "PSA 10 (Gem Mint) • Verified Seller @PokeSeller_102",
-    gallery: [
-      "images/charizard-ex-flashfire.png"
-    ],
-    dispatchTime: "1-2 Business Days",
-    shippingMethods: "USPS First Class Bubble Mailer with Tracking & Top Loader Protection",
-    condition: "PSA 10 (Gem Mint)",
-    sellerName: "PokeSeller_102",
-    date: 1775000000000
-  }
-];
+const PRODUCTS = [];
 
 // Initialize Cart from localStorage
 let cart = [];
@@ -231,8 +213,9 @@ function sanitizeLocalListings() {
     let changed = false;
     const sanitized = [];
     arr.forEach(item => {
-      if (!item || !item.id || deleted.has(String(item.id))) {
+      if (!item || !item.id || deleted.has(String(item.id)) || item.id === 'charizard-ex-flashfire' || String(item.id).includes('seed') || String(item.title || item.name || '').includes('Flashfire')) {
         changed = true;
+        if (item && item.id) dbDelete(item.id);
         return;
       }
       if (item.gallery && Array.isArray(item.gallery) && item.gallery.length > 0) {
