@@ -50,7 +50,7 @@ const DEFAULT_COMMUNITY_LISTINGS = [];
 const DB_NAME = 'milliontcg_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'listings';
-const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec';
+const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKJ6ITmwaUHQfIHhX4WmTjk8l-Sbr6J7N43vegxjglLI9N3E_70Ao9i3Hvl8kcwXOi/exec';
 
 // Clean Slate Migration: wipe all old mock products & corrupted local records
 try {
@@ -251,20 +251,40 @@ async function fetchCloudListings() {
       const data = await res.json().catch(() => null);
       if (data && data.ok && Array.isArray(data.listings)) {
         const cloudItems = filterDeleted(data.listings);
-        setLocalListingsCache(cloudItems);
-        communityListings = cloudItems;
+        
+        // Merge cloud items with local items to prevent wiping out local listings
+        const localItems = getLocalListingsCache();
+        const mergedMap = new Map();
+        
+        // Keep local items first
+        localItems.forEach(item => mergedMap.set(String(item.id), item));
+        
+        // Override with cloud items
+        cloudItems.forEach(item => mergedMap.set(String(item.id), item));
+        
+        const mergedListings = Array.from(mergedMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
+
+        setLocalListingsCache(mergedListings);
+        communityListings = mergedListings;
         openDB().then(db => {
           if (!db) return;
           try {
             const tx = db.transaction(STORE_NAME, 'readwrite');
             const store = tx.objectStore(STORE_NAME);
             store.clear();
-            cloudItems.forEach(item => store.put(item));
+            mergedListings.forEach(item => store.put(item));
           } catch (e) {}
         });
+        
+        // Re-sync any local-only listings to cloud
+        const localOnly = localItems.filter(local => !cloudItems.find(cloud => String(cloud.id) === String(local.id)));
+        if (localOnly.length > 0) {
+          localOnly.forEach(item => syncListingToCloud(item));
+        }
+
         try { renderHomeProducts(); } catch (e) {}
-        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: cloudItems })); } catch (e) {}
-        return cloudItems;
+        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: mergedListings })); } catch (e) {}
+        return mergedListings;
       }
     }
   } catch (e) {
@@ -419,6 +439,10 @@ window.addEventListener('milliontcg_listings_updated', () => {
 });
 
 function renderHomeProducts() {
+  if (document.getElementById('catalog-grid')) {
+    if (typeof refreshCatalogView === 'function') refreshCatalogView();
+    return;
+  }
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 

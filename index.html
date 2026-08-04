@@ -19,24 +19,6 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=2026_CLEAN_ALL">
-  <script>
-    // Instant storage & cache purge: wipe all mock/legacy listings
-    try {
-      localStorage.removeItem('milliontcg_community_listings');
-      localStorage.setItem('milliontcg_community_listings', '[]');
-      if (window.indexedDB) {
-        indexedDB.deleteDatabase('milliontcg_db');
-      }
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (let r of regs) r.unregister();
-        });
-        if (window.caches) {
-          caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-        }
-      }
-    } catch(e) {}
-  </script>
   <!-- Three.js 3D WebGL Engine -->
   <script src="js/three.min.js"></script>
 </head>

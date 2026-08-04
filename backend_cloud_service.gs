@@ -142,10 +142,23 @@ function doPost(e) {
       try {
         scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
       } catch (propErr) {
-        // If master list is too large, store each listing in individual property
-        scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
-        var ids = listings.map(function(item) { return String(item.id); });
-        scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+        try {
+          // If master list is too large, store each listing in individual property
+          scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
+          var ids = listings.map(function(item) { return String(item.id); });
+          scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+        } catch (innerErr) {
+          // If STILL too large (e.g. 9KB property limit hit due to base64 images), strip the heavy base64 strings
+          if (newListing.image && newListing.image.indexOf('data:image') === 0) newListing.image = 'images/logo.png';
+          if (newListing.gallery) newListing.gallery = ['images/logo.png'];
+          scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
+          
+          if (existingIdx >= 0) listings[existingIdx] = newListing;
+          else listings[0] = newListing;
+          
+          var ids = listings.map(function(item) { return String(item.id); });
+          scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+        }
       }
 
       return jsonResponse({ ok: true, message: 'Listing saved to Cloud Marketplace!', listing: newListing });
