@@ -341,43 +341,15 @@
   <script src="main.js"></script>
   <script src="auth.js"></script>
   <script>
-    // Init 3D scene on first load
-    function tryInit3D() {
-      if (typeof initHero3DScene === 'function') {
-        initHero3DScene();
-      } else {
-        setTimeout(tryInit3D, 50);
-      }
-    }
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function() { setTimeout(tryInit3D, 200); });
-    } else {
-      setTimeout(tryInit3D, 200);
-    }
-
     // Re-init 3D scene when user hits Back button (bfcache restore).
-    // WebGL context is destroyed when page is hidden; pageshow fires on restore.
     window.addEventListener('pageshow', function(e) {
       if (e.persisted) {
-        // Page was restored from back-forward cache — restart everything
         setTimeout(function() {
           try { startApp(); } catch(err) {}
-          try { initHero3DScene(); } catch(err) {}
-          try { renderHomeProducts(); } catch(err) {}
-        }, 150);
+          try { if (typeof initHero3DScene === 'function') initHero3DScene(true); } catch(err) {}
+        }, 100);
       }
     });
-  </script>
-  <script>
-    // Force immediate live site refresh by unregistering old cached service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.getRegistrations().then(regs => {
-          for (let r of regs) r.unregister();
-        });
-        caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-      });
-    }
 
     // PWA: Handle install prompt
     let deferredPrompt;

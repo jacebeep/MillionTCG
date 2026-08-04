@@ -332,6 +332,12 @@
           return;
         }
 
+        const signature = `${product.id}:${product.price}:${product.image}:${(product.gallery || []).join(',')}`;
+        if (view.dataset.renderedSignature === signature) {
+          return; // Skip re-render if product data is unchanged
+        }
+        view.dataset.renderedSignature = signature;
+
         // Build gallery array
         let galleryImages = [];
         if (Array.isArray(product.gallery) && product.gallery.length > 0) {

@@ -243,7 +243,13 @@
       const grid = document.getElementById('catalog-grid');
       if (!grid) return;
 
-      if (items.length === 0) {
+      const signature = (items || []).map(p => `${p.id}:${p.price}:${p.image}`).join('|');
+      if (grid.dataset.renderedSignature === signature) {
+        return;
+      }
+      grid.dataset.renderedSignature = signature;
+
+      if (!items || items.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No matching products found.</p>';
         return;
       }

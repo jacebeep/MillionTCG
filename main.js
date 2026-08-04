@@ -244,53 +244,60 @@ function sanitizeLocalListings() {
 }
 
 // ── Cloud Synchronization Functions ──
+let _cloudFetchPromise = null;
 async function fetchCloudListings() {
-  try {
-    const res = await fetch(CLOUD_SCRIPT_URL + '?action=getListings&t=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
-    if (res && res.ok) {
-      const data = await res.json().catch(() => null);
-      if (data && data.ok && Array.isArray(data.listings)) {
-        const cloudItems = filterDeleted(data.listings);
-        
-        // Merge cloud items with local items to prevent wiping out local listings
-        const localItems = getLocalListingsCache();
-        const mergedMap = new Map();
-        
-        // Keep local items first
-        localItems.forEach(item => mergedMap.set(String(item.id), item));
-        
-        // Override with cloud items
-        cloudItems.forEach(item => mergedMap.set(String(item.id), item));
-        
-        const mergedListings = Array.from(mergedMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
+  if (_cloudFetchPromise) return _cloudFetchPromise;
+  _cloudFetchPromise = (async () => {
+    try {
+      const res = await fetch(CLOUD_SCRIPT_URL + '?action=getListings&t=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
+      if (res && res.ok) {
+        const data = await res.json().catch(() => null);
+        if (data && data.ok && Array.isArray(data.listings)) {
+          const cloudItems = filterDeleted(data.listings);
+          
+          // Merge cloud items with local items to prevent wiping out local listings
+          const localItems = getLocalListingsCache();
+          const mergedMap = new Map();
+          
+          // Keep local items first
+          localItems.forEach(item => mergedMap.set(String(item.id), item));
+          
+          // Override with cloud items
+          cloudItems.forEach(item => mergedMap.set(String(item.id), item));
+          
+          const mergedListings = Array.from(mergedMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
 
-        setLocalListingsCache(mergedListings);
-        communityListings = mergedListings;
-        openDB().then(db => {
-          if (!db) return;
-          try {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            const store = tx.objectStore(STORE_NAME);
-            store.clear();
-            mergedListings.forEach(item => store.put(item));
-          } catch (e) {}
-        });
-        
-        // Re-sync any local-only listings to cloud
-        const localOnly = localItems.filter(local => !cloudItems.find(cloud => String(cloud.id) === String(local.id)));
-        if (localOnly.length > 0) {
-          localOnly.forEach(item => syncListingToCloud(item));
+          setLocalListingsCache(mergedListings);
+          communityListings = mergedListings;
+          openDB().then(db => {
+            if (!db) return;
+            try {
+              const tx = db.transaction(STORE_NAME, 'readwrite');
+              const store = tx.objectStore(STORE_NAME);
+              store.clear();
+              mergedListings.forEach(item => store.put(item));
+            } catch (e) {}
+          });
+          
+          // Re-sync any local-only listings to cloud
+          const localOnly = localItems.filter(local => !cloudItems.find(cloud => String(cloud.id) === String(local.id)));
+          if (localOnly.length > 0) {
+            localOnly.forEach(item => syncListingToCloud(item));
+          }
+
+          try { renderHomeProducts(); } catch (e) {}
+          try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: mergedListings })); } catch (e) {}
+          return mergedListings;
         }
-
-        try { renderHomeProducts(); } catch (e) {}
-        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: mergedListings })); } catch (e) {}
-        return mergedListings;
       }
+    } catch (e) {
+      console.warn('[MillionTCG] fetchCloudListings note:', e);
     }
-  } catch (e) {
-    console.warn('[MillionTCG] fetchCloudListings note:', e);
-  }
-  return getLocalListingsCache();
+    return getLocalListingsCache();
+  })().finally(() => {
+    _cloudFetchPromise = null;
+  });
+  return _cloudFetchPromise;
 }
 
 async function syncListingToCloud(listing) {
@@ -361,15 +368,10 @@ function getCommunityListings() {
 
 function getCommunityListingsAsync() {
   return dbGetAll().then(items => {
-    communityListings = items;
-    // Asynchronously check cloud for fresh cross-device updates
-    fetchCloudListings().then(cloudItems => {
-      if (cloudItems && cloudItems.length !== items.length) {
-        communityListings = cloudItems;
-        try { renderHomeProducts(); } catch (e) {}
-      }
-    });
-    return items;
+    if (items && items.length > 0) {
+      communityListings = items;
+    }
+    return communityListings && communityListings.length > 0 ? communityListings : getLocalListingsCache();
   });
 }
 
@@ -408,21 +410,18 @@ function deleteCommunityListing(id) {
 }
 
 let communityListings = getLocalListingsCache();
-// Async load on startup + Cloud Sync + Self Healing
+// Fast startup: render synchronously immediately from cache, sync DB and Cloud non-blockingly
 sanitizeLocalListings();
 openDB().then(() => {
   migrateFromLocalStorage();
   sanitizeLocalListings();
   return dbGetAll();
 }).then(listings => {
-  communityListings = listings;
-  try { renderHomeProducts(); } catch (e) {}
-  return fetchCloudListings();
-}).then(cloudListings => {
-  if (cloudListings && cloudListings.length > 0) {
-    communityListings = cloudListings;
+  if (listings && listings.length > 0) {
+    communityListings = listings;
     try { renderHomeProducts(); } catch (e) {}
   }
+  return fetchCloudListings();
 }).catch(console.error);
 
 // Listen for cross-tab, cloud, or listing updates
@@ -438,6 +437,7 @@ window.addEventListener('milliontcg_listings_updated', () => {
   try { renderHomeProducts(); } catch (e) {}
 });
 
+let _renderHomeScheduled = false;
 function renderHomeProducts() {
   if (document.getElementById('catalog-grid')) {
     if (typeof refreshCatalogView === 'function') refreshCatalogView();
@@ -446,82 +446,77 @@ function renderHomeProducts() {
   const grid = document.querySelector('.product-grid');
   if (!grid) return;
 
-  getCommunityListingsAsync().then(community => {
-    const mappedCommunity = community.map(c => {
-      let cardImg = c.image;
-      if (!cardImg || cardImg === 'images/logo.png') {
-        if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
-          cardImg = c.gallery[0];
-        }
-      }
-      return {
-        id: c.id,
-        name: c.title,
-        price: parseFloat(c.price) || 0,
-        category: c.category || 'Single Card',
-        franchise: c.franchise || '',
-        condition: c.condition || 'Raw',
-        image: cardImg || 'images/logo.png',
-        gallery: c.gallery || [cardImg || 'images/logo.png'],
-        tag: 'SELLER LISTING',
-        desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
-      };
-    });
-
-    const allItems = [...mappedCommunity, ...PRODUCTS];
-
-    if (allItems.length === 0) {
-      grid.innerHTML = `
-        <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px;">
-          <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 16px;">No cards currently listed on the marketplace.</p>
-          <a href="sell.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">+ List Your First Card</a>
-        </div>
-      `;
-      return;
-    }
-
-    grid.innerHTML = allItems.map(p => `
-      <div class="product-card-container" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-        <div class="product-card">
-          ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
-          <div class="product-img-wrapper">
-            <img src="${p.image}" alt="${p.name}">
-          </div>
-          <div class="product-info">
-            <span class="product-category">${p.category}</span>
-            <h3 class="product-name">${p.name}</h3>
-            <p class="product-desc">${p.desc || ''}</p>
-            <div class="product-footer">
-              <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join('');
-  }).catch(err => {
-    console.error('[MillionTCG] renderHomeProducts error:', err);
-    // Fallback: show only static products
-    grid.innerHTML = PRODUCTS.map(p => `
-      <div class="product-card-container" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
-        <div class="product-card">
-          ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
-          <div class="product-img-wrapper">
-            <img src="${p.image}" alt="${p.name}">
-          </div>
-          <div class="product-info">
-            <span class="product-category">${p.category}</span>
-            <h3 class="product-name">${p.name}</h3>
-            <p class="product-desc">${p.desc || ''}</p>
-            <div class="product-footer">
-              <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `).join('');
+  if (_renderHomeScheduled) return;
+  _renderHomeScheduled = true;
+  requestAnimationFrame(() => {
+    _renderHomeScheduled = false;
+    _doRenderHomeProducts(grid);
   });
+}
+
+function _doRenderHomeProducts(grid) {
+  const currentList = (communityListings && communityListings.length > 0) ? communityListings : getLocalListingsCache();
+  _applyHomeGridMarkup(grid, currentList);
+}
+
+function _applyHomeGridMarkup(grid, community) {
+  const mappedCommunity = (community || []).map(c => {
+    let cardImg = c.image;
+    if (!cardImg || cardImg === 'images/logo.png') {
+      if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
+        cardImg = c.gallery[0];
+      }
+    }
+    return {
+      id: c.id,
+      name: c.title,
+      price: parseFloat(c.price) || 0,
+      category: c.category || 'Single Card',
+      franchise: c.franchise || '',
+      condition: c.condition || 'Raw',
+      image: cardImg || 'images/logo.png',
+      gallery: c.gallery || [cardImg || 'images/logo.png'],
+      tag: 'SELLER LISTING',
+      desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
+    };
+  });
+
+  const allItems = [...mappedCommunity, ...PRODUCTS];
+  const signature = allItems.map(p => `${p.id}:${p.price}:${p.image}`).join('|');
+  if (grid.dataset.renderedSignature === signature) {
+    return; // Already rendered this exact content, avoid DOM replacement
+  }
+  grid.dataset.renderedSignature = signature;
+
+  if (allItems.length === 0) {
+    grid.innerHTML = `
+      <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px;">
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 16px;">No cards currently listed on the marketplace.</p>
+        <a href="sell.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">+ List Your First Card</a>
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = allItems.map(p => `
+    <div class="product-card-container" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+      <div class="product-card">
+        ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
+        <div class="product-img-wrapper">
+          <img src="${p.image}" alt="${p.name}">
+        </div>
+        <div class="product-info">
+          <span class="product-category">${p.category}</span>
+          <h3 class="product-name">${p.name}</h3>
+          <p class="product-desc">${p.desc || ''}</p>
+          <div class="product-footer">
+            <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+            <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
 }
 
 function startApp() {
@@ -767,7 +762,11 @@ function initHeroMangaInteractive() {
 }
 
 let _threeRetryCount = 0;
-function initHero3DScene() {
+let _heroAnimFrameId = null;
+let _hero3dResizeBound = false;
+let _heroSpeechTimeout = null;
+
+function initHero3DScene(force) {
   const container = document.getElementById('hero-3d-container');
   const canvas = document.getElementById('hero-3d-canvas');
   if (!container || !canvas) return;
@@ -775,10 +774,15 @@ function initHero3DScene() {
   if (typeof THREE === 'undefined') {
     if (_threeRetryCount < 8) {
       _threeRetryCount++;
-      setTimeout(initHero3DScene, 100);
+      setTimeout(() => initHero3DScene(force), 100);
     } else {
       initCanvas2DFallback(canvas, container);
     }
+    return;
+  }
+
+  // If already initialized and not forced, prevent duplicate initialization
+  if (canvas.userData && canvas.userData.initialized && !force) {
     return;
   }
 
@@ -788,13 +792,22 @@ function initHero3DScene() {
   if (width === 0 || height === 0) {
     if (_threeRetryCount < 50) {
       _threeRetryCount++;
-      setTimeout(initHero3DScene, 100);
+      setTimeout(() => initHero3DScene(force), 100);
     }
     return;
   }
 
+  // Cancel any running animation loop to prevent FPS lag
+  if (_heroAnimFrameId) {
+    cancelAnimationFrame(_heroAnimFrameId);
+    _heroAnimFrameId = null;
+  }
+  if (_heroSpeechTimeout) {
+    clearTimeout(_heroSpeechTimeout);
+    _heroSpeechTimeout = null;
+  }
+
   // If already initialized, dispose the old WebGL renderer before re-creating
-  // (needed when page is restored from bfcache after Back navigation)
   if (canvas.userData && canvas.userData.initialized) {
     if (canvas.userData.renderer) {
       try { canvas.userData.renderer.dispose(); } catch(e) {}
@@ -819,16 +832,17 @@ function initHero3DScene() {
   // --- RENDERER ---
   let renderer;
   try {
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x141416, 1);
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-    // Store renderer so bfcache re-init can dispose it before re-creating
+    // Store renderer and camera so bfcache re-init and resize can use them
     canvas.userData.renderer = renderer;
     canvas.userData.scene = scene;
+    canvas.userData.camera = camera;
     canvas.userData.fog = scene.fog;
 
     // Apply saved background color if set
@@ -859,6 +873,8 @@ function initHero3DScene() {
   const mainLight = new THREE.DirectionalLight(0xffffff, 2.5);
   mainLight.position.set(5, 8, 5);
   mainLight.castShadow = true;
+  mainLight.shadow.mapSize.width = 512;
+  mainLight.shadow.mapSize.height = 512;
   scene.add(mainLight);
 
   const rimLight = new THREE.DirectionalLight(0xffffff, 2.0); // Pure monochrome white rim light
@@ -868,6 +884,8 @@ function initHero3DScene() {
   const spotLight = new THREE.SpotLight(0xffffff, 5.0, 25, Math.PI / 4, 0.5, 1);
   spotLight.position.set(0, 8, 5);
   spotLight.castShadow = true;
+  spotLight.shadow.mapSize.width = 512;
+  spotLight.shadow.mapSize.height = 512;
   scene.add(spotLight);
 
   // --- 3D PERSPECTIVE GRID FLOOR (Monochrome White/Grey Grid) ---
@@ -1208,7 +1226,7 @@ function initHero3DScene() {
   updateLayoutForMobile();
 
   function animate() {
-    requestAnimationFrame(animate);
+    _heroAnimFrameId = requestAnimationFrame(animate);
     const time = clock.getElapsedTime();
     const w = container.clientWidth || window.innerWidth;
     const isMobile = w < 768;
@@ -1293,18 +1311,24 @@ function initHero3DScene() {
   }
 
   animate();
-  setTimeout(() => {
+  _heroSpeechTimeout = setTimeout(() => {
     showSpeech('Hey collector! Drag me around for RAGDOLL physics! 🤪', 4500);
   }, 1000);
 
-  window.addEventListener('resize', () => {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-    renderer.setSize(w, h);
-    updateLayoutForMobile();
-  });
+  if (!_hero3dResizeBound) {
+    _hero3dResizeBound = true;
+    window.addEventListener('resize', () => {
+      const cont = document.getElementById('hero-3d-container');
+      const cvs = document.getElementById('hero-3d-canvas');
+      if (!cont || !cvs || !cvs.userData || !cvs.userData.renderer || !cvs.userData.camera) return;
+      const w = cont.clientWidth || window.innerWidth;
+      const h = cont.clientHeight || 600;
+      cvs.userData.camera.aspect = w / h;
+      cvs.userData.camera.updateProjectionMatrix();
+      cvs.userData.renderer.setSize(w, h);
+      if (typeof updateLayoutForMobile === 'function') updateLayoutForMobile();
+    });
+  }
 }
 
 // Canvas Fallback Engine
