@@ -481,7 +481,7 @@ function renderHomeProducts() {
     }
 
     grid.innerHTML = allItems.map(p => `
-      <div class="product-card">
+      <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
           <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
@@ -501,7 +501,7 @@ function renderHomeProducts() {
     console.error('[MillionTCG] renderHomeProducts error:', err);
     // Fallback: show only static products
     grid.innerHTML = PRODUCTS.map(p => `
-      <div class="product-card">
+      <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         <span class="card-badge">${p.tag || ''}</span>
         <div class="product-img-wrapper" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
           <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
