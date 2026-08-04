@@ -493,7 +493,7 @@ a {
 
 .product-card:hover {
   border-color: var(--text-main);
-  transform: translateY(-6px);
+  transform: scale(1.02);
   box-shadow: 0 10px 30px rgba(255, 255, 255, 0.08);
 }
 
