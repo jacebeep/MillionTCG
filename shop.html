@@ -187,8 +187,8 @@
     </div>
   </footer>
 
-  <script src="main.js?v=2026v2"></script>
-  <script src="auth.js?v=2026v3"></script>
+  <script src="main.js?v=2026v5"></script>
+  <script src="auth.js?v=2026v5"></script>
   <script>
     function getAllShopProductsAsync() {
       return (typeof getCommunityListingsAsync === 'function' ? getCommunityListingsAsync() : Promise.resolve([]))
@@ -207,7 +207,7 @@
         });
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    function refreshCatalogView() {
       const urlParams = new URLSearchParams(window.location.search);
       const catParam = urlParams.get('category');
       const searchParam = urlParams.get('search');
@@ -221,7 +221,13 @@
           renderCatalog(all);
         }
       });
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', refreshCatalogView);
+    window.addEventListener('milliontcg_listings_updated', refreshCatalogView);
+    window.addEventListener('milliontcg_listing_saved', refreshCatalogView);
+    window.addEventListener('storage', refreshCatalogView);
+  </script>
 
     function renderCatalog(items) {
       const grid = document.getElementById('catalog-grid');

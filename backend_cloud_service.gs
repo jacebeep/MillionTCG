@@ -1,0 +1,165 @@
+/**
+ * MillionTCG Serverless Cloud Marketplace & Auth Backend
+ * Google Apps Script Deployment Engine
+ * Connected Account: tcgmillion@gmail.com
+ * 
+ * INSTRUCTIONS TO UPDATE YOUR GOOGLE APPS SCRIPT:
+ * 1. Open https://script.google.com/
+ * 2. Open your "MillionTCG Auth / Database" project
+ * 3. Replace all code with this file
+ * 4. Click "Deploy" -> "New deployment" -> Select "Web app"
+ *    - Execute as: "Me (tcgmillion@gmail.com)"
+ *    - Who has access: "Anyone"
+ * 5. Click "Deploy" and authorize access.
+ */
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) ? e.parameter.action : 'ping';
+  var scriptProps = PropertiesService.getScriptProperties();
+
+  if (action === 'getListings') {
+    try {
+      var raw = scriptProps.getProperty('mtcg_cloud_listings');
+      var listings = raw ? JSON.parse(raw) : [];
+      return jsonResponse({ ok: true, listings: listings });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString(), listings: [] });
+    }
+  }
+
+  if (action === 'getUser') {
+    var email = (e.parameter.email || '').toLowerCase().trim();
+    if (!email) return jsonResponse({ ok: false, error: 'Email required' });
+    try {
+      var rawUser = scriptProps.getProperty('user_' + email);
+      if (rawUser) {
+        return jsonResponse({ ok: true, user: JSON.parse(rawUser) });
+      } else {
+        return jsonResponse({ ok: false, error: 'User not found' });
+      }
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  return jsonResponse({ ok: true, status: 'MillionTCG Cloud Marketplace & Auth Engine Active 🚀' });
+}
+
+function doPost(e) {
+  var scriptProps = PropertiesService.getScriptProperties();
+  var payload = {};
+
+  try {
+    if (e && e.postData && e.postData.contents) {
+      payload = JSON.parse(e.postData.contents);
+    }
+  } catch (err) {
+    return jsonResponse({ ok: false, error: 'Invalid JSON payload' });
+  }
+
+  var action = payload.action || '';
+
+  // 1. Save Card Listing to Global Cloud Database
+  if (action === 'saveListing') {
+    var newListing = payload.listing;
+    if (!newListing || !newListing.id) {
+      return jsonResponse({ ok: false, error: 'Listing data with ID required' });
+    }
+
+    try {
+      var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
+      var listings = rawListings ? JSON.parse(rawListings) : [];
+      
+      // Update existing or prepend new
+      var existingIdx = -1;
+      for (var i = 0; i < listings.length; i++) {
+        if (String(listings[i].id) === String(newListing.id)) {
+          existingIdx = i;
+          break;
+        }
+      }
+
+      if (existingIdx >= 0) {
+        listings[existingIdx] = newListing;
+      } else {
+        listings.unshift(newListing);
+      }
+
+      // Limit cloud store to most recent 200 items to avoid quota caps
+      if (listings.length > 200) listings = listings.slice(0, 200);
+
+      scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
+      return jsonResponse({ ok: true, message: 'Listing saved to Cloud Marketplace!', listing: newListing });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  // 2. Delete Card Listing from Cloud Database
+  if (action === 'deleteListing') {
+    var idToDelete = payload.id;
+    if (!idToDelete) return jsonResponse({ ok: false, error: 'Listing ID required' });
+
+    try {
+      var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
+      var listings = rawListings ? JSON.parse(rawListings) : [];
+      var filtered = listings.filter(function(item) {
+        return String(item.id) !== String(idToDelete);
+      });
+      scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(filtered));
+      return jsonResponse({ ok: true, message: 'Listing deleted from Cloud' });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  // 3. Save User Account to Cloud
+  if (action === 'saveUser') {
+    var email = (payload.email || '').toLowerCase().trim();
+    if (!email) return jsonResponse({ ok: false, error: 'Email required' });
+
+    try {
+      scriptProps.setProperty('user_' + email, JSON.stringify(payload));
+      return jsonResponse({ ok: true, message: 'User account synced to cloud' });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  // 4. Send Verification Code Email from tcgmillion@gmail.com
+  if (action === 'sendVerification') {
+    var targetEmail = payload.email;
+    var code = payload.code;
+    var name = payload.name || 'Collector';
+
+    if (!targetEmail || !code) return jsonResponse({ ok: false, error: 'Target email and code required' });
+
+    try {
+      MailApp.sendEmail({
+        to: targetEmail,
+        subject: 'Your 6-Digit MillionTCG Verification Code: ' + code,
+        htmlBody: '<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;background:#141416;color:#ffffff;padding:32px;border-radius:12px;border:1px solid #333;">' +
+          '<h2 style="color:#eab308;margin-top:0;">MILLION TCG VERIFICATION</h2>' +
+          '<p>Hello ' + name + ',</p>' +
+          '<p>Here is your 6-digit verification code to access your MillionTCG account:</p>' +
+          '<div style="text-align:center;margin:28px 0;">' +
+            '<span style="font-size:32px;font-weight:bold;letter-spacing:6px;background:#000;color:#eab308;padding:14px 28px;border-radius:8px;border:2px solid #eab308;display:inline-block;">' + code + '</span>' +
+          '</div>' +
+          '<p style="color:#aaa;font-size:13px;">If you did not request this code, you can safely ignore this email.</p>' +
+          '<hr style="border:none;border-top:1px solid #333;margin:24px 0;">' +
+          '<p style="color:#777;font-size:12px;text-align:center;">MillionTCG • The Premier High-Octane TCG Platform</p>' +
+        '</div>'
+      });
+      return jsonResponse({ ok: true, message: 'Verification email sent' });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  return jsonResponse({ ok: false, error: 'Unknown action' });
+}
+
+function jsonResponse(data) {
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}

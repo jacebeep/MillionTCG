@@ -32,6 +32,23 @@ document.addEventListener('keydown', (e) => {
 });
 
 const PRODUCTS = [
+  {
+    id: "charizard-ex-flashfire",
+    name: "M Charizard EX (X) - XY - Flashfire (FLF)",
+    price: 230.00,
+    category: "Pokemon",
+    image: "images/charizard-ex-flashfire.png",
+    tag: "SELLER LISTING",
+    desc: "Near Mint (Raw) • Verified Seller @PokeSeller_102",
+    gallery: [
+      "images/charizard-ex-flashfire.png"
+    ],
+    dispatchTime: "1-2 Business Days",
+    shippingMethods: "USPS First Class Bubble Mailer with Tracking & Top Loader Protection",
+    condition: "Near Mint (Raw / Graded Candidate)",
+    sellerName: "PokeSeller_102",
+    date: Date.now()
+  },
   { 
     id: 17, 
     name: "Pokemon 30th Anniversary Collection – Original Partners Special Art Foil Card Set Vol.2", 
@@ -71,11 +88,12 @@ try {
 const DEFAULT_COMMUNITY_LISTINGS = [];
 
 // =============================================================================
-// STORAGE ENGINE — Dual-Layer IndexedDB (High Capacity) + LocalStorage Mirror
+// STORAGE ENGINE — Dual-Layer (IndexedDB + LocalStorage) + Real-Time Cloud Sync
 // =============================================================================
 const DB_NAME = 'milliontcg_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'listings';
+const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxvmoPGXVL-K7t9tTnQ5rqp3FzcJjruwDhbXJe4qEaX726qqpC2AI1ay9DcgA9YXoQdHg/exec';
 
 let _db = null;
 
@@ -149,7 +167,6 @@ function dbGetAll() {
 }
 
 function dbPut(listing) {
-  // Always update localStorage mirror
   const cache = getLocalListingsCache().filter(i => String(i.id) !== String(listing.id));
   cache.unshift(listing);
   setLocalListingsCache(cache);
@@ -188,6 +205,64 @@ function dbDelete(id) {
   }).catch(() => true);
 }
 
+// ── Cloud Synchronization Functions ──
+async function fetchCloudListings() {
+  try {
+    const res = await fetch(CLOUD_SCRIPT_URL + '?action=getListings&t=' + Date.now(), { cache: 'no-cache' }).catch(() => null);
+    if (res && res.ok) {
+      const data = await res.json().catch(() => null);
+      if (data && data.ok && Array.isArray(data.listings) && data.listings.length > 0) {
+        const local = getLocalListingsCache();
+        const mergedMap = new Map();
+        local.forEach(item => { if (item && item.id) mergedMap.set(String(item.id), item); });
+        data.listings.forEach(item => { if (item && item.id) mergedMap.set(String(item.id), item); });
+        const merged = Array.from(mergedMap.values()).sort((a, b) => (b.date || b.createdAt || 0) - (a.date || a.createdAt || 0));
+        setLocalListingsCache(merged);
+        communityListings = merged;
+        try { Promise.all(merged.map(item => dbPut(item))); } catch (e) {}
+        try { renderHomeProducts(); } catch (e) {}
+        try { window.dispatchEvent(new CustomEvent('milliontcg_listings_updated', { detail: merged })); } catch (e) {}
+        return merged;
+      }
+    }
+  } catch (e) {
+    console.warn('[MillionTCG] fetchCloudListings note:', e);
+  }
+  return getLocalListingsCache();
+}
+
+async function syncListingToCloud(listing) {
+  if (!listing || !listing.id) return;
+  try {
+    fetch(CLOUD_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'saveListing',
+        listing: listing
+      })
+    }).then(res => res.json()).then(data => {
+      console.log('[MillionTCG] Cloud listing saved:', data);
+    }).catch(err => console.warn('[MillionTCG] Cloud sync note:', err));
+  } catch (e) {
+    console.warn('[MillionTCG] syncListingToCloud error:', e);
+  }
+}
+
+async function deleteListingFromCloud(id) {
+  if (!id) return;
+  try {
+    fetch(CLOUD_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({
+        action: 'deleteListing',
+        id: String(id)
+      })
+    }).catch(err => console.warn('[MillionTCG] Cloud delete note:', err));
+  } catch (e) {}
+}
+
 // Migrate any old localStorage listings into IndexedDB once
 function migrateFromLocalStorage() {
   try {
@@ -211,6 +286,13 @@ function getCommunityListings() {
 function getCommunityListingsAsync() {
   return dbGetAll().then(items => {
     communityListings = items;
+    // Asynchronously check cloud for fresh cross-device updates
+    fetchCloudListings().then(cloudItems => {
+      if (cloudItems && cloudItems.length !== items.length) {
+        communityListings = cloudItems;
+        try { renderHomeProducts(); } catch (e) {}
+      }
+    });
     return items;
   });
 }
@@ -223,6 +305,7 @@ function saveCommunityListing(newListing) {
     if (!communityListings.some(i => String(i.id) === String(newListing.id))) {
       communityListings.unshift(newListing);
     }
+    syncListingToCloud(newListing);
     try { renderHomeProducts(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent('milliontcg_listing_saved', { detail: newListing })); } catch (e) {}
     try { window.dispatchEvent(new Event('storage')); } catch (e) {}
@@ -232,6 +315,7 @@ function saveCommunityListing(newListing) {
 
 function deleteCommunityListing(id) {
   communityListings = communityListings.filter(i => String(i.id) !== String(id));
+  deleteListingFromCloud(id);
   return dbDelete(id).then(() => {
     try { renderHomeProducts(); } catch (e) {}
     try { window.dispatchEvent(new CustomEvent('milliontcg_listing_deleted', { detail: { id } })); } catch (e) {}
@@ -240,22 +324,31 @@ function deleteCommunityListing(id) {
 }
 
 let communityListings = getLocalListingsCache();
-// Async load on startup
+// Async load on startup + Cloud Sync
 openDB().then(() => {
   migrateFromLocalStorage();
   return dbGetAll();
 }).then(listings => {
   communityListings = listings;
   try { renderHomeProducts(); } catch (e) {}
+  return fetchCloudListings();
+}).then(cloudListings => {
+  if (cloudListings && cloudListings.length > 0) {
+    communityListings = cloudListings;
+    try { renderHomeProducts(); } catch (e) {}
+  }
 }).catch(console.error);
 
-// Listen for cross-tab or listing updates
+// Listen for cross-tab, cloud, or listing updates
 window.addEventListener('storage', () => {
   getCommunityListingsAsync().then(() => {
     try { renderHomeProducts(); } catch (e) {}
   });
 });
 window.addEventListener('milliontcg_listing_saved', () => {
+  try { renderHomeProducts(); } catch (e) {}
+});
+window.addEventListener('milliontcg_listings_updated', () => {
   try { renderHomeProducts(); } catch (e) {}
 });
 
