@@ -481,7 +481,7 @@ function renderHomeProducts() {
     }
 
     grid.innerHTML = allItems.map(p => `
-      <a href="product.html?id=${p.id}" class="product-card" style="text-decoration: none; color: inherit;">
+      <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
         <div class="product-img-wrapper">
           <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
@@ -492,16 +492,16 @@ function renderHomeProducts() {
           <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">${p.desc || ''}</p>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <span class="btn-secondary" style="display: inline-block; text-align: center;">View Product</span>
+            <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
           </div>
         </div>
-      </a>
+      </div>
     `).join('');
   }).catch(err => {
     console.error('[MillionTCG] renderHomeProducts error:', err);
     // Fallback: show only static products
     grid.innerHTML = PRODUCTS.map(p => `
-      <a href="product.html?id=${p.id}" class="product-card" style="text-decoration: none; color: inherit;">
+      <div class="product-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         <span class="card-badge">${p.tag || ''}</span>
         <div class="product-img-wrapper">
           <img src="${p.image}" alt="${p.name}" style="max-width: 100%; max-height: 100%; object-fit: cover;">
@@ -511,10 +511,10 @@ function renderHomeProducts() {
           <h3 class="product-name">${p.name}</h3>
           <div class="product-footer">
             <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-            <span class="btn-secondary" style="display: inline-block; text-align: center;">View Product</span>
+            <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
           </div>
         </div>
-      </a>
+      </div>
     `).join('');
   });
 }
