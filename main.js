@@ -1136,7 +1136,9 @@ function initHero3DScene() {
   });
 
   window.addEventListener('pointerdown', (e) => {
-    const rect = canvas.getBoundingClientRect();
+    const heroCanvas = document.getElementById('hero-3d-canvas');
+    if (!heroCanvas) return;
+    const rect = heroCanvas.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
 
     raycaster.setFromCamera(mouse, camera);
