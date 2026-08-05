@@ -492,6 +492,43 @@
           });
         }
 
+        function updateCardGlare(x, y, rect, intensity = 0.75) {
+          const glares = cardPerspective ? cardPerspective.querySelectorAll('.card-hologram-glare') : [];
+          if (!glares.length) return;
+          const glareX = Math.round((x / rect.width) * 100);
+          const glareY = Math.round((y / rect.height) * 100);
+          const prismAngle = Math.round(115 + (x / rect.width - 0.5) * 50);
+
+          glares.forEach(glare => {
+            glare.style.opacity = String(intensity);
+            glare.style.background = `
+              radial-gradient(circle at ${glareX}% ${glareY}%, rgba(255,255,255,0.65) 0%, rgba(255,255,255,0.2) 32%, rgba(255,255,255,0) 68%),
+              linear-gradient(${prismAngle}deg, transparent 15%, rgba(255,80,80,0.18) 28%, rgba(255,220,80,0.2) 38%, rgba(80,255,180,0.2) 48%, rgba(80,190,255,0.22) 58%, rgba(200,90,255,0.2) 68%, rgba(255,90,190,0.18) 78%, transparent 88%)
+            `;
+          });
+        }
+
+        function resetCardGlare() {
+          const glares = cardPerspective ? cardPerspective.querySelectorAll('.card-hologram-glare') : [];
+          glares.forEach(glare => {
+            glare.style.opacity = '0.55';
+            glare.style.background = `
+              radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.12) 35%, rgba(255, 255, 255, 0) 70%),
+              linear-gradient(
+                115deg,
+                transparent 15%,
+                rgba(255, 80, 80, 0.12) 28%,
+                rgba(255, 220, 80, 0.15) 38%,
+                rgba(80, 255, 180, 0.15) 48%,
+                rgba(80, 190, 255, 0.18) 58%,
+                rgba(200, 90, 255, 0.15) 68%,
+                rgba(255, 90, 190, 0.12) 78%,
+                transparent 90%
+              )
+            `;
+          });
+        }
+
         // Desktop Mouse tilt & glare (untouched for computer users)
         if (cardPerspective && cardFlipper) {
           cardPerspective.addEventListener('mousemove', (e) => {
@@ -503,14 +540,14 @@
             const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 12;
             const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 12;
             cardFlipper.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-            const glare = document.getElementById('hologram-glare');
-            if (glare) glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)`;
+            updateCardGlare(x, y, rect, 0.75);
           });
           cardPerspective.addEventListener('mouseleave', () => {
             if (isTouching) return;
             if (!cardFlipper.classList.contains('is-flipped')) {
               cardFlipper.style.transform = 'rotateX(0deg) rotateY(0deg)';
             }
+            resetCardGlare();
           });
 
           // Mobile Touch Hold & Drag 3D Card Tilt Interaction
@@ -538,12 +575,7 @@
             const rotateY = baseRotY + flipFactor * (((x - rect.width / 2) / (rect.width / 2)) * 18);
 
             cardFlipper.style.transform = `scale3d(1.04, 1.04, 1.04) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
-
-            const glare = document.getElementById('hologram-glare');
-            if (glare) {
-              glare.style.opacity = '0.75';
-              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 70%)`;
-            }
+            updateCardGlare(x, y, rect, 0.85);
           }, { passive: true });
 
           cardPerspective.addEventListener('touchmove', (e) => {
@@ -572,12 +604,7 @@
             const rotateY = baseRotY + flipFactor * (((x - rect.width / 2) / (rect.width / 2)) * 20);
 
             cardFlipper.style.transform = `scale3d(1.05, 1.05, 1.05) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
-
-            const glare = document.getElementById('hologram-glare');
-            if (glare) {
-              glare.style.opacity = '0.85';
-              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 70%)`;
-            }
+            updateCardGlare(x, y, rect, 0.95);
           }, { passive: false });
 
           const handleTouchEnd = () => {
@@ -593,11 +620,7 @@
               cardFlipper.style.transform = 'rotateX(0deg) rotateY(0deg)';
             }
 
-            const glare = document.getElementById('hologram-glare');
-            if (glare) {
-              glare.style.opacity = '0.5';
-              glare.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.15) 100%)';
-            }
+            resetCardGlare();
 
             clearTimeout(touchResetTimeout);
             touchResetTimeout = setTimeout(() => {
