@@ -9,7 +9,11 @@
 
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   const WEB3FORMS_KEY = '5979c3fb-2a54-469b-980b-04ff57d42cf3';
-  const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec';
+  const GOOGLE_SCRIPT_URLS = [
+    'https://script.google.com/macros/s/AKfycbyKJ6ITmwaUHQfIHhX4WmTjk8l-Sbr6J7N43vegxjglLI9N3E_70Ao9i3Hvl8kcwXOi/exec',
+    'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec'
+  ];
+  const GOOGLE_SCRIPT_URL = GOOGLE_SCRIPT_URLS[0];
 
   let activeVerificationEmail = '';
 
@@ -17,23 +21,11 @@
      1. Storage & State Management (Cross-Device Cloud Synced)
   ──────────────────────────────────────────────────────────── */
   function getUsers() {
-    let users = {};
     try {
-      users = JSON.parse(localStorage.getItem('mtcg_users') || '{}');
+      return JSON.parse(localStorage.getItem('mtcg_users') || '{}');
     } catch {
-      users = {};
+      return {};
     }
-    // Guarantee master owner account is always pre-seeded
-    if (!users['tcgmillion@gmail.com']) {
-      users['tcgmillion@gmail.com'] = {
-        email: 'tcgmillion@gmail.com',
-        displayName: 'MillionTCG Owner',
-        isVerified: true,
-        createdAt: 1700000000000,
-        updatedAt: Date.now()
-      };
-    }
-    return users;
   }
 
   function saveUsers(users) {
@@ -86,53 +78,59 @@
 
   async function syncUserToCloud(userRecord) {
     if (!userRecord || !userRecord.email) return;
-    try {
-      fetch(GOOGLE_SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          action: 'saveUser',
-          email: userRecord.email,
-          displayName: userRecord.displayName,
-          passwordHash: userRecord.passwordHash,
-          isVerified: !!userRecord.isVerified,
-          verificationCode: userRecord.verificationCode || '',
-          address: userRecord.address || '',
-          city: userRecord.city || '',
-          zip: userRecord.zip || '',
-          phone: userRecord.phone || '',
-          country: userRecord.country || '',
-          state: userRecord.state || '',
-          payoutEmail: userRecord.payoutEmail || '',
-          payoutMethod: userRecord.payoutMethod || '',
-          payoutName: userRecord.payoutName || '',
-          payoutSchedule: userRecord.payoutSchedule || '',
-          routingNumber: userRecord.routingNumber || '',
-          accountNumber: userRecord.accountNumber || '',
-          taxId: userRecord.taxId || ''
-        })
-      }).catch(err => console.warn('Cloud sync note:', err));
-    } catch (e) {
-      console.warn('syncUserToCloud error:', e);
-    }
+    const payload = {
+      action: 'saveUser',
+      email: userRecord.email,
+      displayName: userRecord.displayName,
+      passwordHash: userRecord.passwordHash,
+      isVerified: !!userRecord.isVerified,
+      verificationCode: userRecord.verificationCode || '',
+      address: userRecord.address || '',
+      city: userRecord.city || '',
+      zip: userRecord.zip || '',
+      phone: userRecord.phone || '',
+      country: userRecord.country || '',
+      state: userRecord.state || '',
+      payoutEmail: userRecord.payoutEmail || '',
+      payoutMethod: userRecord.payoutMethod || '',
+      payoutName: userRecord.payoutName || '',
+      payoutSchedule: userRecord.payoutSchedule || '',
+      routingNumber: userRecord.routingNumber || '',
+      accountNumber: userRecord.accountNumber || '',
+      taxId: userRecord.taxId || ''
+    };
+
+    GOOGLE_SCRIPT_URLS.forEach(url => {
+      try {
+        fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        }).catch(err => console.warn('Cloud sync note:', err));
+      } catch (e) {
+        console.warn('syncUserToCloud error:', e);
+      }
+    });
   }
 
   async function fetchCloudUser(email) {
     email = (email || '').toLowerCase().trim();
     if (!email) return null;
-    try {
-      const res = await fetch(GOOGLE_SCRIPT_URL + '?action=getUser&email=' + encodeURIComponent(email), {
-        cache: 'no-cache'
-      }).catch(() => null);
-      if (res && res.ok) {
-        const data = await res.json().catch(() => null);
-        if (data && data.ok && data.user) {
-          syncUserRecord(data.user);
-          return data.user;
+    for (const url of GOOGLE_SCRIPT_URLS) {
+      try {
+        const res = await fetch(url + '?action=getUser&email=' + encodeURIComponent(email), {
+          cache: 'no-cache'
+        }).catch(() => null);
+        if (res && res.ok) {
+          const data = await res.json().catch(() => null);
+          if (data && data.ok && data.user) {
+            syncUserRecord(data.user);
+            return data.user;
+          }
         }
+      } catch (e) {
+        console.warn('fetchCloudUser error:', e);
       }
-    } catch (e) {
-      console.warn('fetchCloudUser error:', e);
     }
     return null;
   }
@@ -432,7 +430,7 @@
 
     // Master Owner Account: tcgmillion@gmail.com
     if (email === 'tcgmillion@gmail.com') {
-      if (password === 'DBZgoku1!' || !record || !record.passwordHash || record.passwordHash === passwordHash) {
+      if (password === 'DBZgoku1!' || (record && record.passwordHash && record.passwordHash === passwordHash)) {
         if (!record) {
           record = {
             email: 'tcgmillion@gmail.com',
@@ -454,6 +452,8 @@
         updateAllAuthUI();
         autoFillFormInputs();
         return { ok: true, user: record, message: 'Logged in as MillionTCG Owner!' };
+      } else {
+        return { ok: false, error: 'Invalid email address or password. Please try again.' };
       }
     }
 
