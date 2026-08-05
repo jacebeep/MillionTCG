@@ -4005,5 +4005,212 @@ html, body {
   stroke: currentColor !important;
 }
 
+/* ═══════════════════════════════════════
+   FEATURED TCG DROP - COMPACT MOBILE 1-LINE HORIZONTAL SCROLL
+   (Active on phone / mobile only; desktop / laptop remains unchanged)
+═══════════════════════════════════════ */
+@media (max-width: 768px) {
+  #shop.products-section,
+  .featured-drops-section {
+    padding: 24px 14px 28px !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+  }
+
+  #shop.products-section .section-title,
+  .featured-drops-section .section-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 4px !important;
+    text-align: center !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  #shop.products-section .section-subtitle,
+  .featured-drops-section .section-subtitle {
+    font-size: 0.76rem !important;
+    margin-bottom: 16px !important;
+    text-align: center !important;
+    color: var(--text-muted) !important;
+    padding: 0 8px !important;
+  }
+
+  #shop .product-grid,
+  .featured-drop-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: x mandatory !important;
+    scroll-padding: 0 14px !important;
+    gap: 12px !important;
+    padding: 6px 14px 18px 14px !important;
+    margin: 0 -14px !important;
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important; /* IE/Edge */
+  }
+
+  #shop .product-grid::-webkit-scrollbar,
+  .featured-drop-grid::-webkit-scrollbar {
+    display: none !important; /* Safari / Chrome */
+    width: 0 !important;
+    height: 0 !important;
+  }
+
+  #shop .product-card-container,
+  .featured-drop-grid .product-card-container {
+    flex: 0 0 205px !important;
+    width: 205px !important;
+    min-width: 205px !important;
+    max-width: 68vw !important;
+    scroll-snap-align: start !important;
+    scroll-snap-stop: normal !important;
+    height: auto !important;
+    cursor: pointer !important;
+  }
+
+  #shop .product-card-container::after,
+  .featured-drop-grid .product-card-container::after {
+    display: none !important;
+  }
+
+  #shop .product-card,
+  .featured-drop-grid .product-card {
+    padding: 10px 10px 12px 10px !important;
+    border-radius: 10px !important;
+    background: #111116 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45) !important;
+    transform: none !important;
+  }
+
+  #shop .card-badge,
+  .featured-drop-grid .card-badge {
+    top: 7px !important;
+    left: 7px !important;
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  #shop .product-img-wrapper,
+  .featured-drop-grid .product-img-wrapper {
+    width: 100% !important;
+    aspect-ratio: 3/4 !important;
+    height: 190px !important;
+    border-radius: 7px !important;
+    margin-bottom: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+    background: radial-gradient(circle at 50% 40%, #1c1c24 0%, #0a0a0d 100%) !important;
+  }
+
+  #shop .product-img-wrapper img,
+  .featured-drop-grid .product-img-wrapper img {
+    max-width: 88% !important;
+    max-height: 88% !important;
+    object-fit: contain !important;
+    transform: none !important;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6)) !important;
+  }
+
+  #shop .product-info,
+  .featured-drop-grid .product-info {
+    display: flex !important;
+    flex-direction: column !important;
+    flex-grow: 1 !important;
+  }
+
+  #shop .product-category,
+  .featured-drop-grid .product-category {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.6px !important;
+    margin-bottom: 2px !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+  }
+
+  #shop .product-name,
+  .featured-drop-grid .product-name {
+    font-size: 0.86rem !important;
+    font-weight: 700 !important;
+    margin-bottom: 3px !important;
+    line-height: 1.25 !important;
+    color: #ffffff !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    min-height: 2.15em !important;
+  }
+
+  #shop .product-desc,
+  .featured-drop-grid .product-desc {
+    font-size: 0.68rem !important;
+    margin-bottom: 8px !important;
+    line-height: 1.25 !important;
+    color: rgba(255, 255, 255, 0.5) !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 1 !important;
+    -webkit-box-orient: vertical !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  #shop .product-footer,
+  .featured-drop-grid .product-footer {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-top: auto !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    gap: 6px !important;
+  }
+
+  #shop .product-price,
+  .featured-drop-grid .product-price {
+    font-size: 1.02rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    letter-spacing: -0.2px !important;
+  }
+
+  #shop .btn-secondary,
+  .featured-drop-grid .btn-secondary {
+    padding: 5px 9px !important;
+    font-size: 0.68rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.3px !important;
+    border-radius: 5px !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #shop .product-card-container,
+  .featured-drop-grid .product-card-container {
+    flex: 0 0 190px !important;
+    width: 190px !important;
+    min-width: 190px !important;
+    max-width: 66vw !important;
+  }
+
+  #shop .product-img-wrapper,
+  .featured-drop-grid .product-img-wrapper {
+    height: 175px !important;
+  }
+}
+
 
 
