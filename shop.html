@@ -249,29 +249,42 @@
       }
       grid.dataset.renderedSignature = signature;
 
+      const isSingleCardItem = (p) => {
+        if (!p) return false;
+        const cat = (p.category || '').trim().toLowerCase();
+        const name = (p.name || p.title || '').trim().toLowerCase();
+        if (cat === 'single card' || cat === 'singles' || cat === 'single') return true;
+        if (cat.includes('sealed') || cat.includes('box') || cat.includes('accessor') || cat.includes('bundle')) return false;
+        const nonSingleRegex = /\b(pack|packs|booster|booster box|box|boxes|sealed|etb|elite trainer box|tin|tins|sleeve|sleeves|binder|binders|deck box|toploader|toploaders|playmat|playmats|bundle|bundles|mystery|mystery box|lot|case|cases|stand|collection box|starter deck|structure deck)\b/i;
+        return !nonSingleRegex.test(name);
+      };
+
       if (!items || items.length === 0) {
         grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No matching products found.</p>';
         return;
       }
-      grid.innerHTML = items.map(p => `
-        <div class="product-card-container" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; position: relative;">
-          <div class="product-card">
-            ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
-            <div class="product-img-wrapper">
-              <img src="${p.image}" alt="${p.name}">
-            </div>
-            <div class="product-info">
-              <span class="product-category">${p.category}</span>
-              <h3 class="product-name">${p.name}</h3>
-              <p class="product-desc">${p.desc || ''}</p>
-              <div class="product-footer">
-                <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-                <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
+      grid.innerHTML = items.map(p => {
+        const isSingle = isSingleCardItem(p);
+        return `
+          <div class="product-card-container ${isSingle ? 'is-single-card' : ''}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; position: relative;">
+            <div class="product-card">
+              ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
+              <div class="product-img-wrapper">
+                <img src="${p.image}" alt="${p.name}">
+              </div>
+              <div class="product-info">
+                <span class="product-category">${p.category}</span>
+                <h3 class="product-name">${p.name}</h3>
+                <p class="product-desc">${p.desc || ''}</p>
+                <div class="product-footer">
+                  <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
+                  <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
     function filterCatalog(category, all) {

@@ -338,6 +338,18 @@
         }
         view.dataset.renderedSignature = signature;
 
+        const isSingleCardItem = (p) => {
+          if (!p) return false;
+          const cat = (p.category || '').trim().toLowerCase();
+          const name = (p.name || p.title || '').trim().toLowerCase();
+          if (cat === 'single card' || cat === 'singles' || cat === 'single') return true;
+          if (cat.includes('sealed') || cat.includes('box') || cat.includes('accessor') || cat.includes('bundle')) return false;
+          const nonSingleRegex = /\b(pack|packs|booster|booster box|box|boxes|sealed|etb|elite trainer box|tin|tins|sleeve|sleeves|binder|binders|deck box|toploader|toploaders|playmat|playmats|bundle|bundles|mystery|mystery box|lot|case|cases|stand|collection box|starter deck|structure deck)\b/i;
+          return !nonSingleRegex.test(name);
+        };
+
+        const isSingle = isSingleCardItem(product);
+
         // Build gallery array
         let galleryImages = [];
         if (Array.isArray(product.gallery) && product.gallery.length > 0) {
@@ -354,21 +366,21 @@
         view.innerHTML = `
           <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
 
-            <!-- 3D Card Perspective Wrapper -->
-            <div class="card-turn-perspective" id="card-perspective">
+            <!-- 3D Perspective Wrapper -->
+            <div class="card-turn-perspective ${isSingle ? 'is-single-card' : ''}" id="card-perspective">
               <div class="card-3d-flipper" id="card-flipper">
 
                 <!-- Front Face with Hover Lens Magnifier -->
-                <div class="card-face front product-magnifier-container" id="magnifier-container">
+                <div class="card-face front ${isSingle ? 'is-single-card' : ''} product-magnifier-container" id="magnifier-container">
                   <img id="main-product-img" src="${frontPhoto}" alt="${product.name || product.title || 'Product'}">
                   <div class="magnifier-lens" id="magnifier-lens"></div>
-                  <div class="card-hologram-glare" id="hologram-glare"></div>
+                  ${isSingle ? `<div class="card-hologram-glare" id="hologram-glare"></div>` : ''}
                 </div>
 
                 <!-- Back Face -->
-                <div class="card-face back">
+                <div class="card-face back ${isSingle ? 'is-single-card' : ''}">
                   <img id="back-product-img" src="${backPhoto}" alt="${product.name || product.title || 'Product'} (Back)">
-                  <div class="card-hologram-glare"></div>
+                  ${isSingle ? `<div class="card-hologram-glare"></div>` : ''}
                 </div>
               </div>
             </div>
@@ -394,7 +406,9 @@
             ` : ''}
 
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
-              💡 Touch &amp; hold to tilt 3D • Tap to flip front/back • Hover on computer for lens
+              ${isSingle 
+                ? '💡 Touch &amp; hold to tilt 3D • Tap to flip front/back • Hover on computer for lens'
+                : '💡 Hover image for magnifier lens • Click thumbnails below to inspect views'}
             </div>
           </div>
 
