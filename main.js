@@ -476,8 +476,9 @@ function _applyHomeGridMarkup(grid, community) {
       condition: c.condition || 'Raw',
       image: cardImg || 'images/logo.png',
       gallery: c.gallery || [cardImg || 'images/logo.png'],
-      tag: 'SELLER LISTING',
-      desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
+      tag: c.condition ? `${c.condition.toUpperCase()} SINGLE` : 'SINGLE CARD',
+      desc: `${c.condition || 'Raw'} • ${c.franchise || c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`,
+      date: c.date || c.createdAt || 0
     };
   });
 
@@ -485,45 +486,69 @@ function _applyHomeGridMarkup(grid, community) {
     if (!p) return false;
     const cat = (p.category || '').trim().toLowerCase();
     const name = (p.name || p.title || '').trim().toLowerCase();
+
+    // Explicitly reject non-single categories or keywords
+    if (
+      cat.includes('sealed') || 
+      cat.includes('box') || 
+      cat.includes('accessor') || 
+      cat.includes('bundle') || 
+      cat.includes('tin') || 
+      cat.includes('pack')
+    ) {
+      return false;
+    }
+
+    // Strict non-single regex check on product title/name
+    const nonSingleRegex = /\b(pack|packs|booster|booster pack|booster box|box|boxes|sealed|etb|elite trainer box|tin|tins|collector tin|mini tin|sleeve|sleeves|binder|binders|deck box|toploader|toploaders|playmat|playmats|bundle|bundles|mystery|mystery box|lot|case|cases|stand|collection box|starter deck|structure deck|pin collection|figure collection)\b/i;
+    if (nonSingleRegex.test(name)) {
+      return false;
+    }
+
     if (cat === 'single card' || cat === 'singles' || cat === 'single') return true;
-    if (cat.includes('sealed') || cat.includes('box') || cat.includes('accessor') || cat.includes('bundle')) return false;
-    const nonSingleRegex = /\b(pack|packs|booster|booster box|box|boxes|sealed|etb|elite trainer box|tin|tins|sleeve|sleeves|binder|binders|deck box|toploader|toploaders|playmat|playmats|bundle|bundles|mystery|mystery box|lot|case|cases|stand|collection box|starter deck|structure deck)\b/i;
-    return !nonSingleRegex.test(name);
+
+    const validFranchiseCategories = ['pokemon', 'yu-gi-oh!', 'magic the gathering', 'one piece', 'lorcana', 'digimon', 'dragon ball', 'other', ''];
+    return validFranchiseCategories.includes(cat);
   };
 
   const allItems = [...mappedCommunity, ...PRODUCTS];
-  const signature = allItems.map(p => `${p.id}:${p.price}:${p.image}`).join('|');
+  // Strictly filter to SINGLE CARDS ONLY (no tins, booster boxes, packs, bundles, or accessories)
+  const singleCardsOnly = allItems.filter(p => isSingleCardItem(p));
+
+  // Organize cleanly: newest listings first
+  singleCardsOnly.sort((a, b) => (b.date || 0) - (a.date || 0));
+
+  const signature = singleCardsOnly.map(p => `${p.id}:${p.price}:${p.image}`).join('|');
   if (grid.dataset.renderedSignature === signature) {
     return; // Already rendered this exact content, avoid DOM replacement
   }
   grid.dataset.renderedSignature = signature;
 
-  if (allItems.length === 0) {
+  if (singleCardsOnly.length === 0) {
     grid.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 16px;">
-        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 16px;">No cards currently listed on the marketplace.</p>
-        <a href="sell.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">+ List Your First Card</a>
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 16px;">No single cards currently featured in the drop.</p>
+        <a href="sell.html" class="btn-primary" style="display: inline-block; padding: 12px 28px; text-decoration: none; font-weight: 700;">+ List Your First Single Card</a>
       </div>
     `;
     return;
   }
 
-  grid.innerHTML = allItems.map(p => {
-    const isSingle = isSingleCardItem(p);
+  grid.innerHTML = singleCardsOnly.map(p => {
     return `
-      <div class="product-card-container ${isSingle ? 'is-single-card' : ''}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+      <div class="product-card-container is-single-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
         <div class="product-card">
           ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
           <div class="product-img-wrapper">
             <img src="${p.image}" alt="${p.name}">
           </div>
           <div class="product-info">
-            <span class="product-category">${p.category}</span>
+            <span class="product-category">${p.category || 'Single Card'}</span>
             <h3 class="product-name">${p.name}</h3>
             <p class="product-desc">${p.desc || ''}</p>
             <div class="product-footer">
               <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
+              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Card</button>
             </div>
           </div>
         </div>
