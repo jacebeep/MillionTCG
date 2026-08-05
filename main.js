@@ -1927,10 +1927,23 @@ function initSellerSystem() {
       communityListings = allListings;
       
       let userItems = allListings;
-      if (currentUser && currentUser.handle) {
-        const filtered = allListings.filter(item => item.sellerName === currentUser.handle);
-        if (filtered.length > 0 || allListings.length === 0) {
-          userItems = filtered;
+      if (currentUser) {
+        const uEmail = (currentUser.email || '').toLowerCase().trim();
+        const uHandle = (currentUser.handle || '').toLowerCase().replace(/^@/, '');
+        const uName = (currentUser.name || currentUser.displayName || '').toLowerCase().trim();
+
+        if (uEmail === 'tcgmillion@gmail.com' || uHandle === 'tcgmillion' || uHandle === 'milliontcg_owner') {
+          userItems = allListings;
+        } else {
+          const filtered = allListings.filter(item => {
+            if (!item) return false;
+            const sName = (item.sellerName || '').toLowerCase().replace(/^@/, '');
+            const sEmail = (item.sellerEmail || '').toLowerCase().trim();
+            return sName === uHandle || sName === uName || sEmail === uEmail;
+          });
+          if (filtered.length > 0 || allListings.length === 0) {
+            userItems = filtered;
+          }
         }
       }
 
