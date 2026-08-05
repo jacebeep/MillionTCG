@@ -394,7 +394,7 @@
             ` : ''}
 
             <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 10px; text-align: center;">
-              💡 Hover image for magnifier lens • Click card or button to flip 3D front/back!
+              💡 Touch &amp; hold to tilt 3D • Tap to flip front/back • Hover on computer for lens
             </div>
           </div>
 
@@ -473,6 +473,12 @@
         const cardFlipper = document.getElementById('card-flipper');
         const turnCardBtn = document.getElementById('btn-turn-card');
 
+        let wasTouchDragging = false;
+        let isTouching = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchResetTimeout = null;
+
         function flip3DCard() {
           if (cardFlipper) cardFlipper.classList.toggle('is-flipped');
         }
@@ -481,13 +487,15 @@
         if (cardPerspective) {
           cardPerspective.addEventListener('click', (e) => {
             if (e.target.closest('button') || e.target.closest('#product-thumb-bar')) return;
+            if (wasTouchDragging) return; // Don't flip if user was holding and rotating the 3D card
             flip3DCard();
           });
         }
 
-        // Mouse tilt & glare
+        // Desktop Mouse tilt & glare (untouched for computer users)
         if (cardPerspective && cardFlipper) {
           cardPerspective.addEventListener('mousemove', (e) => {
+            if (isTouching) return;
             if (cardFlipper.classList.contains('is-flipped')) return;
             const rect = cardPerspective.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -499,10 +507,106 @@
             if (glare) glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%)`;
           });
           cardPerspective.addEventListener('mouseleave', () => {
+            if (isTouching) return;
             if (!cardFlipper.classList.contains('is-flipped')) {
               cardFlipper.style.transform = 'rotateX(0deg) rotateY(0deg)';
             }
           });
+
+          // Mobile Touch Hold & Drag 3D Card Tilt Interaction
+          cardPerspective.addEventListener('touchstart', (e) => {
+            if (e.target.closest('button') || e.target.closest('#product-thumb-bar')) return;
+            if (e.touches.length !== 1) return;
+
+            const touch = e.touches[0];
+            isTouching = true;
+            wasTouchDragging = false;
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+
+            cardFlipper.style.transition = 'transform 0.08s ease-out, box-shadow 0.15s ease';
+
+            const rect = cardPerspective.getBoundingClientRect();
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+
+            const isFlipped = cardFlipper.classList.contains('is-flipped');
+            const baseRotY = isFlipped ? 180 : 0;
+            const flipFactor = isFlipped ? -1 : 1;
+
+            const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 18;
+            const rotateY = baseRotY + flipFactor * (((x - rect.width / 2) / (rect.width / 2)) * 18);
+
+            cardFlipper.style.transform = `scale3d(1.04, 1.04, 1.04) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+            const glare = document.getElementById('hologram-glare');
+            if (glare) {
+              glare.style.opacity = '0.75';
+              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.1) 40%, rgba(255,255,255,0) 70%)`;
+            }
+          }, { passive: true });
+
+          cardPerspective.addEventListener('touchmove', (e) => {
+            if (!isTouching || e.touches.length !== 1) return;
+            const touch = e.touches[0];
+
+            const deltaX = Math.abs(touch.clientX - touchStartX);
+            const deltaY = Math.abs(touch.clientY - touchStartY);
+
+            if (deltaX > 4 || deltaY > 4) {
+              wasTouchDragging = true;
+              if (e.cancelable) {
+                e.preventDefault(); // Lock viewport scrolling while actively tilting the 3D card
+              }
+            }
+
+            const rect = cardPerspective.getBoundingClientRect();
+            const x = Math.max(-25, Math.min(rect.width + 25, touch.clientX - rect.left));
+            const y = Math.max(-25, Math.min(rect.height + 25, touch.clientY - rect.top));
+
+            const isFlipped = cardFlipper.classList.contains('is-flipped');
+            const baseRotY = isFlipped ? 180 : 0;
+            const flipFactor = isFlipped ? -1 : 1;
+
+            const rotateX = -((y - rect.height / 2) / (rect.height / 2)) * 20;
+            const rotateY = baseRotY + flipFactor * (((x - rect.width / 2) / (rect.width / 2)) * 20);
+
+            cardFlipper.style.transform = `scale3d(1.05, 1.05, 1.05) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+
+            const glare = document.getElementById('hologram-glare');
+            if (glare) {
+              glare.style.opacity = '0.85';
+              glare.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.15) 35%, rgba(255,255,255,0) 70%)`;
+            }
+          }, { passive: false });
+
+          const handleTouchEnd = () => {
+            if (!isTouching) return;
+            isTouching = false;
+
+            cardFlipper.style.transition = 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease';
+
+            const isFlipped = cardFlipper.classList.contains('is-flipped');
+            if (isFlipped) {
+              cardFlipper.style.transform = 'rotateY(180deg)';
+            } else {
+              cardFlipper.style.transform = 'rotateX(0deg) rotateY(0deg)';
+            }
+
+            const glare = document.getElementById('hologram-glare');
+            if (glare) {
+              glare.style.opacity = '0.5';
+              glare.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0) 50%, rgba(255,255,255,0.15) 100%)';
+            }
+
+            clearTimeout(touchResetTimeout);
+            touchResetTimeout = setTimeout(() => {
+              wasTouchDragging = false;
+            }, 120);
+          };
+
+          cardPerspective.addEventListener('touchend', handleTouchEnd, { passive: true });
+          cardPerspective.addEventListener('touchcancel', handleTouchEnd, { passive: true });
         }
 
         // Hover Lens Magnifier
