@@ -113,6 +113,13 @@
       <div class="mobile-drawer-title">MILLION TCG</div>
       <button type="button" class="close-drawer-btn" id="close-drawer-btn" aria-label="Close menu">✕</button>
     </div>
+    <!-- Mobile Search Bar -->
+    <div class="mobile-drawer-search-wrapper">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 14z"/></svg>
+        <input type="text" class="search-input" placeholder="Search all cards...">
+      </div>
+    </div>
     <!-- Auth Profile Section -->
     <div class="auth-drawer-section" id="auth-drawer-profile">
       <!-- Populated by auth.js -->
@@ -138,7 +145,23 @@
   <section class="shop-header">
     <h1 class="section-title">STORE CATALOG</h1>
     <p class="section-subtitle">Explore rare singles, sealed boxes, and gaming gear</p>
+    
+    <!-- In-Page Instant Search Bar -->
+    <div class="catalog-search-wrapper">
+      <div class="catalog-search-bar search-bar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 14z"/></svg>
+        <input type="text" id="catalog-search-input" class="search-input" placeholder="Search cards by name, Pokémon, PSA grade, set, or franchise...">
+      </div>
+    </div>
   </section>
+
+  <!-- Active Search / Filter Banner -->
+  <div id="catalog-active-filter-container" style="display: none; padding: 0 20px;">
+    <div class="catalog-active-filter-bar">
+      <span id="catalog-filter-status-text">Showing results for "..."</span>
+      <button type="button" class="catalog-clear-pill" onclick="clearCatalogSearchAndFilter()">✕ Clear Filter</button>
+    </div>
+  </div>
 
   <!-- Category Filter Bar -->
   <div class="filter-bar">
@@ -152,7 +175,7 @@
   </div>
 
   <!-- Dynamic Product Grid -->
-  <section class="products-section catalog-products-section" style="padding-top: 20px;">
+  <section class="products-section catalog-products-section" style="padding-top: 10px;">
     <div class="product-grid" id="catalog-grid">
       <!-- Items populated by JavaScript -->
     </div>
@@ -223,7 +246,7 @@
     function getAllShopProductsAsync() {
       return (typeof getCommunityListingsAsync === 'function' ? getCommunityListingsAsync() : Promise.resolve([]))
         .then(community => {
-          const mappedCommunity = community.map(c => {
+          const mappedCommunity = (community || []).map(c => {
             let cardImg = c.image;
             if (!cardImg || cardImg === 'images/logo.png') {
               if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
@@ -232,32 +255,44 @@
             }
             return {
               id: c.id,
-              name: c.title,
+              name: c.title || c.name || 'TCG Item',
               price: parseFloat(c.price) || 0,
               category: c.category || 'Single Card',
               franchise: c.franchise || '',
               condition: c.condition || 'Raw',
               image: cardImg || 'images/logo.png',
               gallery: c.gallery || [cardImg || 'images/logo.png'],
-              tag: 'SELLER LISTING',
-              desc: `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
+              tag: c.tag || 'SELLER LISTING',
+              sellerName: c.sellerName || '',
+              desc: c.desc || `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
             };
           });
-          return [...mappedCommunity, ...PRODUCTS];
+          const staticList = (typeof PRODUCTS !== 'undefined' && Array.isArray(PRODUCTS)) ? PRODUCTS : [];
+          return [...mappedCommunity, ...staticList];
         });
     }
 
     function refreshCatalogView() {
       const urlParams = new URLSearchParams(window.location.search);
       const catParam = urlParams.get('category');
-      const searchParam = urlParams.get('search');
+      const searchParam = urlParams.get('search') || urlParams.get('q') || urlParams.get('search_term_string') || urlParams.get('s');
+
+      // Pre-fill all search inputs with query
+      if (searchParam) {
+        document.querySelectorAll('.search-input').forEach(si => {
+          si.value = searchParam;
+          if (si.closest('.search-bar')) si.closest('.search-bar').classList.add('has-query');
+        });
+      }
 
       getAllShopProductsAsync().then(all => {
-        if (catParam) {
+        if (searchParam) {
+          searchCatalog(searchParam, all, catParam);
+        } else if (catParam) {
           filterCatalog(catParam, all);
-        } else if (searchParam) {
-          searchCatalog(searchParam, all);
         } else {
+          const banner = document.getElementById('catalog-active-filter-container');
+          if (banner) banner.style.display = 'none';
           renderCatalog(all);
         }
       });
@@ -269,11 +304,11 @@
     window.addEventListener('milliontcg_listing_deleted', refreshCatalogView);
     window.addEventListener('storage', refreshCatalogView);
 
-    function renderCatalog(items) {
+    function renderCatalog(items, activeQuery) {
       const grid = document.getElementById('catalog-grid');
       if (!grid) return;
 
-      const signature = (items || []).map(p => `${p.id}:${p.price}:${p.image}`).join('|');
+      const signature = (items || []).map(p => `${p.id}:${p.price}:${p.image}`).join('|') + `|q:${activeQuery || ''}`;
       if (grid.dataset.renderedSignature === signature) {
         return;
       }
@@ -289,21 +324,41 @@
       };
 
       if (!items || items.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px 0;">No matching products found.</p>';
+        grid.innerHTML = `
+          <div class="catalog-empty-search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <h3>No Cards Found</h3>
+            <p>${activeQuery ? `No cards or products matched "<strong>${typeof escapeSearchHtml === 'function' ? escapeSearchHtml(activeQuery) : activeQuery}</strong>".` : 'No products available in this selection.'}</p>
+            <div class="search-suggestions-chips" style="margin-bottom: 18px;">
+              <span class="search-chip" onclick="executeCatalogQuickSearch('Pokemon')">⚡ Pokémon</span>
+              <span class="search-chip" onclick="executeCatalogQuickSearch('Charizard')">🔥 Charizard</span>
+              <span class="search-chip" onclick="executeCatalogQuickSearch('Booster Box')">📦 Booster Boxes</span>
+              <span class="search-chip" onclick="executeCatalogQuickSearch('PSA 10')">💎 PSA 10 Slabs</span>
+              <span class="search-chip" onclick="executeCatalogQuickSearch('Yu-Gi-Oh')">✨ Yu-Gi-Oh!</span>
+              <span class="search-chip" onclick="executeCatalogQuickSearch('Magic')">🃏 MTG Magic</span>
+            </div>
+            <button type="button" class="btn-secondary" onclick="clearCatalogSearchAndFilter()" style="margin: 0 auto; display: inline-flex; align-items: center; gap: 6px;">Browse All Cards →</button>
+          </div>
+        `;
         return;
       }
+
       grid.innerHTML = items.map(p => {
         const isSingle = isSingleCardItem(p);
+        const displayName = (typeof highlightSearchMatch === 'function' && activeQuery) ? highlightSearchMatch(p.name, activeQuery) : (p.name || 'TCG Product');
         return `
           <div class="product-card-container ${isSingle ? 'is-single-card' : ''}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; position: relative;">
             <div class="product-card">
               ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
               <div class="product-img-wrapper">
-                <img src="${p.image}" alt="${p.name}">
+                <img src="${p.image || 'images/logo.png'}" alt="${p.name || 'Card'}" onerror="this.src='images/logo.png'">
               </div>
               <div class="product-info">
-                <span class="product-category">${p.category}</span>
-                <h3 class="product-name">${p.name}</h3>
+                <span class="product-category">${p.category || 'Card'}</span>
+                <h3 class="product-name">${displayName}</h3>
                 <p class="product-desc">${p.desc || ''}</p>
                 <div class="product-footer">
                   <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
@@ -337,49 +392,99 @@
         }
       });
 
+      let filtered = all;
       if (!category || category === 'All') {
-        renderCatalog(all);
+        filtered = all;
       } else if (category === 'Sealed Product') {
-        const filtered = all.filter(p => 
+        filtered = all.filter(p => 
           p.category === 'Sealed Product' || 
           (p.name && /pack|booster|box|sealed|etb|tin/i.test(p.name))
         );
-        renderCatalog(filtered);
       } else if (category === 'Accessories') {
-        const filtered = all.filter(p => 
+        filtered = all.filter(p => 
           p.category === 'Accessories' || 
           (p.name && /sleeve|binder|deck box|toploader|playmat|page|case|stand/i.test(p.name))
         );
-        renderCatalog(filtered);
       } else if (category === 'Collector Bundle') {
-        const filtered = all.filter(p => 
+        filtered = all.filter(p => 
           p.category === 'Collector Bundle' || 
           (p.name && /bundle|mystery|lot|starter pack/i.test(p.name))
         );
-        renderCatalog(filtered);
       } else if (category === 'Single Card') {
-        const filtered = all.filter(p => 
+        filtered = all.filter(p => 
           p.category === 'Single Card' || 
           (['Pokemon', 'Yu-Gi-Oh!', 'Magic The Gathering', 'One Piece', 'Lorcana', 'Digimon', 'Dragon Ball', 'Other'].includes(p.category) && !/pack|booster|box|sealed|etb|tin|sleeve|binder|deck box|bundle/i.test(p.name || ''))
         );
-        renderCatalog(filtered);
       } else {
-        const filtered = all.filter(p => 
+        filtered = all.filter(p => 
           (p.category && p.category.toLowerCase().includes(catNorm)) ||
           (p.franchise && p.franchise.toLowerCase().includes(catNorm)) ||
           (p.name && p.name.toLowerCase().includes(catNorm))
         );
-        renderCatalog(filtered);
       }
+
+      // Check if there is an active search query as well
+      const urlParams = new URLSearchParams(window.location.search);
+      const searchParam = urlParams.get('search') || urlParams.get('q') || urlParams.get('search_term_string') || urlParams.get('s');
+      if (searchParam && typeof filterAndRankProducts === 'function') {
+        filtered = filterAndRankProducts(filtered, searchParam);
+      }
+
+      // Update Filter Banner
+      const banner = document.getElementById('catalog-active-filter-container');
+      const statusText = document.getElementById('catalog-filter-status-text');
+      if (banner && statusText) {
+        if (category && category !== 'All') {
+          banner.style.display = 'block';
+          statusText.textContent = `Filtered by Category: ${category} (${filtered.length} items)`;
+        } else if (!searchParam) {
+          banner.style.display = 'none';
+        }
+      }
+
+      renderCatalog(filtered, searchParam);
     }
 
-    function searchCatalog(query, all) {
-      if (!all) { getAllShopProductsAsync().then(a => searchCatalog(query, a)); return; }
-      const filtered = all.filter(p => 
-        p.name.toLowerCase().includes(query.toLowerCase()) || 
-        p.category.toLowerCase().includes(query.toLowerCase())
-      );
-      renderCatalog(filtered);
+    function searchCatalog(query, all, optionalCategory) {
+      if (!all) { getAllShopProductsAsync().then(a => searchCatalog(query, a, optionalCategory)); return; }
+      
+      let pool = all;
+      if (optionalCategory && optionalCategory !== 'All') {
+        const catNorm = optionalCategory.toLowerCase();
+        pool = all.filter(p => (p.category && p.category.toLowerCase().includes(catNorm)));
+      }
+
+      const filtered = typeof filterAndRankProducts === 'function' ? filterAndRankProducts(pool, query) : pool.filter(p => p.name.toLowerCase().includes(query.toLowerCase()));
+
+      // Update Filter Banner
+      const banner = document.getElementById('catalog-active-filter-container');
+      const statusText = document.getElementById('catalog-filter-status-text');
+      if (banner && statusText) {
+        banner.style.display = 'block';
+        statusText.innerHTML = `Showing <strong>${filtered.length}</strong> result${filtered.length === 1 ? '' : 's'} for "<strong>${typeof escapeSearchHtml === 'function' ? escapeSearchHtml(query) : query}</strong>"${optionalCategory && optionalCategory !== 'All' ? ` in <em>${optionalCategory}</em>` : ''}`;
+      }
+
+      renderCatalog(filtered, query);
+    }
+
+    function clearCatalogSearchAndFilter() {
+      try { history.replaceState(null, '', 'shop.html'); } catch (e) {}
+      document.querySelectorAll('.search-input').forEach(si => {
+        si.value = '';
+        if (si.closest('.search-bar')) si.closest('.search-bar').classList.remove('has-query');
+      });
+      const banner = document.getElementById('catalog-active-filter-container');
+      if (banner) banner.style.display = 'none';
+      filterCatalog('All');
+    }
+
+    function executeCatalogQuickSearch(q) {
+      document.querySelectorAll('.search-input').forEach(si => {
+        si.value = q;
+        if (si.closest('.search-bar')) si.closest('.search-bar').classList.add('has-query');
+      });
+      try { history.replaceState(null, '', `shop.html?search=${encodeURIComponent(q)}`); } catch (e) {}
+      searchCatalog(q);
     }
   </script>
   <script>

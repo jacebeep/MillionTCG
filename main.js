@@ -808,15 +808,404 @@ function closeCartModal() {
   }
 }
 
-// Search Functionality Redirect to Shop
+// =============================================================================
+// MILLIONTCG ADVANCED SEARCH ENGINE & AUTOCOMPLETE
+// =============================================================================
+
+function getAllProductsForSearchAsync() {
+  return (typeof getCommunityListingsAsync === 'function' ? getCommunityListingsAsync() : Promise.resolve(getCommunityListings() || []))
+    .then(community => {
+      const mappedCommunity = (community || []).map(c => {
+        let cardImg = c.image;
+        if (!cardImg || cardImg === 'images/logo.png') {
+          if (c.gallery && Array.isArray(c.gallery) && c.gallery.length > 0 && c.gallery[0] !== 'images/logo.png') {
+            cardImg = c.gallery[0];
+          }
+        }
+        return {
+          id: c.id,
+          name: c.title || c.name || 'TCG Item',
+          price: parseFloat(c.price) || 0,
+          category: c.category || 'Single Card',
+          franchise: c.franchise || '',
+          condition: c.condition || 'Raw',
+          image: cardImg || 'images/logo.png',
+          gallery: c.gallery || [cardImg || 'images/logo.png'],
+          tag: c.tag || 'SELLER LISTING',
+          sellerName: c.sellerName || '',
+          desc: c.desc || `${c.condition || 'Raw'} • ${c.category || 'Single Card'} • Verified Seller @${c.sellerName || 'Seller'}`
+        };
+      });
+      const staticList = (typeof PRODUCTS !== 'undefined' && Array.isArray(PRODUCTS)) ? PRODUCTS : [];
+      return [...mappedCommunity, ...staticList];
+    }).catch(() => {
+      return (typeof PRODUCTS !== 'undefined' && Array.isArray(PRODUCTS)) ? PRODUCTS : [];
+    });
+}
+
+function normalizeSearchText(str) {
+  if (!str) return '';
+  return String(str)
+    .toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getQueryTokensWithSynonyms(rawQuery) {
+  const clean = normalizeSearchText(rawQuery);
+  if (!clean) return [];
+  const tokens = clean.split(' ').filter(t => t.length > 0);
+  const expanded = [];
+  tokens.forEach(tok => {
+    expanded.push(tok);
+    if (tok === 'pokemon' || tok === 'pkmn' || tok === 'poke') {
+      expanded.push('pokemon');
+    } else if (tok === 'yugioh' || tok === 'yugi') {
+      expanded.push('yu');
+      expanded.push('gi');
+      expanded.push('oh');
+    } else if (tok === 'mtg' || tok === 'magic') {
+      expanded.push('magic');
+      expanded.push('gathering');
+    } else if (tok === 'bb' || tok === 'booster') {
+      expanded.push('booster');
+      expanded.push('box');
+    } else if (tok === 'etb') {
+      expanded.push('elite');
+      expanded.push('trainer');
+      expanded.push('box');
+    } else if (tok === 'psa10') {
+      expanded.push('psa');
+      expanded.push('10');
+    } else if (tok === 'op' || tok === 'onepiece') {
+      expanded.push('one');
+      expanded.push('piece');
+    }
+  });
+  return Array.from(new Set(expanded));
+}
+
+function filterAndRankProducts(items, rawQuery) {
+  if (!rawQuery || !rawQuery.trim()) return items || [];
+  const normalizedQuery = normalizeSearchText(rawQuery);
+  if (!normalizedQuery) return items || [];
+  const primaryTokens = normalizedQuery.split(' ').filter(Boolean);
+  if (!primaryTokens.length) return items || [];
+
+  const scored = [];
+
+  (items || []).forEach(p => {
+    if (!p) return;
+    const nameNorm = normalizeSearchText(p.name || p.title || '');
+    const catNorm = normalizeSearchText(p.category || '');
+    const franNorm = normalizeSearchText(p.franchise || '');
+    const condNorm = normalizeSearchText(p.condition || '');
+    const tagNorm = normalizeSearchText(p.tag || '');
+    const descNorm = normalizeSearchText(p.desc || '');
+    const sellerNorm = normalizeSearchText(p.sellerName || '');
+
+    const fullSearchable = `${nameNorm} ${catNorm} ${franNorm} ${condNorm} ${tagNorm} ${descNorm} ${sellerNorm}`;
+
+    let matchesAll = primaryTokens.every(tok => fullSearchable.includes(tok));
+    let matchCount = 0;
+    primaryTokens.forEach(tok => {
+      if (fullSearchable.includes(tok)) matchCount++;
+    });
+
+    if (!matchesAll && matchCount === 0) return;
+
+    let score = 0;
+    if (nameNorm === normalizedQuery) score += 1000;
+    else if (nameNorm.startsWith(normalizedQuery)) score += 500;
+    else if (nameNorm.includes(normalizedQuery)) score += 300;
+
+    primaryTokens.forEach(tok => {
+      if (nameNorm.includes(tok)) score += 60;
+      if (franNorm.includes(tok)) score += 40;
+      if (catNorm.includes(tok)) score += 30;
+      if (condNorm.includes(tok)) score += 25;
+      if (tagNorm.includes(tok)) score += 15;
+      if (descNorm.includes(tok)) score += 10;
+    });
+
+    if (matchesAll) score += 150;
+
+    scored.push({ product: p, score });
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(s => s.product);
+}
+
+function highlightSearchMatch(text, query) {
+  if (!text) return '';
+  if (!query || !query.trim()) return escapeSearchHtml(text);
+  const rawTerms = query.trim().split(/\s+/).filter(Boolean);
+  if (!rawTerms.length) return escapeSearchHtml(text);
+  
+  const pattern = new RegExp(`(${rawTerms.map(t => escapeSearchRegex(t)).join('|')})`, 'gi');
+  return escapeSearchHtml(text).replace(pattern, '<mark>$1</mark>');
+}
+
+function escapeSearchHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+function escapeSearchRegex(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function setupSearch() {
-  const searchInputs = document.querySelectorAll('.search-input');
-  searchInputs.forEach(input => {
-    input.onkeypress = (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        window.location.href = `shop.html?search=${encodeURIComponent(input.value.trim())}`;
+  // Check if home page was opened with search param from Google/external
+  const urlParams = new URLSearchParams(window.location.search);
+  const inboundQuery = urlParams.get('search') || urlParams.get('q') || urlParams.get('search_term_string') || urlParams.get('s');
+  const isHomePage = window.location.pathname.endsWith('/index.html') || window.location.pathname === '/' || window.location.pathname.endsWith('/');
+  if (inboundQuery && isHomePage && !document.getElementById('catalog-grid')) {
+    window.location.href = `shop.html?search=${encodeURIComponent(inboundQuery)}`;
+    return;
+  }
+
+  const searchBars = document.querySelectorAll('.search-bar');
+  searchBars.forEach(bar => {
+    if (bar.dataset.searchInitialized === 'true') return;
+    bar.dataset.searchInitialized = 'true';
+
+    let input = bar.querySelector('.search-input, input[type="text"]');
+    if (!input) return;
+
+    // Pre-populate input if URL contains search
+    if (inboundQuery && !input.value) {
+      input.value = inboundQuery;
+      bar.classList.add('has-query');
+    }
+
+    // Enhance SVG icon to be clickable
+    let svgIcon = bar.querySelector('svg');
+    if (svgIcon && !svgIcon.parentElement.classList.contains('search-icon-btn')) {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'search-icon-btn';
+      btn.setAttribute('aria-label', 'Submit Search');
+      bar.insertBefore(btn, svgIcon);
+      btn.appendChild(svgIcon);
+    }
+
+    // Add Clear (✕) button if not exists
+    let clearBtn = bar.querySelector('.search-clear-btn');
+    if (!clearBtn) {
+      clearBtn = document.createElement('button');
+      clearBtn.type = 'button';
+      clearBtn.className = 'search-clear-btn';
+      clearBtn.setAttribute('aria-label', 'Clear search query');
+      clearBtn.innerHTML = '✕';
+      bar.appendChild(clearBtn);
+    }
+
+    // Create Autocomplete Dropdown if not exists
+    let dropdown = bar.querySelector('.search-autocomplete-dropdown');
+    if (!dropdown) {
+      dropdown = document.createElement('div');
+      dropdown.className = 'search-autocomplete-dropdown';
+      dropdown.innerHTML = `
+        <ul class="search-dropdown-list"></ul>
+        <div class="search-dropdown-footer" style="display:none;"></div>
+      `;
+      bar.appendChild(dropdown);
+    }
+
+    const dropdownList = dropdown.querySelector('.search-dropdown-list');
+    const dropdownFooter = dropdown.querySelector('.search-dropdown-footer');
+
+    let debounceTimer = null;
+
+    const closeDropdown = () => {
+      dropdown.classList.remove('active');
+    };
+
+    const executeSearch = (rawVal) => {
+      const q = (rawVal || input.value || '').trim();
+      closeDropdown();
+      if (!q) return;
+
+      if (document.getElementById('catalog-grid')) {
+        // We are on shop.html! Smooth in-page filter without full reload
+        const newUrl = `shop.html?search=${encodeURIComponent(q)}`;
+        try { history.replaceState(null, '', newUrl); } catch (e) {}
+        
+        // Sync all other search inputs on page
+        document.querySelectorAll('.search-input').forEach(si => {
+          if (si !== input) {
+            si.value = q;
+            if (si.closest('.search-bar')) si.closest('.search-bar').classList.add('has-query');
+          }
+        });
+        
+        if (typeof searchCatalog === 'function') {
+          searchCatalog(q);
+        }
+      } else {
+        // Navigate to shop.html with query
+        window.location.href = `shop.html?search=${encodeURIComponent(q)}`;
       }
     };
+
+    const renderSuggestions = (query) => {
+      if (!query || !query.trim()) {
+        closeDropdown();
+        return;
+      }
+
+      getAllProductsForSearchAsync().then(items => {
+        const matches = filterAndRankProducts(items, query);
+        if (matches.length > 0) {
+          const topMatches = matches.slice(0, 5);
+          dropdownList.innerHTML = topMatches.map(p => `
+            <li class="search-dropdown-item" data-product-id="${p.id}">
+              <img src="${p.image || 'images/logo.png'}" alt="${escapeSearchHtml(p.name)}" class="search-item-img" onerror="this.src='images/logo.png'">
+              <div class="search-item-info">
+                <div class="search-item-title">${highlightSearchMatch(p.name, query)}</div>
+                <div class="search-item-meta">
+                  <span class="search-item-category">${escapeSearchHtml(p.category || 'Card')}</span>
+                  <span>${escapeSearchHtml(p.condition || 'Raw')}</span>
+                </div>
+              </div>
+              <div class="search-item-price">$${parseFloat(p.price).toFixed(2)}</div>
+            </li>
+          `).join('');
+
+          dropdownFooter.style.display = 'flex';
+          dropdownFooter.innerHTML = `
+            <span style="color: var(--text-muted);">${matches.length} matching card${matches.length === 1 ? '' : 's'}</span>
+            <a class="search-view-all-btn">View all results →</a>
+          `;
+
+          dropdownList.querySelectorAll('.search-dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+              e.preventDefault();
+              const pid = item.dataset.productId;
+              if (pid) window.location.href = `product.html?id=${pid}`;
+            });
+          });
+
+          const viewAllBtn = dropdownFooter.querySelector('.search-view-all-btn');
+          if (viewAllBtn) {
+            viewAllBtn.addEventListener('click', (e) => {
+              e.preventDefault();
+              executeSearch(query);
+            });
+          }
+
+          dropdown.classList.add('active');
+        } else {
+          // Zero results empty state in dropdown with quick suggestion chips
+          dropdownList.innerHTML = `
+            <div class="search-dropdown-empty">
+              <p>No cards found for "<strong>${escapeSearchHtml(query)}</strong>"</p>
+              <div class="search-suggestions-chips">
+                <span class="search-chip" data-query="Pokemon">Pokémon</span>
+                <span class="search-chip" data-query="Charizard">Charizard</span>
+                <span class="search-chip" data-query="Booster Box">Booster Boxes</span>
+                <span class="search-chip" data-query="PSA 10">PSA 10</span>
+                <span class="search-chip" data-query="Yu-Gi-Oh">Yu-Gi-Oh!</span>
+                <span class="search-chip" data-query="Magic">Magic MTG</span>
+              </div>
+            </div>
+          `;
+          dropdownFooter.style.display = 'none';
+
+          dropdownList.querySelectorAll('.search-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+              e.preventDefault();
+              const chipQ = chip.dataset.query;
+              input.value = chipQ;
+              bar.classList.add('has-query');
+              executeSearch(chipQ);
+            });
+          });
+
+          dropdown.classList.add('active');
+        }
+      });
+    };
+
+    // Input event
+    input.addEventListener('input', () => {
+      const val = input.value;
+      if (val.trim()) {
+        bar.classList.add('has-query');
+      } else {
+        bar.classList.remove('has-query');
+      }
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        renderSuggestions(val.trim());
+      }, 140);
+    });
+
+    // Focus event
+    input.addEventListener('focus', () => {
+      if (input.value.trim()) {
+        renderSuggestions(input.value.trim());
+      }
+    });
+
+    // Keydown handler
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.keyCode === 13) {
+        e.preventDefault();
+        executeSearch();
+      } else if (e.key === 'Escape' || e.keyCode === 27) {
+        closeDropdown();
+      }
+    });
+
+    // Search Icon Click
+    const iconBtn = bar.querySelector('.search-icon-btn');
+    if (iconBtn) {
+      iconBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        executeSearch();
+      });
+    }
+
+    // Clear Button Click
+    clearBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      input.value = '';
+      bar.classList.remove('has-query');
+      closeDropdown();
+      input.focus();
+      if (document.getElementById('catalog-grid')) {
+        try { history.replaceState(null, '', 'shop.html'); } catch (err) {}
+        if (typeof filterCatalog === 'function') filterCatalog('All');
+      }
+    });
+  });
+
+  // Global click outside to dismiss all search dropdowns
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-bar')) {
+      document.querySelectorAll('.search-autocomplete-dropdown').forEach(dd => {
+        dd.classList.remove('active');
+      });
+    }
+  });
+
+  // Global Escape key to dismiss dropdowns
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      document.querySelectorAll('.search-autocomplete-dropdown').forEach(dd => {
+        dd.classList.remove('active');
+      });
+    }
   });
 }
 

@@ -320,6 +320,10 @@
       </nav>
 
       <div class="header-actions">
+        <div class="search-bar">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 14z"/></svg>
+          <input type="text" class="search-input" placeholder="Search cards...">
+        </div>
         <button class="icon-btn" id="auth-desktop-btn" aria-label="Sign In / Account">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -337,6 +341,33 @@
       </div>
     </div>
   </header>
+
+  <!-- Mobile Navigation Drawer Overlay -->
+  <div class="mobile-nav-overlay" id="mobile-nav-overlay"></div>
+  <div class="mobile-nav-drawer" id="mobile-nav-drawer">
+    <div class="mobile-drawer-header">
+      <div class="mobile-drawer-title">MILLION TCG</div>
+      <button type="button" class="close-drawer-btn" id="close-drawer-btn" aria-label="Close menu">✕</button>
+    </div>
+    <!-- Mobile Search Bar -->
+    <div class="mobile-drawer-search-wrapper">
+      <div class="search-bar">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 14z"/></svg>
+        <input type="text" class="search-input" placeholder="Search all cards...">
+      </div>
+    </div>
+    <div class="auth-drawer-section" id="auth-drawer-profile"></div>
+    <ul class="mobile-nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="shop.html">Shop All</a></li>
+      <li><a href="shop.html?category=Single Card">Single Cards</a></li>
+      <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
+      <li><a href="sell.html" style="color: #ffffff;">Sell Cards 🏷️</a></li>
+      <li><a href="how-it-works.html">How It Works</a></li>
+      <li><a href="track-order.html">Track Order</a></li>
+      <li><a href="contact-us.html">Contact Us</a></li>
+    </ul>
+  </div>
 
   <!-- Main Account Dashboard -->
   <main class="account-wrapper">
