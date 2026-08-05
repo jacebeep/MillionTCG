@@ -4125,10 +4125,136 @@ html, body {
 }
 
 /* ═══════════════════════════════════════
+   FEATURED TCG DROP - HORIZONTAL CAROUSEL (Desktop & Laptop)
+═══════════════════════════════════════ */
+.featured-drops-section {
+  position: relative;
+  max-width: 1340px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.featured-drop-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 26px;
+  gap: 20px;
+}
+
+.featured-drop-header .section-title {
+  margin-bottom: 6px;
+  text-align: left;
+}
+
+.featured-drop-header .section-subtitle {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.featured-scroll-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.scroll-arrow-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #14141c;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  user-select: none;
+}
+
+.scroll-arrow-btn:hover {
+  background: #20202c;
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #ffffff;
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 255, 255, 0.15);
+}
+
+.scroll-arrow-btn:active {
+  transform: scale(0.94);
+}
+
+/* Horizontal single-row scroll for Featured Drops on desktop */
+.featured-drop-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  scroll-padding: 0 8px;
+  gap: 24px !important;
+  padding: 10px 4px 26px 4px !important;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.24) rgba(255, 255, 255, 0.04);
+}
+
+.featured-drop-grid::-webkit-scrollbar {
+  height: 8px;
+}
+
+.featured-drop-grid::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  margin: 0 4px;
+}
+
+.featured-drop-grid::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.24);
+  border-radius: 10px;
+  transition: background 0.3s ease;
+}
+
+.featured-drop-grid::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #ff2d55, #a855f7, #3b82f6);
+}
+
+.featured-drop-grid .product-card-container {
+  flex: 0 0 270px !important;
+  width: 270px !important;
+  min-width: 270px !important;
+  max-width: 270px !important;
+  scroll-snap-align: start;
+  height: auto;
+}
+
+/* ═══════════════════════════════════════
    FEATURED TCG DROP & STORE CATALOG - COMPACT MOBILE 1-LINE HORIZONTAL SCROLL
-   (Active on phone / mobile only; desktop / laptop remains unchanged)
+   (Active on phone / mobile only)
 ═══════════════════════════════════════ */
 @media (max-width: 768px) {
+  .featured-scroll-controls {
+    display: none !important;
+  }
+
+  .featured-drop-header {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 4px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .featured-drop-header .section-title,
+  .featured-drop-header .section-subtitle {
+    text-align: center !important;
+  }
+
   #shop.products-section,
   .featured-drops-section,
   .catalog-products-section {

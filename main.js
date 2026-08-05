@@ -530,6 +530,77 @@ function _applyHomeGridMarkup(grid, community) {
       </div>
     `;
   }).join('');
+
+  setupFeaturedDropScroll();
+}
+
+function setupFeaturedDropScroll() {
+  const grid = document.querySelector('.featured-drop-grid');
+  const btnLeft = document.getElementById('featured-scroll-left');
+  const btnRight = document.getElementById('featured-scroll-right');
+
+  if (btnLeft && grid && !btnLeft.dataset.bound) {
+    btnLeft.dataset.bound = 'true';
+    btnLeft.addEventListener('click', (e) => {
+      e.preventDefault();
+      const scrollDist = grid.clientWidth * 0.75 || 540;
+      grid.scrollBy({ left: -scrollDist, behavior: 'smooth' });
+    });
+  }
+
+  if (btnRight && grid && !btnRight.dataset.bound) {
+    btnRight.dataset.bound = 'true';
+    btnRight.addEventListener('click', (e) => {
+      e.preventDefault();
+      const scrollDist = grid.clientWidth * 0.75 || 540;
+      grid.scrollBy({ left: scrollDist, behavior: 'smooth' });
+    });
+  }
+
+  if (grid && !grid.dataset.scrollInitialized) {
+    grid.dataset.scrollInitialized = 'true';
+
+    let isDown = false;
+    let startX;
+    let scrollLeft;
+    let hasMoved = false;
+
+    grid.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button') || e.target.closest('a')) return;
+      isDown = true;
+      hasMoved = false;
+      startX = e.pageX - grid.offsetLeft;
+      scrollLeft = grid.scrollLeft;
+      grid.style.cursor = 'grabbing';
+      grid.style.userSelect = 'none';
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!isDown) return;
+      isDown = false;
+      if (grid) {
+        grid.style.cursor = '';
+        grid.style.userSelect = '';
+      }
+    });
+
+    grid.addEventListener('mousemove', (e) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - grid.offsetLeft;
+      const walk = (x - startX) * 1.4;
+      if (Math.abs(walk) > 6) hasMoved = true;
+      grid.scrollLeft = scrollLeft - walk;
+    });
+
+    grid.addEventListener('click', (e) => {
+      if (hasMoved) {
+        e.preventDefault();
+        e.stopPropagation();
+        hasMoved = false;
+      }
+    }, true);
+  }
 }
 
 function startApp() {
@@ -538,6 +609,7 @@ function startApp() {
   try { setupSearch(); } catch (e) {}
   try { setupMobileMenu(); } catch (e) {}
   try { renderHomeProducts(); } catch (e) {}
+  try { setupFeaturedDropScroll(); } catch (e) {}
   try { initHeroMangaInteractive(); } catch (e) { console.error("3D init error:", e); }
   try { initSellerSystem(); } catch (e) {}
 }
