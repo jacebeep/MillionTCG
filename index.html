@@ -3,22 +3,89 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MillionTCG | Your Ultimate TCG Destination</title>
-  <meta name="description" content="MillionTCG - Collect, trade, and compete. Premier destination for trading card game booster packs, singles, and sealed products.">
-  <!-- Strip index.html from URL so iOS "Add to Home Screen" saves the clean link -->
+  <title>MillionTCG | Buy & Sell Pokémon, MTG, Yu-Gi-Oh Cards & Sealed Boxes</title>
+  
+  <!-- Primary SEO Meta Tags -->
+  <meta name="description" content="MillionTCG is the premier trading card marketplace. Buy and sell authentic Pokémon, Magic: The Gathering, Yu-Gi-Oh cards, PSA graded slabs, booster boxes, and rare singles with buyer protection and fast shipping.">
+  <meta name="keywords" content="MillionTCG, Million TCG, buy pokemon cards, sell pokemon cards, mtg cards, magic the gathering singles, yu-gi-oh cards, PSA graded cards, trading card marketplace, booster boxes, pokemon booster pack, tcg singles">
+  <meta name="author" content="MillionTCG">
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+  <link rel="canonical" href="https://milliontcg.com/">
+
+  <!-- Open Graph / Facebook / Discord Link Previews -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://milliontcg.com/">
+  <meta property="og:site_name" content="MillionTCG">
+  <meta property="og:title" content="MillionTCG | Buy & Sell Pokémon, MTG, Yu-Gi-Oh Cards & Sealed Boxes">
+  <meta property="og:description" content="Premier trading card marketplace. Buy and sell authentic Pokémon, MTG, and Yu-Gi-Oh cards, PSA slabs, and sealed booster boxes.">
+  <meta property="og:image" content="https://milliontcg.com/images/hero-banner.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://milliontcg.com/">
+  <meta name="twitter:title" content="MillionTCG | Premier Trading Card Marketplace">
+  <meta name="twitter:description" content="Buy and sell authentic Pokémon, MTG, and Yu-Gi-Oh cards, PSA slabs, and sealed booster boxes.">
+  <meta name="twitter:image" content="https://milliontcg.com/images/hero-banner.png">
+
+  <!-- Structured Data: Google Sitelinks Search Box & Organization Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": "https://milliontcg.com/#website",
+        "url": "https://milliontcg.com/",
+        "name": "MillionTCG",
+        "description": "Premier Trading Card Marketplace for Pokémon, MTG, and Yu-Gi-Oh cards and sealed products.",
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "https://milliontcg.com/shop.html?search={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        },
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "OnlineStore",
+        "@id": "https://milliontcg.com/#store",
+        "name": "MillionTCG",
+        "url": "https://milliontcg.com/",
+        "logo": "https://milliontcg.com/images/logo.png",
+        "image": "https://milliontcg.com/images/hero-banner.png",
+        "description": "Marketplace for authentic trading cards, singles, PSA slabs, and booster boxes.",
+        "priceRange": "$",
+        "currenciesAccepted": "USD",
+        "paymentAccepted": "Credit Card, Debit Card, PayPal, Apple Pay, Google Pay"
+      }
+    ]
+  }
+  </script>
+
+  <!-- Strip index.html from URL so iOS "Add to Home Screen" saves clean link -->
   <script>if(location.pathname.endsWith('/index.html'))history.replaceState(null,'',location.pathname.replace('/index.html','/')+location.search+location.hash);</script>
-  <!-- PWA -->
+  
+  <!-- PWA & Mobile Web App -->
   <link rel="manifest" href="manifest.json">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="MillionTCG">
   <meta name="theme-color" content="#0a0a0a">
+  <link rel="icon" type="image/png" href="images/logo.png">
   <link rel="apple-touch-icon" href="images/logo.png">
+
+  <!-- Preconnect & Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=2026_MASTER_AUTH">
+  
   <!-- Three.js 3D WebGL Engine -->
   <script src="js/three.min.js"></script>
 </head>
