@@ -303,14 +303,14 @@
         </svg>
       </button>
 
-      <a href="index.html" class="brand-logo">
+      <a href="/" class="brand-logo">
         <img src="images/logo.png" alt="MillionTCG Logo">
         <span class="brand-title">MILLION TCG</span>
       </a>
 
       <nav class="main-nav">
         <ul>
-          <li><a href="index.html" class="nav-link">Home</a></li>
+          <li><a href="/" class="nav-link">Home</a></li>
           <li><a href="shop.html" class="nav-link">Shop All</a></li>
           <li><a href="shop.html?category=Single Card" class="nav-link">Single Cards</a></li>
           <li><a href="shop.html?category=Sealed Product" class="nav-link">Sealed Boosters</a></li>
@@ -358,7 +358,7 @@
     </div>
     <div class="auth-drawer-section" id="auth-drawer-profile"></div>
     <ul class="mobile-nav-links">
-      <li><a href="index.html">Home</a></li>
+      <li><a href="/">Home</a></li>
       <li><a href="shop.html">Shop All</a></li>
       <li><a href="shop.html?category=Single Card">Single Cards</a></li>
       <li><a href="shop.html?category=Sealed Product">Sealed Boosters</a></li>
@@ -675,7 +675,7 @@
       // Sign Out
       document.getElementById('acc-signout-btn')?.addEventListener('click', () => {
         if (window.MillionAuth) window.MillionAuth.signOut();
-        window.location.href = 'index.html';
+        window.location.href = '/';
       });
 
       // Populate User Details
