@@ -36,7 +36,7 @@ async function run() {
     }
     // Trick Google Merchant Center into accepting Google Drive thumbnail URLs
     if (rawImg.includes('drive.google.com')) {
-      rawImg = rawImg.replace('thumbnail?id=', 'uc?export=download&id=') + '#.jpg';
+      rawImg = rawImg.replace('thumbnail?id=', 'uc?export=download&id=') + '&ext=.jpg';
     }
     const img = esc(rawImg);
     const price = parseFloat(p.price || 0).toFixed(2);
