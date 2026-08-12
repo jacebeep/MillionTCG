@@ -32,8 +32,11 @@ async function run() {
     const desc = esc(p.desc || `${p.condition || 'Raw'} Single Card - ${p.category || 'Trading Card'}`);
     let rawImg = (p.gallery && p.gallery[0]) || p.image || 'https://milliontcg.com/images/logo.png';
     if (!rawImg.startsWith('http')) {
-      // Strip leading slash if present
       rawImg = 'https://milliontcg.com/' + rawImg.replace(/^\//, '');
+    }
+    // Trick Google Merchant Center into accepting Google Drive thumbnail URLs
+    if (rawImg.includes('drive.google.com')) {
+      rawImg = rawImg.replace('thumbnail?id=', 'uc?export=download&id=') + '#.jpg';
     }
     const img = esc(rawImg);
     const price = parseFloat(p.price || 0).toFixed(2);
