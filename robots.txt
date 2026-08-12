@@ -6,6 +6,14 @@ Allow: /
 Disallow: /checkout.html
 Disallow: /account.html
 
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /checkout.html
+Disallow: /account.html
+
 # Disallow API or backend script paths if any
 Disallow: /backend_cloud_service.gs
 
