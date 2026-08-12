@@ -34,9 +34,13 @@ async function run() {
     if (!rawImg.startsWith('http')) {
       rawImg = 'https://milliontcg.com/' + rawImg.replace(/^\//, '');
     }
-    // Trick Google Merchant Center into accepting Google Drive thumbnail URLs
+    // Force Google Merchant Center to accept the image by proxying it as a pure JPEG
     if (rawImg.includes('drive.google.com')) {
-      rawImg = rawImg.replace('thumbnail?id=', 'uc?export=download&id=') + '&ext=.jpg';
+      const match = rawImg.match(/id=([a-zA-Z0-9_-]+)/);
+      if (match && match[1]) {
+        const driveUrl = 'https://drive.google.com/uc?export=download&id=' + match[1];
+        rawImg = 'https://wsrv.nl/?url=' + encodeURIComponent(driveUrl) + '&output=jpg';
+      }
     }
     const img = esc(rawImg);
     const price = parseFloat(p.price || 0).toFixed(2);
