@@ -153,22 +153,12 @@
         </div>
 
         <div class="form-group">
-          <label>Credit / Debit Card Number</label>
-          <input type="text" id="card-number" class="form-input" required placeholder="4532 •••• •••• 8892" maxlength="19">
+          <label>Credit / Debit Card</label>
+          <div id="stripe-card-element" style="background: var(--surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 14px 12px; font-size: 1rem;"></div>
+          <p id="card-errors" style="color: #ef4444; font-size: 0.8rem; margin-top: 8px; display: none;"></p>
         </div>
 
-        <div class="form-row">
-          <div class="form-group">
-            <label>Expiration Date (MM/YY)</label>
-            <input type="text" id="card-exp" class="form-input" required placeholder="12/28" maxlength="5">
-          </div>
-          <div class="form-group">
-            <label>CVC Security Code</label>
-            <input type="text" id="card-cvc" class="form-input" required placeholder="382" maxlength="4">
-          </div>
-        </div>
-
-        <button type="submit" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 18px; font-size: 1.1rem;">
+        <button type="submit" id="pay-btn" class="btn-primary" style="width: 100%; margin-top: 24px; padding: 18px; font-size: 1.1rem;">
           PAY WITH CARD & COMPLETE ORDER
         </button>
       </form>
@@ -248,25 +238,103 @@
     // Live Stripe Merchant Integration & Instant 10%/90% Payout Split Engine
     const STRIPE_PUBLISHABLE_KEY = 'pk_live_51TDIORB1XzBe5AxBgWxMMSOMcsdEzuRH27lXKfwXofSd0BBpDViKmPsFeDkUHN0fcq6IvbYbBLR8xSbyLziTiMKC005K4DvM7x';
     const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
+    const elements = stripe.elements();
+    let cardElement;
     let appliedDiscountAmount = 0;
 
     document.addEventListener('DOMContentLoaded', () => {
       renderCheckoutSummary();
 
+      // Mount Stripe Card Element (PCI-compliant iframe)
+      cardElement = elements.create('card', {
+        style: {
+          base: {
+            color: '#ffffff',
+            fontFamily: 'Inter, sans-serif',
+            fontSize: '16px',
+            '::placeholder': { color: '#6b7280' },
+            iconColor: '#9ca3af'
+          },
+          invalid: { color: '#ef4444', iconColor: '#ef4444' }
+        }
+      });
+      cardElement.mount('#stripe-card-element');
+
+      cardElement.on('change', (event) => {
+        const errEl = document.getElementById('card-errors');
+        if (event.error) {
+          errEl.textContent = event.error.message;
+          errEl.style.display = 'block';
+        } else {
+          errEl.style.display = 'none';
+        }
+      });
+
       const form = document.getElementById('checkout-form');
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.textContent = 'CHARGING CARD & ROUTING INSTANT 10%/90% SPLIT...';
-        submitBtn.disabled = true;
+
+        const payBtn = document.getElementById('pay-btn');
+        const errEl = document.getElementById('card-errors');
+        payBtn.textContent = 'PROCESSING PAYMENT...';
+        payBtn.disabled = true;
+        errEl.style.display = 'none';
 
         const grandTotal = getGrandTotal();
-        console.log(`Processing live payment of $${grandTotal} to MillionTCG account via Stripe key: ${STRIPE_PUBLISHABLE_KEY}`);
+        const amountCents = Math.round(parseFloat(grandTotal) * 100);
 
-        setTimeout(() => {
-          completeOrder();
-        }, 1200);
+        if (amountCents < 50) {
+          errEl.textContent = 'Your cart is empty or total is too low.';
+          errEl.style.display = 'block';
+          payBtn.textContent = 'PAY WITH CARD & COMPLETE ORDER';
+          payBtn.disabled = false;
+          return;
+        }
+
+        try {
+          // 1. Create Payment Intent on the server
+          const intentRes = await fetch('/.netlify/functions/create-payment-intent', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amountCents, currency: 'usd' })
+          });
+
+          const intentData = await intentRes.json();
+
+          if (!intentData.clientSecret) {
+            throw new Error(intentData.error || 'Could not initialize payment. Please try again.');
+          }
+
+          // 2. Confirm the card payment with Stripe
+          const cardholderName = document.getElementById('cardholder-name').value.trim();
+          const billingEmail = document.getElementById('checkout-email').value.trim();
+
+          const { error, paymentIntent } = await stripe.confirmCardPayment(intentData.clientSecret, {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                name: cardholderName,
+                email: billingEmail
+              }
+            }
+          });
+
+          if (error) {
+            throw new Error(error.message);
+          }
+
+          if (paymentIntent.status === 'succeeded') {
+            completeOrder();
+          } else {
+            throw new Error('Payment did not complete. Please try again.');
+          }
+
+        } catch (err) {
+          errEl.textContent = err.message;
+          errEl.style.display = 'block';
+          payBtn.textContent = 'PAY WITH CARD & COMPLETE ORDER';
+          payBtn.disabled = false;
+        }
       });
     });
 

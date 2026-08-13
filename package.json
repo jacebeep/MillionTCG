@@ -1,0 +1,8 @@
+{
+  "name": "milliontcg",
+  "version": "1.0.0",
+  "description": "MillionTCG Marketplace",
+  "dependencies": {
+    "stripe": "^14.0.0"
+  }
+}
