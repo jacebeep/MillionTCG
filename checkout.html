@@ -293,7 +293,7 @@
 
         try {
           // 1. Create Payment Intent on the server
-          const intentRes = await fetch('/.netlify/functions/create-payment-intent', {
+          const intentRes = await fetch('https://delightful-paletas-5a879f.netlify.app/.netlify/functions/create-payment-intent', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ amount: amountCents, currency: 'usd' })

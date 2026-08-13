@@ -1,9 +1,21 @@
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Content-Type': 'application/json'
+};
+
 exports.handler = async (event) => {
+  // Handle CORS preflight
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 200, headers: CORS_HEADERS, body: '' };
+  }
+
   // Only allow POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method Not Allowed' }) };
+    return { statusCode: 405, headers: CORS_HEADERS, body: JSON.stringify({ error: 'Method Not Allowed' }) };
   }
 
   try {
@@ -12,6 +24,7 @@ exports.handler = async (event) => {
     if (!amount || amount < 50) {
       return {
         statusCode: 400,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'Invalid amount. Minimum order is $0.50.' })
       };
     }
@@ -24,7 +37,7 @@ exports.handler = async (event) => {
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: CORS_HEADERS,
       body: JSON.stringify({ clientSecret: paymentIntent.client_secret })
     };
 
@@ -32,6 +45,7 @@ exports.handler = async (event) => {
     console.error('Stripe error:', err.message);
     return {
       statusCode: 500,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ error: err.message })
     };
   }
