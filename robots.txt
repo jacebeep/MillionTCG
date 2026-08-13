@@ -1,20 +1,18 @@
 # Robots.txt for MillionTCG (https://milliontcg.com)
 # Allow search engines to index public pages while protecting private user views
 
+User-agent: Googlebot
+Allow: /
+Disallow: /checkout.html
+Disallow: /account.html
+
+User-agent: Googlebot-Image
+Allow: /
+
 User-agent: *
 Allow: /
 Disallow: /checkout.html
 Disallow: /account.html
-
-User-agent: Googlebot
-Allow: /
-
-User-agent: Googlebot-Image
-Allow: /
-Disallow: /checkout.html
-Disallow: /account.html
-
-# Disallow API or backend script paths if any
 Disallow: /backend_cloud_service.gs
 
 # XML Sitemap location for Googlebot & all search crawlers
