@@ -2380,17 +2380,45 @@ function initSellerSystem() {
             <div class="my-listing-meta">${item.condition || 'Raw'} • ${categoryMeta}${franchiseMeta}</div>
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
-          <div style="display: flex; gap: 8px; align-items: center;">
-            <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View Listing</a>
-            <button type="button" class="btn-delete-listing" data-id="${item.id}">Remove</button>
+          <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View</a>
+            <button type="button" class="btn-edit-listing btn-secondary" data-id="${item.id}" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; white-space: nowrap;">Edit Price</button>
+            <button type="button" class="btn-delete-listing" data-id="${item.id}" style="white-space: nowrap;">Remove</button>
           </div>
         `;
+
+        row.querySelector('.btn-edit-listing').addEventListener('click', () => {
+          const newPrice = prompt(`Enter new price for "${item.title}" ($):`, item.price);
+          if (newPrice !== null) {
+            const parsed = parseFloat(newPrice);
+            if (!isNaN(parsed) && parsed >= 0.50) {
+              item.price = parsed.toFixed(2);
+              
+              dbPut(item);
+              const local = getLocalListingsCache();
+              const idx = local.findIndex(i => String(i.id) === String(item.id));
+              if (idx >= 0) {
+                local[idx] = item;
+                setLocalListingsCache(local);
+              }
+
+              syncListingToCloud(item).then(() => {
+                alert('Price updated successfully!');
+              });
+              
+              renderMyListings();
+              try { renderHomeProducts(); } catch(e){}
+            } else {
+              alert('Invalid price entered. Price must be at least $0.50.');
+            }
+          }
+        });
 
         row.querySelector('.btn-delete-listing').addEventListener('click', () => {
           if (!confirm(`Remove "${item.title}" from your listings?`)) return;
           deleteCommunityListing(item.id).then(() => {
             renderMyListings();
-            renderHomeProducts();
+            try { renderHomeProducts(); } catch(e){}
           }).catch(console.error);
         });
 
