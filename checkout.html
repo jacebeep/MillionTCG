@@ -349,6 +349,16 @@
       const adminCut = (grandTotal * 0.10).toFixed(2);
       const netPayout = (grandTotal - adminCut).toFixed(2);
 
+      // Extract buyer information early for seller orders
+      const first = (document.getElementById('checkout-first-name') ? document.getElementById('checkout-first-name').value : '').trim();
+      const last = (document.getElementById('checkout-last-name') ? document.getElementById('checkout-last-name').value : '').trim();
+      const buyerName = `${first} ${last}`.trim() || 'Guest Customer';
+      const buyerEmail = (document.getElementById('checkout-email') ? document.getElementById('checkout-email').value : '').trim() || 'Not specified';
+      const buyerAddr = (document.getElementById('checkout-address') ? document.getElementById('checkout-address').value : '').trim();
+      const buyerCity = (document.getElementById('checkout-city') ? document.getElementById('checkout-city').value : '').trim();
+      const buyerZip = (document.getElementById('checkout-zip') ? document.getElementById('checkout-zip').value : '').trim();
+      const fullAddress = [buyerAddr, buyerCity, buyerZip].filter(Boolean).join(', ') || 'Not specified';
+
       // Create Sold Order in Escrow for Seller Dashboard
       try {
         let soldOrders = JSON.parse(localStorage.getItem('milliontcg_sold_orders') || '[]');
@@ -366,6 +376,8 @@
             status: 'HELD_IN_ESCROW', // 10% to admin, 90% held in escrow for seller until delivered
             carrier: '',
             trackingNum: '',
+            buyerName: buyerName,
+            fullAddress: fullAddress,
             date: Date.now()
           });
         });
@@ -375,14 +387,6 @@
 
       // Direct Email Alert to Admin for Every Sale
       if (typeof window.sendDirectEmailNotification === 'function') {
-        const first = (document.getElementById('checkout-first-name') ? document.getElementById('checkout-first-name').value : '').trim();
-        const last = (document.getElementById('checkout-last-name') ? document.getElementById('checkout-last-name').value : '').trim();
-        const buyerName = `${first} ${last}`.trim() || 'Guest Customer';
-        const buyerEmail = (document.getElementById('checkout-email') ? document.getElementById('checkout-email').value : '').trim() || 'Not specified';
-        const buyerAddr = (document.getElementById('checkout-address') ? document.getElementById('checkout-address').value : '').trim();
-        const buyerCity = (document.getElementById('checkout-city') ? document.getElementById('checkout-city').value : '').trim();
-        const buyerZip = (document.getElementById('checkout-zip') ? document.getElementById('checkout-zip').value : '').trim();
-        const fullAddress = [buyerAddr, buyerCity, buyerZip].filter(Boolean).join(', ') || 'Not specified';
         const itemsSummary = currentCart.map(i => `${i.name} (x${i.quantity || 1}) - $${((i.price || 0) * (i.quantity || 1)).toFixed(2)}`).join(' | ');
 
         window.sendDirectEmailNotification('NEW SALE COMPLETED! 🛍️', {

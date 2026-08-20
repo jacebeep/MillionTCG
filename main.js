@@ -2488,6 +2488,11 @@ function renderSoldOrders() {
           <div class="sold-order-payout-text">
             Sale: $${gross.toFixed(2)} | Fee (10%): -$${fee.toFixed(2)} | <strong>Net Payout: $${net.toFixed(2)}</strong>
           </div>
+          ${order.buyerName && order.fullAddress && order.fullAddress !== 'Not specified' ? `
+          <div style="font-size: 0.85rem; color: #a1a1aa; margin-top: 6px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+            <strong style="color: #fff;">Ship To:</strong> ${order.buyerName}<br>
+            ${order.fullAddress}
+          </div>` : ''}
         </div>
       </div>
     `;
