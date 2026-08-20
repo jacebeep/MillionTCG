@@ -2443,115 +2443,124 @@ try {
 if (!soldOrders) soldOrders = [];
 
 function renderSoldOrders() {
-  const soldContainer = document.getElementById('sold-orders-list');
-  if (!soldContainer || !currentUser) return;
-  soldContainer.innerHTML = '';
+  if (!currentUser) return;
+
+  const containers = [
+    document.getElementById('sold-orders-list'),
+    document.getElementById('modal-sold-orders-list')
+  ].filter(Boolean);
+
+  if (containers.length === 0) return;
 
   const userSold = soldOrders.filter(order => order.sellerHandle === currentUser.handle || currentUser.handle === 'PokeVault');
 
-  if (userSold.length === 0) {
-    soldContainer.innerHTML = `
-      <div style="text-align: center; color: #888888; padding: 24px 16px;">
-        <div style="font-size: 1.8rem; margin-bottom: 6px;">🤝</div>
-        No pending sold orders. When a customer buys your card, the order will appear here for tracking upload!
-      </div>
-    `;
-    return;
-  }
+  containers.forEach(soldContainer => {
+    soldContainer.innerHTML = '';
 
-  userSold.forEach(order => {
-    const gross = parseFloat(order.price);
-    const fee = gross * 0.10;
-    const net = gross - fee;
-
-    const card = document.createElement('div');
-    card.className = 'sold-order-card';
-
-    let badgeHTML = '';
-    if (order.status === 'HELD_IN_ESCROW') {
-      badgeHTML = `<span class="escrow-badge escrow-badge-held">🔒 HELD IN ESCROW (Upload Tracking Required)</span>`;
-    } else if (order.status === 'IN_TRANSIT') {
-      badgeHTML = `<span class="escrow-badge escrow-badge-transit">📦 IN TRANSIT (${order.carrier}: ${order.trackingNum})</span>`;
-    } else {
-      badgeHTML = `<span class="escrow-badge escrow-badge-released">✅ DELIVERED • 90% PAYOUT RELEASED ($${net.toFixed(2)})</span>`;
-    }
-
-    card.innerHTML = `
-      <div class="sold-order-header">
-        <span class="order-id-tag">ORDER #${order.id}</span>
-        ${badgeHTML}
-      </div>
-      <div class="sold-order-body">
-        <img class="sold-order-img" src="${order.image}" alt="${order.itemTitle}">
-        <div class="sold-order-info">
-          <div class="sold-order-title">${order.itemTitle}</div>
-          <div class="sold-order-payout-text">
-            Sale: $${gross.toFixed(2)} | Fee (10%): -$${fee.toFixed(2)} | <strong>Net Payout: $${net.toFixed(2)}</strong>
-          </div>
-          ${order.buyerName && order.fullAddress && order.fullAddress !== 'Not specified' ? `
-          <div style="font-size: 0.85rem; color: #a1a1aa; margin-top: 6px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
-            <strong style="color: #fff;">Ship To:</strong> ${order.buyerName}<br>
-            ${order.fullAddress}
-          </div>` : ''}
+    if (userSold.length === 0) {
+      soldContainer.innerHTML = `
+        <div style="text-align: center; color: #888888; padding: 24px 16px;">
+          <div style="font-size: 1.8rem; margin-bottom: 6px;">🤝</div>
+          No pending sold orders. When a customer buys your card, the order will appear here for tracking upload!
         </div>
-      </div>
-    `;
-
-    // Render Action Form or Delivery Check Trigger
-    if (order.status === 'HELD_IN_ESCROW') {
-      const formDiv = document.createElement('div');
-      formDiv.className = 'tracking-input-form';
-      formDiv.innerHTML = `
-        <select class="carrier-select">
-          <option value="USPS">USPS Express</option>
-          <option value="UPS">UPS Ground</option>
-          <option value="FedEx">FedEx Home</option>
-          <option value="DHL">DHL Express</option>
-        </select>
-        <input type="text" class="tracking-num-input" placeholder="Enter Tracking Number (e.g. 94001112025...)" required>
-        <button class="btn-upload-tracking">Upload & Dispatch Package 📦</button>
       `;
-
-      formDiv.querySelector('.btn-upload-tracking').addEventListener('click', () => {
-        const carrier = formDiv.querySelector('.carrier-select').value;
-        const trackingNum = formDiv.querySelector('.tracking-num-input').value.trim();
-
-        if (!trackingNum) {
-          alert('Please enter a valid shipping tracking number.');
-          return;
-        }
-
-        order.carrier = carrier;
-        order.trackingNum = trackingNum;
-        order.status = 'IN_TRANSIT';
-        localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
-        renderSoldOrders();
-
-        alert(`📦 TRACKING UPLOADED! Package is marked IN TRANSIT via ${carrier} (${trackingNum}). Checking carrier delivery status...`);
-      });
-
-      card.appendChild(formDiv);
-    } else if (order.status === 'IN_TRANSIT') {
-      const deliveryCheckDiv = document.createElement('div');
-      deliveryCheckDiv.style.marginTop = '12px';
-      deliveryCheckDiv.innerHTML = `
-        <button class="btn-primary" style="padding: 8px 16px; font-size: 0.8rem;" id="check-delivery-${order.id}">
-          CHECK CARRIER DELIVERY STATUS (Simulate Delivery) 🚚
-        </button>
-      `;
-
-      deliveryCheckDiv.querySelector(`#check-delivery-${order.id}`).addEventListener('click', () => {
-        order.status = 'DELIVERED_RELEASED';
-        localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
-        renderSoldOrders();
-
-        alert(`🎉 CARRIER STATUS: DELIVERED! Delivery confirmed. MillionTCG Escrow has released 90% net funds ($${net.toFixed(2)}) directly to your linked payout account!`);
-      });
-
-      card.appendChild(deliveryCheckDiv);
+      return;
     }
 
-    soldContainer.appendChild(card);
+    userSold.forEach(order => {
+      const gross = parseFloat(order.price);
+      const fee = gross * 0.10;
+      const net = gross - fee;
+
+      const card = document.createElement('div');
+      card.className = 'sold-order-card';
+
+      let badgeHTML = '';
+      if (order.status === 'HELD_IN_ESCROW') {
+        badgeHTML = `<span class="escrow-badge escrow-badge-held">🔒 HELD IN ESCROW (Upload Tracking Required)</span>`;
+      } else if (order.status === 'IN_TRANSIT') {
+        badgeHTML = `<span class="escrow-badge escrow-badge-transit">📦 IN TRANSIT (${order.carrier}: ${order.trackingNum})</span>`;
+      } else {
+        badgeHTML = `<span class="escrow-badge escrow-badge-released">✅ DELIVERED • 90% PAYOUT RELEASED ($${net.toFixed(2)})</span>`;
+      }
+
+      card.innerHTML = `
+        <div class="sold-order-header">
+          <span class="order-id-tag">ORDER #${order.id}</span>
+          ${badgeHTML}
+        </div>
+        <div class="sold-order-body">
+          <img class="sold-order-img" src="${order.image}" alt="${order.itemTitle}">
+          <div class="sold-order-info">
+            <div class="sold-order-title">${order.itemTitle}</div>
+            <div class="sold-order-payout-text">
+              Sale: $${gross.toFixed(2)} | Fee (10%): -$${fee.toFixed(2)} | <strong>Net Payout: $${net.toFixed(2)}</strong>
+            </div>
+            ${order.buyerName && order.fullAddress && order.fullAddress !== 'Not specified' ? `
+            <div style="font-size: 0.85rem; color: #a1a1aa; margin-top: 6px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05);">
+              <strong style="color: #fff;">Ship To:</strong> ${order.buyerName}<br>
+              ${order.fullAddress}
+            </div>` : ''}
+          </div>
+        </div>
+      `;
+
+      // Render Action Form or Delivery Check Trigger
+      if (order.status === 'HELD_IN_ESCROW') {
+        const formDiv = document.createElement('div');
+        formDiv.className = 'tracking-input-form';
+        formDiv.innerHTML = `
+          <select class="carrier-select">
+            <option value="USPS">USPS Express</option>
+            <option value="UPS">UPS Ground</option>
+            <option value="FedEx">FedEx Home</option>
+            <option value="DHL">DHL Express</option>
+          </select>
+          <input type="text" class="tracking-num-input" placeholder="Enter Tracking Number (e.g. 94001112025...)" required>
+          <button class="btn-upload-tracking">Upload & Dispatch Package 📦</button>
+        `;
+
+        formDiv.querySelector('.btn-upload-tracking').addEventListener('click', () => {
+          const carrier = formDiv.querySelector('.carrier-select').value;
+          const trackingNum = formDiv.querySelector('.tracking-num-input').value.trim();
+
+          if (!trackingNum) {
+            alert('Please enter a valid shipping tracking number.');
+            return;
+          }
+
+          order.carrier = carrier;
+          order.trackingNum = trackingNum;
+          order.status = 'IN_TRANSIT';
+          localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
+          renderSoldOrders();
+
+          alert(`📦 TRACKING UPLOADED! Package is marked IN TRANSIT via ${carrier} (${trackingNum}). Checking carrier delivery status...`);
+        });
+
+        card.appendChild(formDiv);
+      } else if (order.status === 'IN_TRANSIT') {
+        const deliveryCheckDiv = document.createElement('div');
+        deliveryCheckDiv.style.marginTop = '12px';
+        deliveryCheckDiv.innerHTML = `
+          <button class="btn-primary" style="padding: 8px 16px; font-size: 0.8rem;" id="check-delivery-${order.id}">
+            CHECK CARRIER DELIVERY STATUS (Simulate Delivery) 🚚
+          </button>
+        `;
+
+        deliveryCheckDiv.querySelector(`#check-delivery-${order.id}`).addEventListener('click', () => {
+          order.status = 'DELIVERED_RELEASED';
+          localStorage.setItem('milliontcg_sold_orders', JSON.stringify(soldOrders));
+          renderSoldOrders();
+
+          alert(`🎉 CARRIER STATUS: DELIVERED! Delivery confirmed. MillionTCG Escrow has released 90% net funds ($${net.toFixed(2)}) directly to your linked payout account!`);
+        });
+
+        card.appendChild(deliveryCheckDiv);
+      }
+
+      soldContainer.appendChild(card);
+    });
   });
 }
 

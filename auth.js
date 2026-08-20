@@ -642,6 +642,7 @@
     if (user) {
       tabsContainer.innerHTML = `
         <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">👤 Profile & Shipping</button>
+        <button class="auth-tab-btn ${currentTab === 'orders' ? 'active' : ''}" data-tab="orders">📦 Orders & History</button>
         <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">🏦 Banking & Payouts</button>
         <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Store Settings</button>
         <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
@@ -723,7 +724,7 @@
     renderModalTabs(tab);
     clearErrors();
 
-    const panels = ['signin', 'signup', 'verify', 'profile', 'banking', 'settings', 'colors'];
+    const panels = ['signin', 'signup', 'verify', 'profile', 'orders', 'banking', 'settings', 'colors'];
     panels.forEach(p => {
       const el = document.getElementById(`auth-${p}-panel`);
       if (el) el.style.display = tab === p ? 'flex' : 'none';
@@ -742,6 +743,7 @@
     if (tab === 'profile') populateProfilePanel();
     if (tab === 'banking') populateBankingPanel();
     if (tab === 'colors') populateColorsPanel();
+    if (tab === 'orders' && typeof renderSoldOrders === 'function') renderSoldOrders();
   }
 
   function openAuthModal(tab) {
@@ -873,6 +875,14 @@
             </div>
           </div>
           <button class="auth-submit-btn" id="profile-save-btn" style="width:100%;padding:16px;font-size:1rem;font-weight:800;">Save Profile Changes</button>
+        </div>
+
+        <!-- Orders & History Panel -->
+        <div id="auth-orders-panel" class="auth-panel" style="display:none;width:100%;max-height:400px;overflow-y:auto;">
+          <p class="auth-panel-sub" style="margin-bottom:18px;">View your past card orders and delivery status.</p>
+          <div id="modal-sold-orders-list">
+            <!-- Will be populated by main.js, or we can just give it the ID sold-orders-list -->
+          </div>
         </div>
 
         <!-- Banking & Payouts Panel -->
