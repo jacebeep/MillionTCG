@@ -727,9 +727,9 @@
 
   function openAuthModal(tab) {
     const user = getCurrentUser();
-    // If logged in, go to the full account dashboard instead of modal
+    // If logged in, go directly to the account dashboard (banking tab by default)
     if (user && !['signin', 'signup', 'verify'].includes(tab)) {
-      const dest = tab ? `account.html?tab=${tab}` : 'account.html';
+      const dest = tab ? `account.html?tab=${tab}` : 'account.html?tab=banking';
       window.location.href = dest;
       return;
     }
