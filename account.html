@@ -406,6 +406,11 @@
           <span class="icon">🔔</span>
           <span>Notification Preferences</span>
         </button>
+        <!-- Admin-only: hidden by default, shown via JS for tcgmillion@gmail.com -->
+        <button class="account-nav-btn" data-panel="admin-orders" id="admin-orders-nav-btn" style="display:none; color:#eab308;">
+          <span class="icon">📊</span>
+          <span>Admin Orders</span>
+        </button>
         <button class="account-nav-btn" id="acc-signout-btn" style="color:#ef4444;margin-top:16px;">
           <span class="icon">🚪</span>
           <span>Sign Out</span>
@@ -610,6 +615,32 @@
           </label>
         </div>
       </div>
+
+      <!-- 7. Admin Orders Panel (tcgmillion@gmail.com only) -->
+      <div id="panel-admin-orders" class="account-panel" style="display:none;">
+        <div class="panel-header">
+          <h1 class="panel-title">📊 Admin Orders Dashboard</h1>
+          <p class="panel-sub">All customer orders across the marketplace — buyer name, shipping address, items, and totals.</p>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center; margin-bottom:24px; flex-wrap:wrap;">
+          <button id="admin-refresh-orders-btn" class="save-btn" style="margin-top:0; padding:12px 24px; font-size:0.9rem;">
+            🔄 Refresh Orders
+          </button>
+          <input type="text" id="admin-orders-search" class="form-group" placeholder="🔍 Search by buyer name, order ID, or item..." 
+            style="flex:1; min-width:200px; background:#1a1a1e; border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px 16px; color:#fff; font-size:0.9rem; outline:none; font-family:inherit;">
+        </div>
+
+        <div id="admin-orders-status" style="text-align:center; color:#a1a1aa; font-size:0.9rem; padding:12px 0; display:none;">
+          Loading orders...
+        </div>
+
+        <div id="admin-orders-list">
+          <div style="text-align:center; color:#a1a1aa; padding:40px 20px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.08); border-radius:12px;">
+            Click "Refresh Orders" to load all orders from the cloud.
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -642,17 +673,24 @@
   <script src="main.js?v=2026_ADDRESS_UPDATE"></script>
   <script src="auth.js?v=2026_MASTER_AUTH"></script>
   <script>
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec';
+    const ADMIN_EMAIL = 'tcgmillion@gmail.com';
+    const ADMIN_ORDERS_KEY = 'MTCG_ADMIN_2026';
+
     document.addEventListener('DOMContentLoaded', () => {
-      // Check auth status
       const user = window.MillionAuth ? window.MillionAuth.getCurrentUser() : null;
       if (!user) {
-        // Prompt to sign in if not logged in
         if (window.MillionAuth) window.MillionAuth.openAuthModal('signin');
       } else {
         populateAccountPage(user);
+        // Show admin nav button for admin account
+        if (user.email && user.email.toLowerCase() === ADMIN_EMAIL) {
+          const adminBtn = document.getElementById('admin-orders-nav-btn');
+          if (adminBtn) adminBtn.style.display = 'flex';
+        }
       }
 
-      // Tab Navigation
+      // Tab Navigation — includes admin-orders panel
       const navBtns = document.querySelectorAll('.account-nav-btn[data-panel]');
       const panels = document.querySelectorAll('.account-panel');
 
@@ -661,6 +699,9 @@
         panels.forEach(panel => {
           panel.style.display = panel.id === `panel-${targetPanel}` ? 'block' : 'none';
         });
+        if (targetPanel === 'admin-orders') {
+          loadAdminOrders();
+        }
       }
 
       navBtns.forEach(btn => {
@@ -670,7 +711,12 @@
       // Handle URL Query tab (e.g. account.html?tab=banking)
       const urlParams = new URLSearchParams(window.location.search);
       const tabParam = urlParams.get('tab');
-      if (tabParam) switchPanel(tabParam);
+      if (tabParam) {
+        switchPanel(tabParam);
+      } else {
+        // Default to Profile panel
+        switchPanel('profile');
+      }
 
       // Sign Out
       document.getElementById('acc-signout-btn')?.addEventListener('click', () => {
@@ -684,7 +730,6 @@
         document.getElementById('acc-user-email').textContent = u.email;
         document.getElementById('acc-avatar-initial').textContent = (u.displayName || u.email).slice(0, 1).toUpperCase();
 
-        // Profile Fields
         document.getElementById('acc-display-name').value = u.displayName || '';
         document.getElementById('acc-email').value = u.email;
         if (document.getElementById('acc-phone')) document.getElementById('acc-phone').value = u.phone || '';
@@ -694,7 +739,6 @@
         if (document.getElementById('acc-state')) document.getElementById('acc-state').value = u.state || '';
         document.getElementById('acc-zip').value = u.zip || '';
 
-        // Banking & Payout Fields
         if (document.getElementById('acc-payout-email')) document.getElementById('acc-payout-email').value = u.payoutEmail || u.email || '';
         if (document.getElementById('acc-payout-method') && u.payoutMethod) document.getElementById('acc-payout-method').value = u.payoutMethod;
         if (document.getElementById('acc-payout-name')) document.getElementById('acc-payout-name').value = u.payoutName || u.displayName || '';
@@ -759,21 +803,14 @@
         const newPass = document.getElementById('acc-new-pass').value;
         const confirmPass = document.getElementById('acc-confirm-pass').value;
 
-        if (!newPass || newPass.length < 6) {
-          alert('Password must be at least 6 characters long.');
-          return;
-        }
-        if (newPass !== confirmPass) {
-          alert('Passwords do not match. Please verify and try again.');
-          return;
-        }
+        if (!newPass || newPass.length < 6) { alert('Password must be at least 6 characters long.'); return; }
+        if (newPass !== confirmPass) { alert('Passwords do not match.'); return; }
 
         if (btn) { btn.disabled = true; btn.textContent = 'Updating Password...'; }
-
         if (window.MillionAuth) {
           const res = await window.MillionAuth.updateProfile({ newPassword: newPass });
           if (res.ok) {
-            alert('✅ Password updated successfully across all devices!');
+            alert('✅ Password updated successfully!');
             document.getElementById('acc-new-pass').value = '';
             document.getElementById('acc-confirm-pass').value = '';
           } else {
@@ -783,7 +820,7 @@
         if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
       });
 
-      // 3D Stage Color Customizer Live Preview
+      // 3D Stage Color Customizer
       const picker = document.getElementById('page-stage-color-picker');
       const preview = document.getElementById('stage-color-preview');
       const currentBg = localStorage.getItem('mtcg_stage_bg_color') || '#141416';
@@ -791,20 +828,113 @@
       if (picker && preview) {
         picker.value = currentBg;
         preview.style.backgroundColor = currentBg;
-
         picker.addEventListener('input', () => {
           preview.style.backgroundColor = picker.value;
-          if (window.set3DStageBackgroundColor) {
-            window.set3DStageBackgroundColor(picker.value);
-          }
+          if (window.set3DStageBackgroundColor) window.set3DStageBackgroundColor(picker.value);
         });
       }
 
       document.getElementById('apply-stage-color-btn')?.addEventListener('click', () => {
         if (picker && window.set3DStageBackgroundColor) {
           window.set3DStageBackgroundColor(picker.value);
+          localStorage.setItem('mtcg_stage_bg_color', picker.value);
           alert('🎨 3D Stage background color applied successfully!');
         }
+      });
+
+      // ─── Admin Orders Dashboard ───────────────────────────────────────
+      let allAdminOrders = [];
+
+      async function loadAdminOrders() {
+        const listEl = document.getElementById('admin-orders-list');
+        const statusEl = document.getElementById('admin-orders-status');
+        if (!listEl) return;
+
+        statusEl.style.display = 'block';
+        statusEl.textContent = '⏳ Loading orders from cloud...';
+
+        try {
+          const url = `${GOOGLE_SCRIPT_URL}?action=getOrders&adminKey=${ADMIN_ORDERS_KEY}`;
+          const res = await fetch(url);
+          const data = await res.json();
+
+          if (!data.ok) throw new Error(data.error || 'Failed to fetch orders');
+
+          allAdminOrders = data.orders || [];
+          statusEl.style.display = 'none';
+          renderAdminOrders(allAdminOrders);
+        } catch (err) {
+          statusEl.textContent = '❌ Error loading orders: ' + err.message;
+          statusEl.style.color = '#ef4444';
+        }
+      }
+
+      function renderAdminOrders(orders) {
+        const listEl = document.getElementById('admin-orders-list');
+        if (!listEl) return;
+
+        if (orders.length === 0) {
+          listEl.innerHTML = `<div style="text-align:center; color:#a1a1aa; padding:40px 20px; background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.08); border-radius:12px;">No orders found yet. Orders will appear here after customers complete checkout.</div>`;
+          return;
+        }
+
+        listEl.innerHTML = orders.map(o => {
+          const date = o.date ? new Date(o.date).toLocaleString() : 'Unknown';
+          const statusColor = o.status === 'DELIVERED_RELEASED' ? '#4ade80' : o.status === 'IN_TRANSIT' ? '#60a5fa' : '#eab308';
+          const statusLabel = o.status === 'DELIVERED_RELEASED' ? '✅ Delivered' : o.status === 'IN_TRANSIT' ? `📦 In Transit (${o.carrier || ''} ${o.trackingNum || ''})` : '🔒 Awaiting Shipment';
+          const itemsSummary = o.items
+            ? o.items.map(i => `${i.name} x${i.quantity || 1} ($${((i.price || 0) * (i.quantity || 1)).toFixed(2)})`).join(', ')
+            : (o.itemTitle || 'N/A');
+
+          return `
+            <div class="order-card" style="margin-bottom:16px;">
+              <div class="order-header">
+                <span class="order-id">📋 ${o.id}</span>
+                <span style="font-size:0.8rem; color:#a1a1aa;">${date}</span>
+                <span style="background:rgba(234,179,8,0.12); color:${statusColor}; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:700;">${statusLabel}</span>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:12px; font-size:0.9rem;">
+                <div>
+                  <div style="color:#a1a1aa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Buyer</div>
+                  <div style="color:#fff; font-weight:600;">${o.buyerName || 'N/A'}</div>
+                  <div style="color:#a1a1aa; font-size:0.85rem;">${o.buyerEmail || ''}</div>
+                </div>
+                <div>
+                  <div style="color:#a1a1aa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Ship To 📍</div>
+                  <div style="color:#fff; font-weight:600; font-family:monospace; background:rgba(255,255,255,0.04); padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.08); cursor:pointer;" title="Click to copy" onclick="navigator.clipboard.writeText('${(o.fullAddress || '').replace(/'/g, "\\'")}').then(()=>alert('📋 Address copied!'))">
+                    ${o.fullAddress || 'Not specified'}
+                  </div>
+                </div>
+                <div>
+                  <div style="color:#a1a1aa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Items Purchased</div>
+                  <div style="color:#e4e4e7;">${itemsSummary}</div>
+                </div>
+                <div>
+                  <div style="color:#a1a1aa; font-size:0.75rem; font-weight:700; text-transform:uppercase; margin-bottom:4px;">Total</div>
+                  <div style="color:#4ade80; font-weight:800; font-size:1.1rem;">$${parseFloat(o.total || o.price || 0).toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Refresh button
+      document.getElementById('admin-refresh-orders-btn')?.addEventListener('click', loadAdminOrders);
+
+      // Search filter
+      document.getElementById('admin-orders-search')?.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!q) { renderAdminOrders(allAdminOrders); return; }
+        const filtered = allAdminOrders.filter(o =>
+          (o.id || '').toLowerCase().includes(q) ||
+          (o.buyerName || '').toLowerCase().includes(q) ||
+          (o.buyerEmail || '').toLowerCase().includes(q) ||
+          (o.fullAddress || '').toLowerCase().includes(q) ||
+          (o.itemTitle || '').toLowerCase().includes(q) ||
+          (o.items || []).some(i => (i.name || '').toLowerCase().includes(q))
+        );
+        renderAdminOrders(filtered);
       });
     });
   </script>

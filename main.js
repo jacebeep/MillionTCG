@@ -50,7 +50,7 @@ const DEFAULT_COMMUNITY_LISTINGS = [];
 const DB_NAME = 'milliontcg_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'listings';
-const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyKJ6ITmwaUHQfIHhX4WmTjk8l-Sbr6J7N43vegxjglLI9N3E_70Ao9i3Hvl8kcwXOi/exec';
+const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec';
 
 // Clean Slate Migration: wipe all old mock products & corrupted local records
 try {

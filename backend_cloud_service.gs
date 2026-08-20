@@ -60,6 +60,18 @@ function doGet(e) {
     }
   }
 
+  if (action === 'getOrders') {
+    var adminKey = (e && e.parameter && e.parameter.adminKey) ? e.parameter.adminKey : '';
+    if (adminKey !== 'MTCG_ADMIN_2026') return jsonResponse({ ok: false, error: 'Unauthorized' });
+    try {
+      var raw = scriptProps.getProperty('mtcg_orders');
+      var orders = raw ? JSON.parse(raw) : [];
+      return jsonResponse({ ok: true, orders: orders });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString(), orders: [] });
+    }
+  }
+
   return jsonResponse({ ok: true, status: 'MillionTCG Cloud Marketplace & Auth Engine Active 🚀' });
 }
 
@@ -227,6 +239,26 @@ function doPost(e) {
         '</div>'
       });
       return jsonResponse({ ok: true, message: 'Verification email sent' });
+    } catch (err) {
+      return jsonResponse({ ok: false, error: err.toString() });
+    }
+  }
+
+  // 5. Save Order to Cloud (called after every completed checkout)
+  if (action === 'saveOrder') {
+    var order = payload.order;
+    if (!order || !order.id) return jsonResponse({ ok: false, error: 'Order with ID required' });
+
+    try {
+      var rawOrders = scriptProps.getProperty('mtcg_orders');
+      var orders = rawOrders ? JSON.parse(rawOrders) : [];
+      // Remove any duplicate if the same order ID is re-sent
+      orders = orders.filter(function(o) { return String(o.id) !== String(order.id); });
+      orders.unshift(order);
+      // Limit to 500 most recent orders
+      if (orders.length > 500) orders = orders.slice(0, 500);
+      scriptProps.setProperty('mtcg_orders', JSON.stringify(orders));
+      return jsonResponse({ ok: true, message: 'Order saved to cloud', orderId: order.id });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString() });
     }

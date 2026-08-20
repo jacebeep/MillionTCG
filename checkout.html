@@ -401,6 +401,26 @@
         });
       }
 
+      // Save order to cloud backend so admin can view it in the Orders Dashboard
+      try {
+        const cloudOrderId = `MTCG-${Math.floor(100000 + Math.random() * 900000)}`;
+        const cloudOrder = {
+          id: cloudOrderId,
+          date: Date.now(),
+          buyerName: buyerName,
+          buyerEmail: buyerEmail,
+          fullAddress: fullAddress,
+          items: currentCart.map(i => ({ name: i.name, price: i.price, quantity: i.quantity || 1, image: i.image })),
+          total: grandTotal.toFixed(2),
+          status: 'HELD_IN_ESCROW'
+        };
+        fetch('https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'saveOrder', order: cloudOrder })
+        }).catch(err => console.warn('Cloud order save failed (non-critical):', err));
+      } catch(e) { console.warn('Cloud order save error:', e); }
+
       const splitLogBox = document.getElementById('instant-payout-split-log');
       if (splitLogBox) {
         splitLogBox.innerHTML = `

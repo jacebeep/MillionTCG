@@ -1,7 +1,7 @@
 /**
  * MillionTCG Multi-Device Auth & Account Management Engine
  * Primary Business Email: tcgmillion@gmail.com
- * Google Apps Script Cloud Engine: https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec
+ * Google Apps Script Cloud Engine: https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec
  */
 
 (function () {
@@ -10,8 +10,7 @@
   const MAIN_BUSINESS_EMAIL = 'tcgmillion@gmail.com';
   const WEB3FORMS_KEY = '5979c3fb-2a54-469b-980b-04ff57d42cf3';
   const GOOGLE_SCRIPT_URLS = [
-    'https://script.google.com/macros/s/AKfycbyKJ6ITmwaUHQfIHhX4WmTjk8l-Sbr6J7N43vegxjglLI9N3E_70Ao9i3Hvl8kcwXOi/exec',
-    'https://script.google.com/macros/s/AKfycby5NrrYtTyusk5os4Tv5N6c7ZGjEvax_rddc3CaVzkr4dUvDpb4VltWFfpeRzEe1dDDBw/exec'
+    'https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec'
   ];
   const GOOGLE_SCRIPT_URL = GOOGLE_SCRIPT_URLS[0];
 
@@ -638,26 +637,15 @@
     const tabsContainer = document.getElementById('auth-tabs');
     if (!tabsContainer) return;
 
-    const user = getCurrentUser();
-    if (user) {
+    if (currentTab === 'verify') {
       tabsContainer.innerHTML = `
-        <button class="auth-tab-btn ${currentTab === 'profile' ? 'active' : ''}" data-tab="profile">👤 Profile & Shipping</button>
-        <button class="auth-tab-btn ${currentTab === 'orders' ? 'active' : ''}" data-tab="orders">📦 Orders & History</button>
-        <button class="auth-tab-btn ${currentTab === 'banking' ? 'active' : ''}" data-tab="banking">🏦 Banking & Payouts</button>
-        <button class="auth-tab-btn ${currentTab === 'settings' ? 'active' : ''}" data-tab="settings">⚙️ Store Settings</button>
-        <button class="auth-tab-btn ${currentTab === 'colors' ? 'active' : ''}" data-tab="colors">🎨 3D Stage Color</button>
+        <button class="auth-tab-btn active" data-tab="verify">🔐 Verification Code</button>
       `;
     } else {
-      if (currentTab === 'verify') {
-        tabsContainer.innerHTML = `
-          <button class="auth-tab-btn active" data-tab="verify">🔐 Verification Code</button>
-        `;
-      } else {
-        tabsContainer.innerHTML = `
-          <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
-          <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
-        `;
-      }
+      tabsContainer.innerHTML = `
+        <button class="auth-tab-btn ${currentTab === 'signin' ? 'active' : ''}" data-tab="signin">Sign In</button>
+        <button class="auth-tab-btn ${currentTab === 'signup' ? 'active' : ''}" data-tab="signup">Create Account</button>
+      `;
     }
 
     tabsContainer.querySelectorAll('.auth-tab-btn').forEach(btn => {
@@ -714,17 +702,13 @@
   }
 
   function switchTab(tab) {
-    const user = getCurrentUser();
-    if (user) {
-      if (['signin', 'signup', 'verify'].includes(tab)) tab = 'profile';
-    } else {
-      if (!['signin', 'signup', 'verify'].includes(tab)) tab = 'signin';
-    }
+    // Only handle auth flows in the modal (signin/signup/verify)
+    if (!['signin', 'signup', 'verify'].includes(tab)) tab = 'signin';
 
     renderModalTabs(tab);
     clearErrors();
 
-    const panels = ['signin', 'signup', 'verify', 'profile', 'orders', 'banking', 'settings', 'colors'];
+    const panels = ['signin', 'signup', 'verify'];
     panels.forEach(p => {
       const el = document.getElementById(`auth-${p}-panel`);
       if (el) el.style.display = tab === p ? 'flex' : 'none';
@@ -739,20 +723,22 @@
         setTimeout(() => codeInput.focus(), 150);
       }
     }
-
-    if (tab === 'profile') populateProfilePanel();
-    if (tab === 'banking') populateBankingPanel();
-    if (tab === 'colors') populateColorsPanel();
-    if (tab === 'orders' && typeof renderSoldOrders === 'function') renderSoldOrders();
   }
 
   function openAuthModal(tab) {
+    const user = getCurrentUser();
+    // If logged in, go to the full account dashboard instead of modal
+    if (user && !['signin', 'signup', 'verify'].includes(tab)) {
+      const dest = tab ? `account.html?tab=${tab}` : 'account.html';
+      window.location.href = dest;
+      return;
+    }
     let modal = document.getElementById('auth-modal');
     if (!modal) {
       modal = buildModal();
       document.body.appendChild(modal);
     }
-    const defaultTab = getCurrentUser() ? 'profile' : 'signin';
+    const defaultTab = user ? 'signin' : 'signin';
     switchTab(tab || defaultTab);
     modal.classList.add('active');
   }
