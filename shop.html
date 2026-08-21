@@ -332,8 +332,7 @@
               <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
             </svg>
             <h3>No Cards Found</h3>
-            <p>${activeQuery ? 
-o cards or products matched "<strong>${typeof escapeSearchHtml === 'function' ? escapeSearchHtml(activeQuery) : activeQuery}</strong>".` : 'No products available in this selection.'}</p>
+            <p>${activeQuery ? `No cards or products matched "<strong>${typeof escapeSearchHtml === 'function' ? escapeSearchHtml(activeQuery) : activeQuery}</strong>".` : 'No products available in this selection.'}</p>
             <div class="search-suggestions-chips" style="margin-bottom: 18px;">
               <span class="search-chip" onclick="executeCatalogQuickSearch('Pokemon')">⚡ Pokémon</span>
               <span class="search-chip" onclick="executeCatalogQuickSearch('Charizard')">🔥 Charizard</span>
