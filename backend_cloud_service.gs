@@ -130,47 +130,54 @@ function doPost(e) {
         });
       }
 
-      var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
-      var listings = rawListings ? JSON.parse(rawListings) : [];
-      
-      // Update existing or prepend new
-      var existingIdx = -1;
-      for (var i = 0; i < listings.length; i++) {
-        if (String(listings[i].id) === String(newListing.id)) {
-          existingIdx = i;
-          break;
-        }
-      }
-
-      if (existingIdx >= 0) {
-        listings[existingIdx] = newListing;
-      } else {
-        listings.unshift(newListing);
-      }
-
-      // Limit cloud store to most recent 200 items to avoid quota caps
-      if (listings.length > 200) listings = listings.slice(0, 200);
+      var lock = LockService.getScriptLock();
+      lock.waitLock(15000); // Wait up to 15 seconds for a lock
 
       try {
-        scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
-      } catch (propErr) {
-        try {
-          // If master list is too large, store each listing in individual property
-          scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
-          var ids = listings.map(function(item) { return String(item.id); });
-          scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
-        } catch (innerErr) {
-          // If STILL too large (e.g. 9KB property limit hit due to base64 images), strip the heavy base64 strings
-          if (newListing.image && newListing.image.indexOf('data:image') === 0) newListing.image = 'images/logo.png';
-          if (newListing.gallery) newListing.gallery = ['images/logo.png'];
-          scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
-          
-          if (existingIdx >= 0) listings[existingIdx] = newListing;
-          else listings[0] = newListing;
-          
-          var ids = listings.map(function(item) { return String(item.id); });
-          scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+        var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
+        var listings = rawListings ? JSON.parse(rawListings) : [];
+        
+        // Update existing or prepend new
+        var existingIdx = -1;
+        for (var i = 0; i < listings.length; i++) {
+          if (String(listings[i].id) === String(newListing.id)) {
+            existingIdx = i;
+            break;
+          }
         }
+
+        if (existingIdx >= 0) {
+          listings[existingIdx] = newListing;
+        } else {
+          listings.unshift(newListing);
+        }
+
+        // Limit cloud store to most recent 200 items to avoid quota caps
+        if (listings.length > 200) listings = listings.slice(0, 200);
+
+        try {
+          scriptProps.setProperty('mtcg_cloud_listings', JSON.stringify(listings));
+        } catch (propErr) {
+          try {
+            // If master list is too large, store each listing in individual property
+            scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
+            var ids = listings.map(function(item) { return String(item.id); });
+            scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+          } catch (innerErr) {
+            // If STILL too large, strip the heavy base64 strings
+            if (newListing.image && newListing.image.indexOf('data:image') === 0) newListing.image = 'images/logo.png';
+            if (newListing.gallery) newListing.gallery = ['images/logo.png'];
+            scriptProps.setProperty('listing_' + newListing.id, JSON.stringify(newListing));
+            
+            if (existingIdx >= 0) listings[existingIdx] = newListing;
+            else listings[0] = newListing;
+            
+            var ids = listings.map(function(item) { return String(item.id); });
+            scriptProps.setProperty('mtcg_listing_ids', JSON.stringify(ids));
+          }
+        }
+      } finally {
+        lock.releaseLock();
       }
 
       return jsonResponse({ ok: true, message: 'Listing saved to Cloud Marketplace!', listing: newListing });
@@ -184,6 +191,8 @@ function doPost(e) {
     var idToDelete = payload.id;
     if (!idToDelete) return jsonResponse({ ok: false, error: 'Listing ID required' });
 
+    var lock = LockService.getScriptLock();
+    lock.waitLock(15000);
     try {
       var rawListings = scriptProps.getProperty('mtcg_cloud_listings');
       var listings = rawListings ? JSON.parse(rawListings) : [];
@@ -198,6 +207,8 @@ function doPost(e) {
       return jsonResponse({ ok: true, message: 'Listing deleted from Cloud' });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString() });
+    } finally {
+      lock.releaseLock();
     }
   }
 
@@ -249,6 +260,8 @@ function doPost(e) {
     var order = payload.order;
     if (!order || !order.id) return jsonResponse({ ok: false, error: 'Order with ID required' });
 
+    var lock = LockService.getScriptLock();
+    lock.waitLock(15000);
     try {
       var rawOrders = scriptProps.getProperty('mtcg_orders');
       var orders = rawOrders ? JSON.parse(rawOrders) : [];
@@ -261,6 +274,8 @@ function doPost(e) {
       return jsonResponse({ ok: true, message: 'Order saved to cloud', orderId: order.id });
     } catch (err) {
       return jsonResponse({ ok: false, error: err.toString() });
+    } finally {
+      lock.releaseLock();
     }
   }
 

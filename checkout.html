@@ -240,7 +240,7 @@
     const stripe = Stripe(STRIPE_PUBLISHABLE_KEY);
     const elements = stripe.elements();
     let cardElement;
-    let appliedDiscountAmount = 0;
+    let appliedPromoCode = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       renderCheckoutSummary();
@@ -292,6 +292,24 @@
         }
 
         try {
+          // Extract buyer information and cart state synchronously before any async operations
+          // This prevents DOM state loss or autocomplete resets during payment processing
+          const first = (document.getElementById('checkout-first-name') ? document.getElementById('checkout-first-name').value : '').trim();
+          const last = (document.getElementById('checkout-last-name') ? document.getElementById('checkout-last-name').value : '').trim();
+          const buyerName = `${first} ${last}`.trim() || 'Guest Customer';
+          const buyerEmail = (document.getElementById('checkout-email') ? document.getElementById('checkout-email').value : '').trim() || 'Not specified';
+          const buyerAddr = (document.getElementById('checkout-address') ? document.getElementById('checkout-address').value : '').trim();
+          const buyerCity = (document.getElementById('checkout-city') ? document.getElementById('checkout-city').value : '').trim();
+          const buyerZip = (document.getElementById('checkout-zip') ? document.getElementById('checkout-zip').value : '').trim();
+          const fullAddress = [buyerAddr, buyerCity, buyerZip].filter(Boolean).join(', ') || 'Not specified';
+          
+          const buyerData = {
+            buyerName,
+            buyerEmail,
+            fullAddress,
+            cartSnapshot: JSON.parse(JSON.stringify(cart)) // Deep copy of cart before payment
+          };
+
           // 1. Create Payment Intent on the server
           const intentRes = await fetch('https://delightful-paletas-5a879f.netlify.app/.netlify/functions/create-payment-intent', {
             method: 'POST',
@@ -324,7 +342,7 @@
           }
 
           if (paymentIntent.status === 'succeeded') {
-            completeOrder();
+            await completeOrder(buyerData);
           } else {
             throw new Error('Payment did not complete. Please try again.');
           }
@@ -338,26 +356,23 @@
       });
     });
 
-    function getGrandTotal() {
-      let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      return Math.max(0, subtotal - appliedDiscountAmount).toFixed(2);
+    function getGrandTotal(customCart) {
+      const itemsToTotal = customCart || cart;
+      let subtotal = itemsToTotal.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      return Math.max(0, subtotal - getDiscountAmount(subtotal)).toFixed(2);
     }
 
-    function completeOrder() {
-      const currentCart = [...cart];
-      const grandTotal = parseFloat(getGrandTotal());
-      const adminCut = (grandTotal * 0.10).toFixed(2);
-      const netPayout = (grandTotal - adminCut).toFixed(2);
+    async function completeOrder(buyerData) {
+      const currentCart = buyerData && buyerData.cartSnapshot ? buyerData.cartSnapshot : [...cart];
+      const subtotal = currentCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const grandTotal = parseFloat(getGrandTotal(currentCart));
+      const adminCut = (subtotal * 0.10).toFixed(2);
+      const netPayout = (subtotal - adminCut).toFixed(2);
 
       // Extract buyer information early for seller orders
-      const first = (document.getElementById('checkout-first-name') ? document.getElementById('checkout-first-name').value : '').trim();
-      const last = (document.getElementById('checkout-last-name') ? document.getElementById('checkout-last-name').value : '').trim();
-      const buyerName = `${first} ${last}`.trim() || 'Guest Customer';
-      const buyerEmail = (document.getElementById('checkout-email') ? document.getElementById('checkout-email').value : '').trim() || 'Not specified';
-      const buyerAddr = (document.getElementById('checkout-address') ? document.getElementById('checkout-address').value : '').trim();
-      const buyerCity = (document.getElementById('checkout-city') ? document.getElementById('checkout-city').value : '').trim();
-      const buyerZip = (document.getElementById('checkout-zip') ? document.getElementById('checkout-zip').value : '').trim();
-      const fullAddress = [buyerAddr, buyerCity, buyerZip].filter(Boolean).join(', ') || 'Not specified';
+      const buyerName = buyerData ? buyerData.buyerName : 'Guest Customer';
+      const buyerEmail = buyerData ? buyerData.buyerEmail : 'Not specified';
+      const fullAddress = buyerData ? buyerData.fullAddress : 'Not specified';
 
       // Create Sold Order in Escrow for Seller Dashboard
       try {
@@ -414,7 +429,7 @@
           total: grandTotal.toFixed(2),
           status: 'HELD_IN_ESCROW'
         };
-        fetch('https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec', {
+        await fetch('https://script.google.com/macros/s/AKfycbxPpq3qcK_fDDg5fTEupdiPOXx2oFdqanWtdO3QhI862jHN93sXpyHsAqCqK39jzDUp/exec', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'saveOrder', order: cloudOrder })
@@ -445,6 +460,12 @@
       }
     }
 
+    function getDiscountAmount(subtotal) {
+      if (appliedPromoCode === 'MILLION10') return subtotal * 0.10;
+      if (appliedPromoCode === 'FIRSTDROP') return 15.00;
+      return 0;
+    }
+
     function applyPromoCode() {
       const codeInput = document.getElementById('promo-code-input');
       const msg = document.getElementById('promo-message');
@@ -453,23 +474,22 @@
       let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
       if (code === 'MILLION10') {
-        appliedDiscountAmount = subtotal * 0.10;
+        appliedPromoCode = 'MILLION10';
         msg.style.display = 'block';
         msg.style.color = '#4ade80';
         msg.textContent = '✓ Coupon MILLION10 applied! 10% OFF your order.';
       } else if (code === 'FIRSTDROP') {
-        appliedDiscountAmount = 15.00;
+        appliedPromoCode = 'FIRSTDROP';
         msg.style.display = 'block';
         msg.style.color = '#4ade80';
         msg.textContent = '✓ Coupon FIRSTDROP applied! $15.00 OFF your order.';
       } else {
-        appliedDiscountAmount = 0;
+        appliedPromoCode = null;
         msg.style.display = 'block';
         msg.style.color = '#ef4444';
         msg.textContent = '✕ Invalid promo code. Try "MILLION10" or "FIRSTDROP".';
       }
 
-      window.appliedDiscount = appliedDiscountAmount;
       renderCheckoutSummary();
     }
 
@@ -508,14 +528,16 @@
 
       subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
 
-      if (appliedDiscountAmount > 0) {
+      const discountAmount = getDiscountAmount(subtotal);
+
+      if (discountAmount > 0) {
         discountRow.style.display = 'flex';
-        discountEl.textContent = `-$${appliedDiscountAmount.toFixed(2)}`;
+        discountEl.textContent = `-$${discountAmount.toFixed(2)}`;
       } else {
         discountRow.style.display = 'none';
       }
 
-      const grandTotal = Math.max(0, subtotal - appliedDiscountAmount);
+      const grandTotal = Math.max(0, subtotal - discountAmount);
       totalEl.textContent = `$${grandTotal.toFixed(2)}`;
     }
   </script>

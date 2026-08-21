@@ -218,7 +218,13 @@
       }
 
       // 1. Log locally
-      const logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
+      let logs = [];
+      try {
+        logs = JSON.parse(localStorage.getItem('mtcg_notifications') || '[]');
+        if (!Array.isArray(logs)) logs = [];
+      } catch(e) {
+        logs = [];
+      }
       logs.unshift({ eventTitle, detailsData, timestamp });
       localStorage.setItem('mtcg_notifications', JSON.stringify(logs.slice(0, 50)));
 
@@ -557,7 +563,14 @@
       const t = e.target;
       if (!t || !t.id) return;
       if (t.id === 'checkout-email' && t.value) localStorage.setItem('mtcg_saved_email', t.value.trim());
-      if (t.id === 'checkout-first-name' && t.value) localStorage.setItem('mtcg_saved_name', t.value.trim());
+      
+      if ((t.id === 'checkout-first-name' || t.id === 'checkout-last-name')) {
+        const first = (document.getElementById('checkout-first-name') ? document.getElementById('checkout-first-name').value : '').trim();
+        const last = (document.getElementById('checkout-last-name') ? document.getElementById('checkout-last-name').value : '').trim();
+        const fullName = `${first} ${last}`.trim();
+        if (fullName) localStorage.setItem('mtcg_saved_name', fullName);
+      }
+      
       if (t.id === 'checkout-address' && t.value) localStorage.setItem('mtcg_saved_address', t.value.trim());
       if (t.id === 'checkout-city' && t.value) localStorage.setItem('mtcg_saved_city', t.value.trim());
       if (t.id === 'checkout-zip' && t.value) localStorage.setItem('mtcg_saved_zip', t.value.trim());
@@ -602,7 +615,7 @@
     const accEmail = document.getElementById('acc-user-email');
     if (accEmail) accEmail.textContent = isAuth ? user.email : 'Sign in to access seller dashboard';
 
-    const accAvatar = document.getElementById('acc-avatar-letter');
+    const accAvatar = document.getElementById('acc-avatar-initial');
     if (accAvatar) accAvatar.textContent = isAuth ? (user.displayName || user.email || 'U')[0].toUpperCase() : '?';
 
     // Mobile Drawer Profile
