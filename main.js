@@ -31,7 +31,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const PRODUCTS = window.MILLION_TCG_PRODUCTS || [];
+const PRODUCTS = [];
 
 // Initialize Cart from localStorage
 let cart = [];
@@ -409,7 +409,7 @@ function deleteCommunityListing(id) {
   });
 }
 
-let communityListings = getLocalListingsCache();
+let communityListings = (window.MILLION_TCG_PRODUCTS && window.MILLION_TCG_PRODUCTS.length > 0) ? window.MILLION_TCG_PRODUCTS : getLocalListingsCache();
 // Fast startup: render synchronously immediately from cache, sync DB and Cloud non-blockingly
 sanitizeLocalListings();
 openDB().then(() => {
