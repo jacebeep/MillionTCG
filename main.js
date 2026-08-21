@@ -31,7 +31,7 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-const PRODUCTS = [];
+const PRODUCTS = window.MILLION_TCG_PRODUCTS || [];
 
 // Initialize Cart from localStorage
 let cart = [];

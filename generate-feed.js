@@ -1,4 +1,5 @@
 const fs = require('fs');
+
 const CLOUD_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhoUyU3cfpYh-66NG3aerW_YhLDnQ1Quv22DupQwjLQ-5WD5XOpcR7KoJ2KZ09cQ4O/exec';
 
 function esc(str) {
@@ -26,6 +27,7 @@ async function run() {
     console.error('Error fetching listings:', err);
   }
 
+  // 1. Generate google-feed.xml
   const productItems = listings.map(p => {
     const url  = esc(buildProductUrl(p.id));
     const title = esc(p.title || p.name || 'Trading Card');
@@ -34,7 +36,6 @@ async function run() {
     if (!rawImg.startsWith('http')) {
       rawImg = 'https://milliontcg.com/' + rawImg.replace(/^\//, '');
     }
-    // Force Google Merchant Center to accept the image by proxying it as a pure JPEG
     if (rawImg.includes('drive.google.com')) {
       const match = rawImg.match(/id=([a-zA-Z0-9_-]+)/);
       if (match && match[1]) {
@@ -73,6 +74,87 @@ ${productItems}
 
   fs.writeFileSync('google-feed.xml', xml);
   console.log('Successfully generated google-feed.xml with ' + listings.length + ' products.');
+
+  // 2. Generate static JS file for synchronous loading
+  if (!fs.existsSync('js')) fs.mkdirSync('js');
+  fs.writeFileSync('js/products-data.js', `window.MILLION_TCG_PRODUCTS = ${JSON.stringify(listings)};`);
+  console.log('Successfully generated js/products-data.js');
+
+  // 3. Generate sitemap.xml
+  const sitemapItems = listings.map(p => {
+    return `
+  <url>
+    <loc>${esc(buildProductUrl(p.id))}</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`;
+  }).join('');
+
+  const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://milliontcg.com/</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://milliontcg.com/images/hero-banner.png</image:loc>
+      <image:title>MillionTCG Trading Card Marketplace</image:title>
+      <image:caption>Premier Marketplace for Pokémon, Magic: The Gathering, Yu-Gi-Oh cards, booster boxes, and singles</image:caption>
+    </image:image>
+    <image:image>
+      <image:loc>https://milliontcg.com/images/logo.png</image:loc>
+      <image:title>MillionTCG Official Logo</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/shop.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/sell.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/how-it-works.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/contact-us.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/track-order.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/shipping-policy.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://milliontcg.com/returns-policy.html</loc>
+    <lastmod>2026-08-05</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>${sitemapItems}
+</urlset>`;
+
+  fs.writeFileSync('sitemap.xml', sitemapXml);
+  console.log('Successfully updated sitemap.xml with product links.');
 }
 
 run();
