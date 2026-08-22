@@ -6,10 +6,22 @@
     <description>Premier Trading Card Marketplace</description>
 
     <item>
+      <g:id>charizard-vmax-shining-fates-sv107</g:id>
+      <g:title>Charizard VMAX - Shining Fates SV107/SV122</g:title>
+      <g:description>Shiny Charizard VMAX Secret Rare from Shining Fates. Flawless surface and immaculate centering.</g:description>
+      <g:link>https://milliontcg.com/product.html?name=charizard-vmax-shining-fates-sv107sv122&amp;id=charizard-vmax-shining-fates-sv107</g:link>
+      <g:image_link>https://milliontcg.com/images/charizard-vmax.png</g:image_link>
+      <g:condition>new</g:condition>
+      <g:availability>in_stock</g:availability>
+      <g:price>110.00 USD</g:price>
+      <g:brand>Single Card</g:brand>
+      <g:google_product_category>1243</g:google_product_category>
+    </item>
+    <item>
       <g:id>v-heroes-tin-umbreon-v</g:id>
       <g:title>V Heroes Tin [Umbreon V]</g:title>
       <g:description>Factory sealed Pokemon V Heroes Tin featuring Umbreon V foil promo card and 4 booster packs.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=v-heroes-tin-umbreon-v</g:link>
+      <g:link>https://milliontcg.com/product.html?name=v-heroes-tin-umbreon-v&amp;id=v-heroes-tin-umbreon-v</g:link>
       <g:image_link>https://milliontcg.com/images/umbreon-v.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -21,7 +33,7 @@
       <g:id>mega-gengar-ex-phantom-forces-121</g:id>
       <g:title>Mega Gengar EX - XY - Phantom Forces #121/119 Secret Rare</g:title>
       <g:description>Iconic shiny Mega Gengar EX Secret Rare #121/119 from Phantom Forces. S-Tier collector grail.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=mega-gengar-ex-phantom-forces-121</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-gengar-ex-xy-phantom-forces-121119-secret-rare&amp;id=mega-gengar-ex-phantom-forces-121</g:link>
       <g:image_link>https://milliontcg.com/images/mega-gengar-ex.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -33,7 +45,7 @@
       <g:id>lugia-v-silver-tempest-186</g:id>
       <g:title>Lugia V - Silver Tempest #186/195 Alternate Art</g:title>
       <g:description>Dramatic storm art Lugia V Alternate Art Secret Rare from Silver Tempest. Pack fresh condition.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=lugia-v-silver-tempest-186</g:link>
+      <g:link>https://milliontcg.com/product.html?name=lugia-v-silver-tempest-186195-alternate-art&amp;id=lugia-v-silver-tempest-186</g:link>
       <g:image_link>https://milliontcg.com/images/lugia-v.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -45,7 +57,7 @@
       <g:id>charizard-gx-hidden-fates-sv49</g:id>
       <g:title>Charizard GX - Hidden Fates SV49/SV94 Shiny Vault</g:title>
       <g:description>The legendary Shiny Charizard GX SV49 from Hidden Fates. Ultra premium collector centerpiece.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=charizard-gx-hidden-fates-sv49</g:link>
+      <g:link>https://milliontcg.com/product.html?name=charizard-gx-hidden-fates-sv49sv94-shiny-vault&amp;id=charizard-gx-hidden-fates-sv49</g:link>
       <g:image_link>https://milliontcg.com/images/charizard-gx-sv49.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -57,7 +69,7 @@
       <g:id>v-heroes-tin-sylveon-v</g:id>
       <g:title>V Heroes Tin [Sylveon V]</g:title>
       <g:description>Factory sealed Pokemon V Heroes Tin featuring Sylveon V foil promo card and 4 booster packs.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=v-heroes-tin-sylveon-v</g:link>
+      <g:link>https://milliontcg.com/product.html?name=v-heroes-tin-sylveon-v&amp;id=v-heroes-tin-sylveon-v</g:link>
       <g:image_link>https://milliontcg.com/images/sylveon-v.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -69,7 +81,7 @@
       <g:id>gengar-ex-phantom-forces-34</g:id>
       <g:title>Gengar EX - XY - Phantom Forces #34/119</g:title>
       <g:description>Original XY Phantom Forces Ultra Rare Gengar EX with pristine holofoil finish and sharp corners.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=gengar-ex-phantom-forces-34</g:link>
+      <g:link>https://milliontcg.com/product.html?name=gengar-ex-xy-phantom-forces-34119&amp;id=gengar-ex-phantom-forces-34</g:link>
       <g:image_link>https://milliontcg.com/images/gengar-ex-xy4.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -81,7 +93,7 @@
       <g:id>pikachu-vmax-vivid-voltage-188</g:id>
       <g:title>Pikachu VMAX - Vivid Voltage #188/185 Rainbow Rare</g:title>
       <g:description>Chonkachu Rainbow Secret Rare #188/185 from Vivid Voltage. Brilliant rainbow hyper rare foil.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=pikachu-vmax-vivid-voltage-188</g:link>
+      <g:link>https://milliontcg.com/product.html?name=pikachu-vmax-vivid-voltage-188185-rainbow-rare&amp;id=pikachu-vmax-vivid-voltage-188</g:link>
       <g:image_link>https://milliontcg.com/images/pikachu-vmax.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -93,7 +105,7 @@
       <g:id>pokemon-30th-anniversary-vol2</g:id>
       <g:title>Pokemon 30th Anniversary Vol.2 Booster Box</g:title>
       <g:description>Official 30th Anniversary Vol.2 Booster Box featuring legendary holographic full arts and premium celebration pull rates.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=pokemon-30th-anniversary-vol2</g:link>
+      <g:link>https://milliontcg.com/product.html?name=pokemon-30th-anniversary-vol2-booster-box&amp;id=pokemon-30th-anniversary-vol2</g:link>
       <g:image_link>https://milliontcg.com/images/pokemon-30th-vol2-singlebox.png</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -105,7 +117,7 @@
       <g:id>user_1787119632956</g:id>
       <g:title>Pokemon Mimikyu Tin</g:title>
       <g:description>Factory Sealed (Brand New) Single Card - Single Card</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1787119632956</g:link>
+      <g:link>https://milliontcg.com/product.html?name=pokemon-mimikyu-tin&amp;id=user_1787119632956</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1YSCcI5-8Eh2iKTtLW-d2Mk2PMcQV2dx6&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -120,7 +132,7 @@
 Card Number / Rarity:003/132 / Double Rare
 Card Type / HP / Stage:Grass / 380 / Stage 2
 Card Text:Ability: Solar Transfer As often as you like during your turn, you may use this Ability. Move a Basic Grass Energy from 1 of your Pokmon to another of your Pokmon.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1786365365612</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-venusaur-ex&amp;id=user_1786365365612</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1p9JBpiMEfb6M_TzYbpxgM3Dlng7VwrBe&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -136,7 +148,7 @@ Card Number / Rarity:125/094 / Special Illustration Rare
 Card Type / HP / Stage:Fire / 360 / Stage 2
 Attack 1:[RR] Inferno X (90x)
 Discard any amount of Fire Energy from among your Pokemon, and this attack does 90 damage for each card you discarded in this way.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1786104911852</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-charizard-x-ex-125094-me02-phantasmal-flames&amp;id=user_1786104911852</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1xtLxtmctWTwVg0_cSWxnQXYm02njUuvU&amp;output=jpg</g:image_link>
       <g:condition>used</g:condition>
       <g:availability>in_stock</g:availability>
@@ -152,7 +164,7 @@ Card Number / Rarity:023 / Promo
 Card Type / HP / Stage:Fire / 360 / Stage 2
 Attack 1:[R][R] Inferno X (90x)
 Discard any amount of Fire Energy from among your Pokémon, and this attack does 90 damage for each card you discarded in this way.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1786104847096</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-charizard-x-ex-023-me-mega-evolution-promo&amp;id=user_1786104847096</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1WySadFq6x-rOMpEi91ZlXHB4mAjOXglP&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -173,7 +185,7 @@ When you play this card from your hand to evolve a Pokemon during your turn, you
 Attack 1:[RR] Burning Darkness (180+)
 This attack does 30 more damage for each Prize card your opponent has taken.
 Weakness / Resistance / Retreat Cost:Gx2 / None / 2</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1786104781545</g:link>
+      <g:link>https://milliontcg.com/product.html?name=charizard-ex-obsidian-flames&amp;id=user_1786104781545</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1BUipPsOX7l5MJmjw_OI4mt3Ol4h5hsR8&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -195,7 +207,7 @@ Attack 1:[RR] Burning Darkness (180+)
 This attack does 30 more damage for each Prize card your opponent has taken.
 Weakness / Resistance / Retreat Cost:Gx2 / None / 2
 Artist:AKIRA EGAWA</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1786104594612</g:link>
+      <g:link>https://milliontcg.com/product.html?name=charizard-ex-234091-sv-paldean-fates&amp;id=user_1786104594612</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1y6e--BxsDukhXeeqwjSjlbhAjitTJZ8p&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -214,7 +226,7 @@ The Pokémon TCG: Mega Charizard Tin includes:
 • 1 foil promo card featuring Mega Charizard X ex or Mega Charizard Y ex
 • 4 Pokémon TCG booster packs
 • A code card for Pokémon TCG Live</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785954794185</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-charizard-tin-mega-charizard-x&amp;id=user_1785954794185</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1KxYSOw5aEk_4uqOhBB4dcLwbbLCQr0yd&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -231,7 +243,7 @@ In this tin, you’ll find:
 • 1 foil card featuring Umbreon V!
 • 4 Pokémon TCG booster packs
 • A code card for Pokémon Trading Card Game Live</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785954406722</g:link>
+      <g:link>https://milliontcg.com/product.html?name=v-heroes-tin-umbreon-v&amp;id=user_1785954406722</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1fsrxGUu3TyfCsl8ZtvkAD81GL6Q17NbS&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -248,7 +260,7 @@ In this tin, you’ll find:
 • 1 foil card featuring Sylveon V!
 • 5 Pokémon TCG booster packs
 • A code card for Pokémon Trading Card Game Live</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785954297696</g:link>
+      <g:link>https://milliontcg.com/product.html?name=v-heroes-tin-sylveon-v&amp;id=user_1785954297696</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D17GnIBGG9Mg4t1DRnmVEB34-vB_pU-TNL&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -263,7 +275,7 @@ In this tin, you’ll find:
 Card Number / Rarity:269/217 / Mega Attack Rare
 Card Type / HP / Stage:Darkness / 350 / Stage 2
 Card Text:Ability: Shadowy Concealment If 1 of your Darkness Pokemon is Knocked Out by damage from an attack from your opponent&apos;s Pokemon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn&apos;t stack.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785954102818</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-gengar-ex-me-ascended-heroes&amp;id=user_1785954102818</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1SOmTXhSUnsKCSsPxSFz-mSKKJAIVuw-8&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -282,7 +294,7 @@ This attack does 60 damage for each of your opponent&apos;s Pokémon V and Poké
 Attack 2:[DDD] G-Max Swallow up (250)
 During your next turn, this Pokémon can&apos;t attack.
 Weakness / Resistance / Retreat Cost:Fx2 / None / 3</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785953939761</g:link>
+      <g:link>https://milliontcg.com/product.html?name=gengar-vmax-alternate-art-secret-fusion-strike&amp;id=user_1785953939761</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1NibZCY3PaRYz5a7yPBctmeFUs8sihtfe&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -301,7 +313,7 @@ The Pokémon TCG: Mega Moonlit Tin includes:
 • 1 foil promo card featuring Mega Gengar ex
 • 4 Pokémon TCG booster packs
 • A code card for Pokémon TCG Live</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952668185</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-moonlit-tin-mega-gengar-ex&amp;id=user_1785952668185</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1iFg9GQVP0WNO5uj9hMiLXyRNUUcaYLpV&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -317,7 +329,7 @@ Card Type / HP / Stage:Darkness / 310 / Stage 2
 Card Text:Ability—Gnawing Curse
 Whenever your opponent attaches an Energy card from their hand to 1 of their Pokémon, put 2 damage counters on that Pokémon.
 Attack 1:[D][D] Tricky Steps (160) You may move an Energy from your opponent&apos;s Active Pokémon to 1 of their Benched Pokémon.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952563597</g:link>
+      <g:link>https://milliontcg.com/product.html?name=gengar-ex-193162-sv05-temporal-forces-tef&amp;id=user_1785952563597</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1yka7UlHQMQ8xRk8Cd7NYG8mOFjfRTZDM&amp;output=jpg</g:image_link>
       <g:condition>used</g:condition>
       <g:availability>in_stock</g:availability>
@@ -334,7 +346,7 @@ Card Type / HP / Stage:Darkness / 350 / Stage 2
 Card Text:Ability: Shadowy Concealment If 1 of your Darkness Pokemon is Knocked Out by damage from an attack from your opponent&apos;s Pokemon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn&apos;t stack.
 Attack 1:[DD] Void Gale (230)
 Move an Energy from this Pokemon to 1 of your Benched Pokemon.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952469013</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-gengar-ex-me02-phantasmal-flames-pfl&amp;id=user_1785952469013</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1zCFcgNOYn-Xy9DyjAygGHHRQE_X9PcJj&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -351,7 +363,7 @@ Card Type / HP / Stage:Psychic / 170 / Basic
 Attack 1:[1] Night Attack Put 3 damage counters on 1 of your opponent&apos;s Pokémon.
 Attack 2:[2P] Dark Corridor (60) Your opponent&apos;s Active Pokémon is now Poisoned. Switch this Pokémon with 1 of your Benched Pokémon.
 Weakness / Resistance / Retreat Cost:Mx2 / F-20 / 2</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952310657</g:link>
+      <g:link>https://milliontcg.com/product.html?name=gengar-ex-xy-phantom-forces&amp;id=user_1785952310657</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1hqIfFJqR7dTzzXL-tumTiH4MWCazImJD&amp;output=jpg</g:image_link>
       <g:condition>used</g:condition>
       <g:availability>in_stock</g:availability>
@@ -368,7 +380,7 @@ Card Type / HP / Stage:Psychic / 80 / Stage 2
 Card Text:Pokémon Power: Curse Once during your turn (before your attack), you may move 1 damage counter from 1 of your opponent&apos;s Pokémon to another (even if it would Knock Out the other Pokémon) This power can&apos;t be used if Gengar is Asleep, Confused, or Paralyzed.
 Attack 1:[PPP] Dark Mind (30)
 If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don&apos;t apply Weakness and Resistance for Benched Pokémon.)</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952199485</g:link>
+      <g:link>https://milliontcg.com/product.html?name=gengar-5-fossil-fo&amp;id=user_1785952199485</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D19c2Xoh7GvVyIIU-VXXxVzU3Z04I4KwZO&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -384,7 +396,7 @@ Card Type / HP / Stage:Darkness / 350 / Stage 2
 Card Text:Ability: Shadowy Concealment If 1 of your Darkness Pokemon is Knocked Out by damage from an attack from your opponent&apos;s Pokemon ex, that player takes 1 fewer Prize card. The effect of Shadowy Concealment doesn&apos;t stack.
 Attack 1:[DD] Void Gale (230)
 Move an Energy from this Pokemon to 1 of your Benched Pokemon.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952130038</g:link>
+      <g:link>https://milliontcg.com/product.html?name=mega-gengar-ex-284217-me-ascended-heroes-asc&amp;id=user_1785952130038</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1Nmu5Jj6R_cmBY72d5KNGH1x0h0PS_hJe&amp;output=jpg</g:image_link>
       <g:condition>used</g:condition>
       <g:availability>in_stock</g:availability>
@@ -404,7 +416,7 @@ Discard 3 Energy from this Pokemon.
 Attack 2:[P+] Aero Unit GX
 Attach 5 basic Energy cards from your discard pile to your Pokemon in any way you like. If this Pokemon has at least 1 extra Energy attached to it (in addition to this attack&apos;s cost), prevent all effects of attacks, including damage, done to it during your opponent&apos;s next turn. (You can&apos;t use more than 1 GX attack in a game.)
 Weakness / Resistance / Retreat Cost:Yx2 / None / 1</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785952012449</g:link>
+      <g:link>https://milliontcg.com/product.html?name=latias-latios-gx-alternate-full-art-sm&amp;id=user_1785952012449</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D16y1F7JX2TZ9oyLuiQNtNQIjGNQBIUPFb&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -421,7 +433,7 @@ Card Type / HP / Stage:Psychic / 80 / Stage 2
 Card Text:Pokémon Power: Damage Swap As often as you like during your turn (before your attack), you may move 1 damage counter from 1 of your Pokémon to another as long as you don&apos;t Knock Out that Pokémon. This power can&apos;t be used if Alakazam is Asleep, Confused, or Paralyzed.
 Attack 1:[PPP] Confuse Ray (30)
 Flip a coin. If heads, the Defending Pokémon is now Confused.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785951823698</g:link>
+      <g:link>https://milliontcg.com/product.html?name=alakazam-base-set-bs&amp;id=user_1785951823698</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1lH6XsaEeHwCXQS_wkCGsRtzuvAC_3Fgr&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -436,7 +448,7 @@ Flip a coin. If heads, the Defending Pokémon is now Confused.</g:description>
 Card Number / Rarity:015/102 / Holo Rare
 Card Type / HP / Stage:Grass / 100 / Stage 2
 Card Text:Pokémon Power: Energy Trans As often as you like during your turn (before your attack), you may take 1 Grass Energy card attached to 1 of your Pokémon and attach it to a different one. This power can&apos;t be used if Venusaur is Asleep, Confused, or Paralyzed.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942986912</g:link>
+      <g:link>https://milliontcg.com/product.html?name=venusaur-base-set-bs&amp;id=user_1785942986912</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1o5KuM7F6-uvA3fg3iAfuXhdJ0nyc47JQ&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -451,7 +463,7 @@ Card Text:Pokémon Power: Energy Trans As often as you like during your turn (be
 Card Number / Rarity:002/102 / Holo Rare
 Card Type / HP / Stage:Water / 100 / Stage 2
 Card Text:Pokémon Power: Rain Dance As often as you like during your turn (before your attack), you may attach 1 Water Energy card to 1 of your Water Pokémon. (This doesn&apos;t use up your 1 Energy card attachment for the turn.) This power can&apos;t be used if Blastoise is Asleep, Confused, or Paralyzed.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942932226</g:link>
+      <g:link>https://milliontcg.com/product.html?name=blastoise-base-set-bs&amp;id=user_1785942932226</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1zbpuT46nRDQNS0sQKXAoAH_fYojZ-nUu&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -466,7 +478,7 @@ Card Text:Pokémon Power: Rain Dance As often as you like during your turn (befo
 Card Number / Rarity:004/102 / Holo Rare
 Card Type / HP / Stage:Fire / 120 / Stage 2
 Card Text:Pokémon Power: Energy Burn As often as you like during your turn (before your attack), you may turn all Energy attached to Charizard into Fire Energy for the rest of the turn. This power can&apos;t be used if Charizard is Asleep, Confused, or Paralyzed.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942859146</g:link>
+      <g:link>https://milliontcg.com/product.html?name=charizard-base-set-shadowless-bss&amp;id=user_1785942859146</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1q53jhYoFRfndjFzb7xyBppEusXn-iE-O&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -483,7 +495,7 @@ Card Type / HP / Stage:Grass / 230 / Mega
 Card Text:When a Pokémon-EX has been Knocked Out, your opponent takes 2 Prize cards.
 
 When 1 of your Pokémon becomes a Mega Evolution Pokémon, your turn ends.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942732942</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-venusaur-ex-xy-evolutions&amp;id=user_1785942732942</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1-nWtJi-3Sez8W-cY0Cx7KfAdUI-jDvUg&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -500,7 +512,7 @@ Card Type / HP / Stage:Grass / 230 / Mega
 Card Text:When a Pokémon-EX has been Knocked Out, your opponent takes 2 Prize cards.
 
 When 1 of your Pokémon becomes a Mega Evolution Pokémon, your turn ends.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942653994</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-venusaur-ex-full-art-xy-evolutions&amp;id=user_1785942653994</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1y02J6OC0r9IoeYKiHTfe1q-azuO4buqM&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -516,7 +528,7 @@ Card Number / Rarity:XY166 / Promo
 Card Type / HP / Stage:Psychic / 210 / Mega
 Attack 1:[1PPP] Hollow Geist (120)
 Your opponent&apos;s Active Pokemon is now Confused and Poisoned.</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785942397536</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-gengar-ex-xy-promos-pr&amp;id=user_1785942397536</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1eIcZTAtZDupgxpoKLTgiUtw3BJPJgqpQ&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -535,7 +547,7 @@ Card Text:When 1 of your Pokémon becomes a Mega Evolution Pokémon, your turn e
 When a Pokémon-EX has been Knocked Out, your opponent takes 2 Prize cards.
 Attack 1:[WWW] Hydro Bombard (120)
 This attack does 30 damage to 2 of your opponent&apos;s Benched Pokemon. (Don&apos;t apply Weakness and Resistance for Benched Pokemon.)</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785939965203</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-blastoise-ex-xy&amp;id=user_1785939965203</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1j_oP8vt2BEbxaK8WewhdGRl50cZR8vMT&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -554,7 +566,7 @@ Card Text:When 1 of your Pokémon becomes a Mega Evolution Pokémon, your turn e
 When a Pokémon-EX has been Knocked Out, your opponent takes 2 Prize cards.
 Attack 1:[WWW] Hydro Bombard (120)
 This attack does 30 damage to 2 of your opponent&apos;s Benched Pokemon. (Don&apos;t apply Weakness and Resistance for Benched Pokemon.)</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785939890108</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-blastoise-ex-full-art-xy&amp;id=user_1785939890108</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1uVl3Tnq7uSQzF8-jYinWVMBYx4Rg_yzS&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -574,7 +586,7 @@ When a Pokémon-EX has been Knocked Out, your opponent takes 2 Prize cards.
 Attack 1:[3RR] Crimson Dive (300)
 This Pokemon does 50 damage to itself.
 Weakness / Resistance / Retreat Cost:Wx2 / None / 1</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785939743797</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-charizard-ex-xy&amp;id=user_1785939743797</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1L2IezAynINpyqcixXtqKbPIwGsKTNdjd&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>
@@ -592,7 +604,7 @@ Card Text:Mega Evolution rule When 1 of your Pokémon becomes a Mega Evolution P
 Attack 1:Wild Blaze - 300 Discard the top 5 cards of your deck.
 Weakness / Resistance / Retreat Cost:Yx2 / / 3
 Artist:5ban Graphics</g:description>
-      <g:link>https://milliontcg.com/product.html?id=user_1785869788313</g:link>
+      <g:link>https://milliontcg.com/product.html?name=m-charizard-ex-x-xy&amp;id=user_1785869788313</g:link>
       <g:image_link>https://wsrv.nl/?url=https%3A%2F%2Fdrive.google.com%2Fuc%3Fexport%3Ddownload%26id%3D1VTv7kQBbJeGF3M7tRIckGNuSKALElpxj&amp;output=jpg</g:image_link>
       <g:condition>new</g:condition>
       <g:availability>in_stock</g:availability>

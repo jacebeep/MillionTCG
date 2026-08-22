@@ -351,7 +351,7 @@
         const isSingle = isSingleCardItem(p);
         const displayName = (typeof highlightSearchMatch === 'function' && activeQuery) ? highlightSearchMatch(p.name, activeQuery) : (p.name || 'TCG Product');
         return `
-          <div class="product-card-container ${isSingle ? 'is-single-card' : ''}" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer; position: relative;">
+          <div class="product-card-container ${isSingle ? 'is-single-card' : ''}" onclick="window.location.href='${window.buildProductUrl ? window.buildProductUrl(p) : `product.html?id=${p.id}`}'" style="cursor: pointer; position: relative;">
             <div class="product-card">
               ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
               <div class="product-img-wrapper">
@@ -363,7 +363,7 @@
                 <p class="product-desc">${p.desc || ''}</p>
                 <div class="product-footer">
                   <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-                  <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Product</button>
+                  <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='${window.buildProductUrl ? window.buildProductUrl(p) : `product.html?id=${p.id}`}'">View Product</button>
                 </div>
               </div>
             </div>
