@@ -572,7 +572,7 @@
         // ── Update OG / Twitter meta tags dynamically so Reddit/Discord/Twitter
         //    show a rich preview when this product URL is shared.
         (function updateSocialMeta() {
-          const productUrl = `https://milliontcg.com/product.html?id=${encodeURIComponent(product.id)}`;
+          const productUrl = window.buildProductUrl ? `https://milliontcg.com/${window.buildProductUrl(product)}` : `https://milliontcg.com/product.html?id=${encodeURIComponent(product.id)}`;
           const productTitle = `${product.name || product.title || 'TCG Card'} — $${parseFloat(product.price || 0).toFixed(2)} | MillionTCG`;
           const productDesc = product.desc || product.description || `Buy ${product.name || 'this TCG card'} on MillionTCG — escrow-protected, 10% seller fee. Ships fast.`;
           const productImg = (product.images && product.images[0]) || product.image || 'https://milliontcg.com/images/hero-banner.png';
@@ -592,7 +592,7 @@
 
         // ── Wire up share buttons
         (function setupShareButtons() {
-          const productUrl = `https://milliontcg.com/product.html?id=${encodeURIComponent(product.id)}`;
+          const productUrl = window.buildProductUrl ? `https://milliontcg.com/${window.buildProductUrl(product)}` : `https://milliontcg.com/product.html?id=${encodeURIComponent(product.id)}`;
           const productName = product.name || product.title || 'TCG Card';
           const price = `$${parseFloat(product.price || 0).toFixed(2)}`;
 

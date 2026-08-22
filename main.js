@@ -33,6 +33,18 @@ document.addEventListener('keydown', (e) => {
 
 const PRODUCTS = [];
 
+window.buildProductUrl = function(p) {
+  if (!p || !p.id) return '#';
+  const name = p.name || p.title || 'product';
+  const slug = name.toString().toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+  return `product.html?name=${slug}&id=${encodeURIComponent(p.id)}`;
+};
+
 // Initialize Cart from localStorage
 let cart = [];
 try {
@@ -536,7 +548,7 @@ function _applyHomeGridMarkup(grid, community) {
 
   grid.innerHTML = singleCardsOnly.map(p => {
     return `
-      <div class="product-card-container is-single-card" onclick="window.location.href='product.html?id=${p.id}'" style="cursor: pointer;">
+      <div class="product-card-container is-single-card" onclick="window.location.href='${window.buildProductUrl(p)}'" style="cursor: pointer;">
         <div class="product-card">
           ${p.tag ? `<span class="card-badge">${p.tag}</span>` : ''}
           <div class="product-img-wrapper">
@@ -548,7 +560,7 @@ function _applyHomeGridMarkup(grid, community) {
             <p class="product-desc">${p.desc || ''}</p>
             <div class="product-footer">
               <span class="product-price">$${parseFloat(p.price).toFixed(2)}</span>
-              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='product.html?id=${p.id}'">View Card</button>
+              <button class="btn-secondary" onclick="event.stopPropagation(); window.location.href='${window.buildProductUrl(p)}'">View Card</button>
             </div>
           </div>
         </div>
@@ -1091,7 +1103,14 @@ function setupSearch() {
             item.addEventListener('click', (e) => {
               e.preventDefault();
               const pid = item.dataset.productId;
-              if (pid) window.location.href = `product.html?id=${pid}`;
+              if (pid) {
+                const found = PRODUCTS.find(p => p.id === pid) || communityListings.find(p => p.id === pid);
+                if (found) {
+                  window.location.href = window.buildProductUrl(found);
+                } else {
+                  window.location.href = `product.html?id=${pid}`;
+                }
+              }
             });
           });
 
@@ -2381,7 +2400,7 @@ function initSellerSystem() {
           </div>
           <div class="my-listing-price">$${parseFloat(item.price).toFixed(2)}</div>
           <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-            <a href="product.html?id=${item.id}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View</a>
+            <a href="${window.buildProductUrl ? window.buildProductUrl(item) : `product.html?id=${item.id}`}" class="btn-primary" style="padding: 6px 12px; font-size: 0.75rem; text-decoration: none; border-radius: 6px; white-space: nowrap;">View</a>
             <button type="button" class="btn-edit-listing btn-secondary" data-id="${item.id}" style="padding: 6px 12px; font-size: 0.75rem; border-radius: 6px; white-space: nowrap;">Edit Price</button>
             <button type="button" class="btn-delete-listing" data-id="${item.id}" style="white-space: nowrap;">Remove</button>
           </div>

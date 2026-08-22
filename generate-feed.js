@@ -11,8 +11,20 @@ function esc(str) {
     .replace(/'/g,  '&apos;');
 }
 
-function buildProductUrl(id) {
-  return `https://milliontcg.com/product.html?id=${encodeURIComponent(id)}`;
+function slugify(text) {
+  return (text || '')
+    .toString()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
+function buildProductUrl(p) {
+  const slug = slugify(p.title || p.name || 'product');
+  return `https://milliontcg.com/product.html?name=${slug}&id=${encodeURIComponent(p.id)}`;
 }
 
 async function run() {
@@ -29,7 +41,7 @@ async function run() {
 
   // 1. Generate google-feed.xml
   const productItems = listings.map(p => {
-    const url  = esc(buildProductUrl(p.id));
+    const url  = esc(buildProductUrl(p));
     const title = esc(p.title || p.name || 'Trading Card');
     const desc = esc(p.desc || `${p.condition || 'Raw'} Single Card - ${p.category || 'Trading Card'}`);
     let rawImg = (p.gallery && p.gallery[0]) || p.image || 'https://milliontcg.com/images/logo.png';
@@ -84,7 +96,7 @@ ${productItems}
   const sitemapItems = listings.map(p => {
     return `
   <url>
-    <loc>${esc(buildProductUrl(p.id))}</loc>
+    <loc>${esc(buildProductUrl(p))}</loc>
     <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
